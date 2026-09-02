@@ -1,0 +1,17 @@
+# smoke-matrix.sh ignore list — reviewed code, not a dumping ground.
+#
+# One extended-regex per line. A log line matching any of these is not treated as a failure.
+# Blank lines and lines starting with # are ignored.
+#
+# Populate this ONCE, on the real Linux target, with:
+#     ./hybrid/tools/smoke-matrix.sh --baseline
+# then read every appended line and DELETE the ones that are genuine bugs.
+#
+# Legitimate entries look like: "no Hyprland instance", "PipeWire connection failed",
+# "org.freedesktop.Notifications not provided" - i.e. hardware or session services that
+# genuinely do not exist inside a headless container.
+#
+# Illegitimate entries look like: "TypeError", "is not defined", "Unable to assign",
+# or anything naming one of our own QML files. Those are bugs. Fix them instead.
+#
+# (empty until baselined on the target machine)

@@ -1,0 +1,230 @@
+# Known traps
+
+Each entry was verified against source on 2026-09-02. Paths are upstream-relative.
+When one of these bites you, extend the entry rather than burying the lesson in a commit message.
+
+---
+
+## T1 — `modules/drawers/Panels.qml` is a coupling graph, not a panel list
+
+**Symptom:** you wrap a panel in a `Loader` and unrelated things break.
+
+Panels reference each other by `id` through anchors and required properties:
+
+```qml
+osdWrapper.anchors.rightMargin: sessionWrapper.anchors.rightMargin
+                                + session.width * (1 - session.offsetScale)
+toasts.anchors.bottom:          sidebar.visible ? parent.bottom : utilities.top
+sidebar.anchors.top:            notifications.bottom
+Notifications.Wrapper { sidebarPanel: sidebar; osdPanel: osdWrapper;
+                        sessionPanel: sessionWrapper; utilitiesPanel: utilities }
+```
+
+It also exposes ~11 `readonly property alias` members, and `panels.<x>` is referenced
+**~107 times across 6 files** (`ContentWindow.qml`, `Interactions.qml`, `Regions.qml`,
+`launcher/WallpaperList.qml`, `launcher/Wrapper.qml`, `nexus/PageCompRegistry.qml`).
+
+**Why a Loader hurts here**
+
+- `readonly property alias osd: osd` **cannot alias into a Loader**. Aliases need a compile-time
+  target; `loader.item` is `null` until loaded. Converting to `property Item` means auditing every
+  one of those call sites for null-safety.
+- `Regions.qml` derives the Wayland input region from panel geometry. A null panel during load is a
+  frame of wrong click-through.
+
+**Rule:** Loader-host only weakly-referenced, self-contained modules. OP's `modules/dock/` has its
+own `Wrapper`/window and is a good candidate. Inside the Panels graph, merge implementations and
+switch behaviour with config properties instead.
+
+---
+
+## T2 — The bar has a 10-member implicit contract
+
+`modules/drawers/Interactions.qml` (313 lines) is a global hover/drag/hit-test state machine that
+reaches into bar internals:
+
+```
+bar.checkPopout    bar.clampedWidth   bar.closeTray         bar.dragThreshold  bar.handleWheel
+bar.implicitWidth  bar.isHovered      bar.minHoverThreshold bar.popouts        bar.showOnHover
+```
+
+Both forks modified `Interactions.qml` differently (OP +61/-7, MiDnight +94/-32), so each extended
+this contract in its own direction.
+
+**Rule:** the bar is not swappable — there is one bar. Bar *components* (Dock, Spotify, Github,
+status icons) are the unit of choice, and they map almost 1:1 onto upstream's planned plugin entry
+points (`BarEntry`, `BarPopout`, `StatusIcon`). Keep them shaped that way so they can migrate later.
+
+---
+
+## T3 — OP's pattern lock is a lock-screen bypass — RELEASE BLOCKER
+
+`modules/lock/center/PasswordInput.qml`:
+
+```qml
+readonly property string patternCode: GlobalConfig.lock.pattern ?? "74159"
+readonly property bool patternAvailable: true          // hardcoded, ignores enablePattern
+
+onPatternFinished: code => {
+    if (code === root.patternCode) {
+        root.lock.lock.unlock();                        // direct unlock, PAM never consulted
+        return;
+    }
+    triggerError();
+    root.lock.pam.rejectPattern();
+}
+```
+
+`plugin/src/Caelestia/Config/lockconfig.hpp`:
+
+```cpp
+CONFIG_GLOBAL_PROPERTY(bool, enablePattern, true)
+CONFIG_GLOBAL_PROPERTY(QString, pattern, u"74159"_s)
+```
+
+Four separate defects:
+
+1. The unlock secret is stored **plaintext** in `~/.config/caelestia/shell.json`, readable by any
+   process running as that user.
+2. The success path **bypasses PAM entirely** — no attempt counting, no lockout, no `faillock`, no
+   audit trail.
+3. `patternAvailable` is hardcoded `true`, so the grid toggle is reachable even when `enablePattern`
+   is false.
+4. The default `"74159"` is a published constant. Any unconfigured OP install unlocks with it.
+
+**Minimum bar before this ships:** salted hash (argon2id), honour `enablePattern`, no default value,
+attempt limiting with password fallback, and require a password on first unlock after boot/suspend.
+Preferred design: pattern is a convenience gate *in front of* PAM, never a replacement for it.
+
+Dropping the feature is a legitimate alternative and costs nothing else in the project.
+
+---
+
+## T4 — `configDir()` is hardcoded; directory naming does not isolate a dev instance
+
+`plugin/src/Caelestia/Config/common.cpp`:
+
+```cpp
+QString configDir() {
+    return QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation) + u"/caelestia"_s;
+}
+```
+
+Installing QML to `~/.config/quickshell/caelestia-hybrid` still reads the **same**
+`~/.config/caelestia/shell.json` as the user's working shell. A dev instance will fight their daily
+driver over one file.
+
+- **Workaround in use:** `hybrid/tools/dev-shell.sh` overrides `XDG_CONFIG_HOME`.
+- **Proper fix (small, upstreamable):** make `configDir()` honour `$CAELESTIA_CONFIG_DIR`.
+
+---
+
+## T5 — Singletons are lazy, but shadowing one does not work
+
+Good news: QML singletons are lazily instantiated. `ServiceLoader.qml` exists precisely to *force* a
+handful to load early (`IdleInhibitor; GameMode; Notifs; Players; Brightness;`). An unreferenced
+service is never constructed, so dead variant code costs nothing at runtime.
+
+Bad news: `qs.services.Colours` and `qs.variants.midnight.services.Colours` are **different types**.
+Anything importing `qs.services` gets the shared one. You cannot shadow a singleton to change
+behaviour for one consumer — the change must go into the single shared service, gated by config.
+
+This is why decision D5 exists: **merge services, do not fork them.**
+
+---
+
+## T6 — `services/Wallpapers.qml` state model *is* the feature
+
+MiDnight rewrote it 125 → 486 lines with new singleton state: `wallpaperMode`, `previewPath`,
+`rollbackPath`, `isTrackingRollback`, `cacheBuster`, `_hashCache`, video detection, categories.
+
+Splitting wallpaper into selectable sub-implementations (renderer / browser / transitions / video /
+auto-pause / wallhaven / palette extraction) would mean seven implementations of one singleton's
+state. **Rejected.** Wallpaper is one implementation with config options.
+
+---
+
+## T7 — Both forks wrote code upstream has since replaced
+
+- `services/NetworkUsage.qml`: both forks added it; upstream landed
+  `feat(services): migrate NetworkUsage from QML to C++ (#1860)` after both fork points.
+  On the Phase 2 merge, **delete both QML copies and take upstream's C++**.
+- MiDnight's per-monitor config (`monitorconfigmanager.cpp`, `ConfigList`, `PerMonitorStatusChip`,
+  `MonitorTargetSelector`) is superseded by upstream's `Settings/layerregistry.hpp` +
+  `ConfigRoot::forScreen()`. **Take upstream's, drop MiDnight's.**
+
+Before re-landing any fork feature, check whether upstream has since implemented it natively.
+
+---
+
+## T8 — `services/Audio.qml` conflicts are cosmetic; keep both sides
+
+- OP adds `getStreamTitle()` / `getStreamIcon()` — per-app audio display.
+- MiDnight adds `playLock()` / `playUnlock()` / `playCameraClick()` … — sound effects via
+  `QtMultimedia`.
+
+Different concerns, both purely additive, hunks textually adjacent (OP `@@ -104,2 +105,93`,
+MiDnight `@@ -107,0 +109,44`). Git reports a conflict; the resolution is **keep both**.
+
+This is the template for most service conflicts in this project. If a service conflict looks like it
+needs a decision, re-read it — usually it does not.
+
+---
+
+## T9 — MiDnight ships with CI disabled
+
+```
+.github/workflows/  build-nix.yml
+                    check-format.yml.disabled
+                    lint.yml.disabled
+                    release.yml.disabled
+                    update-flake-inputs.yml.disabled
+                    update-image.yml.disabled
+```
+
+33.5k lines that are not `qmllint`-clean and not `clang-format`-clean. Re-enabling in Phase 0 will
+surface a backlog — budget for it, and fix rather than re-disable.
+
+**MiDnight only disabled the workflows; it did not weaken them.** `lint.yml` and
+`check-format.yml` are byte-identical to upstream at the merge base `ad8dca0a`. The `lint-cpp`
+clang-tidy job that upstream's current `lint.yml` has was added on 2026-09-01
+(`5f37c31e chore: add clang tidy (#1920)`), *after* MiDnight's fork point — it was never removed.
+It arrives naturally in the Phase 2 merge. Do not backport it early: running
+`-warnings-as-errors='*'` against pre-rewrite C++ produces noise from code that is about to be
+replaced.
+
+Not every disabled workflow should come back:
+
+| Workflow | Phase 0 action |
+|---|---|
+| `check-format.yml`, `lint.yml` | **Re-enable** — quality gates |
+| `release.yml` | Leave off until there is a release process; wants `contents: write` |
+| `update-flake-inputs.yml` | Leave off — weekly bot that commits to the repo, needs an app token |
+| `update-image.yml` | **Leave off permanently** — publishes `shell-arch-env` to the fork owner's ghcr; we consume upstream's image instead |
+
+Both quality gates reference `ghcr.io/${{ github.repository_owner }}/shell-arch-env:latest`. A fork
+does not publish that image, so the templated owner resolves to nothing and the job cannot start.
+Repoint to `ghcr.io/caelestia-dots/`. OP hit this and fixed it the same way.
+
+---
+
+## T10 — Config schema is compiled C++, not dynamic JSON
+
+Adding a setting is not "add a JSON key". It is a macro in a `*config.hpp`, registration on the
+config root, and Nexus UI wiring. See the `config-property` skill.
+
+Unknown JSON keys do not become config properties — upstream's `Settings/quarantine.cpp` sets aside
+what it cannot place. A hand-edited `shell.json` key that never appears in the UI is this, not a bug.
+
+---
+
+## T11 — Upstream's plugin system is coming and overlaps with our feature flags
+
+`caelestia/feat/plugins` is a real system: manifests, hot reload, a URL interceptor, per-plugin
+settings plus settings UI, and typed entry points (`Custom`, `BarEntry`, `BarPopout`, `StatusIcon`,
+`QuickToggle`, `DashboardTab`). As of 2026-09-02 it is 51 commits ahead of `main` and **64 behind**,
+and is built on the *old* config module, so it needs rework before it lands.
+
+It cannot host a dock, lockscreen, or wallpaper backend — the entry points do not exist. But when it
+does land, anything we built as a bar entry, popout, status icon or quick toggle should migrate onto
+it. Shape those features accordingly and avoid inventing a competing manifest format.

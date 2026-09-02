@@ -3,4 +3,5 @@
 /.qmlls.ini
 build/
 .cache/
-logs
+logs.smoke-logs/
+.qmlls.ini
