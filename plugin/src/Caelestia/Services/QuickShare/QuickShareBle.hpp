@@ -21,8 +21,8 @@ class QuickShareBleAdvertisementAdaptor : public QDBusAbstractAdaptor {
 public:
     explicit QuickShareBleAdvertisementAdaptor(QObject* parent);
 
-    // NOLINTNEXTLINE(readability-convert-member-functions-to-static): moc requires a
-    // member function for a Q_PROPERTY READ accessor.
+    // moc requires a member function for a Q_PROPERTY READ accessor.
+    // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
     [[nodiscard]] QString type() const { return u"broadcast"_s; }
 
     // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
@@ -32,6 +32,8 @@ public:
     [[nodiscard]] QVariantMap serviceData() const;
 
 public slots:
+    // BlueZ's org.bluez.LEAdvertisement1 method name, exported verbatim by moc.
+    // NOLINTNEXTLINE(readability-identifier-naming)
     static void Release();
 };
 

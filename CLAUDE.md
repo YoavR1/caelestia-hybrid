@@ -24,6 +24,7 @@ Every gate upstream enforces is green on a tree that arrived with all four of th
 | `clang-format` | 23 of 143 files drift | 0 |
 | `scripts/qml-lint-conventions.py` | 1034 | 0 |
 | `qmllint` | ~810 | 0 |
+| `clang-tidy` | 446, never run | 0 |
 | smoke matrix | did not run at all | 6 presets, x2 compositor configs |
 
 CI runs all four plus the smoke matrix (`.github/workflows/smoke.yml`, headless sway).

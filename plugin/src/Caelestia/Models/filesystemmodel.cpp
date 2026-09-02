@@ -338,9 +338,9 @@ FileSystemModel::ScanFilters FileSystemModel::filtersFor(
     }
 
     if (filter == Filter::Videos) {
-        static const QStringList videoExtensions = { u"mp4"_s, u"webm"_s, u"mkv"_s, u"avi"_s, u"mov"_s, u"wmv"_s,
+        static const QStringList k_videoExtensions = { u"mp4"_s, u"webm"_s, u"mkv"_s, u"avi"_s, u"mov"_s, u"wmv"_s,
             u"flv"_s };
-        for (const auto& ext : videoExtensions)
+        for (const auto& ext : k_videoExtensions)
             filters.nameFilters << u"*."_s + ext;
     }
 

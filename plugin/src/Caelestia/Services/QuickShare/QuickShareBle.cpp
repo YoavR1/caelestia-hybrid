@@ -13,6 +13,8 @@
 QuickShareBleAdvertisementAdaptor::QuickShareBleAdvertisementAdaptor(QObject* parent)
     : QDBusAbstractAdaptor(parent) {}
 
+// moc requires a member function for a Q_PROPERTY READ accessor.
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 QVariantMap QuickShareBleAdvertisementAdaptor::serviceData() const {
     QVariantMap map;
     const char rawData[] = { static_cast<char>(252), 18, static_cast<char>(142), 1, 66, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -207,9 +209,9 @@ void QuickShareBleScanner::onPropertiesChanged(
     }
 }
 
-void QuickShareBleScanner::checkDeviceProperties(const QVariantMap& props) {
-    if (props.contains(u"ServiceData"_s)) {
-        const auto arg = props.value(u"ServiceData"_s).value<QDBusArgument>();
+void QuickShareBleScanner::checkDeviceProperties(const QVariantMap& deviceProperties) {
+    if (deviceProperties.contains(u"ServiceData"_s)) {
+        const auto arg = deviceProperties.value(u"ServiceData"_s).value<QDBusArgument>();
         QMap<QString, QVariant> serviceData;
         arg >> serviceData;
 
@@ -228,7 +230,7 @@ void QuickShareBleScanner::checkDeviceProperties(const QVariantMap& props) {
                 QDateTime const now = QDateTime::currentDateTime();
                 if (!m_lastEmit.isValid() || m_lastEmit.msecsTo(now) > 10000) {
                     m_lastEmit = now;
-                    QString const address = props.value(u"Address"_s).toString();
+                    QString const address = deviceProperties.value(u"Address"_s).toString();
                     emit deviceFound(address, data);
                     qDebug() << "QuickShareBleScanner found device:" << address;
                 }

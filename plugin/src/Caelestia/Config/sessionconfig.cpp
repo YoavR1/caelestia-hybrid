@@ -10,8 +10,8 @@ namespace {
 
 // The built-in buttons, in the order they are shown when nothing has been customised.
 const QStringList& defaultKeys() {
-    static const QStringList keys = { u"logout"_s, u"shutdown"_s, u"hibernate"_s, u"reboot"_s };
-    return keys;
+    static const QStringList k_keys = { u"logout"_s, u"shutdown"_s, u"hibernate"_s, u"reboot"_s };
+    return k_keys;
 }
 
 // Split an incoming object into the keys the schema knows about and the ones it does not.

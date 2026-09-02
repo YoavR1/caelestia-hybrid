@@ -19,7 +19,7 @@ struct Preset {
 };
 
 const Preset& presetFor(HybridPreset::Enum which) {
-    static const Preset recommended{ .features={
+    static const Preset k_recommended{ .features={
                                          { u"dock"_s, true },
                                          { u"overview"_s, true },
                                          { u"clipboard"_s, true },
@@ -37,7 +37,7 @@ const Preset& presetFor(HybridPreset::Enum which) {
             { u"desktopClock"_s, HybridVariant::Midnight }, { u"colours"_s, HybridVariant::Midnight } } };
 
     // MiDnight as it ships: everything it added, nothing OP added.
-    static const Preset midnight{ .features={
+    static const Preset k_midnight{ .features={
                                       { u"dock"_s, false },
                                       { u"overview"_s, false },
                                       { u"clipboard"_s, true },
@@ -55,7 +55,7 @@ const Preset& presetFor(HybridPreset::Enum which) {
             { u"desktopClock"_s, HybridVariant::Midnight }, { u"colours"_s, HybridVariant::Midnight } } };
 
     // OP as it ships.
-    static const Preset op{ .features={
+    static const Preset k_op{ .features={
                                 { u"dock"_s, true },
                                 { u"overview"_s, true },
                                 { u"clipboard"_s, false },
@@ -74,12 +74,12 @@ const Preset& presetFor(HybridPreset::Enum which) {
 
     switch (which) {
     case HybridPreset::Midnight:
-        return midnight;
+        return k_midnight;
     case HybridPreset::Op:
-        return op;
+        return k_op;
     case HybridPreset::Recommended:
     default:
-        return recommended;
+        return k_recommended;
     }
 }
 

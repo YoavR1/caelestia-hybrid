@@ -12,7 +12,7 @@ class QuickShareConnection : public QObject {
     Q_OBJECT
 
 public:
-    enum State {
+    enum State : quint8 {
         Disconnected,
         Connecting,
         OfflineFrameExchange,

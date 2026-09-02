@@ -10,7 +10,7 @@ using Qt::StringLiterals::operator""_s;
 
 namespace {
 
-IUtils* s_instance = nullptr;
+IUtils* g_instance = nullptr;
 
 } // namespace
 
@@ -18,7 +18,7 @@ IUtils::IUtils(QObject* parent)
     : QObject(parent) {}
 
 IUtils* IUtils::getInstance() {
-    return s_instance;
+    return g_instance;
 }
 
 IUtils* IUtils::create(QQmlEngine* engine, QJSEngine* jsEngine) {
@@ -28,8 +28,8 @@ IUtils* IUtils::create(QQmlEngine* engine, QJSEngine* jsEngine) {
     engine->addImageProvider(u"fcache"_s, new CachingImageProvider(CachingImageProvider::FillMode::Fit));
     engine->addImageProvider(u"scache"_s, new CachingImageProvider(CachingImageProvider::FillMode::Stretch));
 
-    s_instance = new IUtils(engine);
-    return s_instance;
+    g_instance = new IUtils(engine);
+    return g_instance;
 }
 
 QUrl IUtils::urlForPath(const QString& path, int fillMode) {
@@ -77,9 +77,9 @@ bool IUtils::isVideo(const QString& path) {
         return false;
 
     const QString suffix = QFileInfo(path).suffix().toLower();
-    static const QStringList videoExtensions = { u"mp4"_s, u"webm"_s, u"mkv"_s, u"avi"_s, u"mov"_s, u"wmv"_s,
+    static const QStringList k_videoExtensions = { u"mp4"_s, u"webm"_s, u"mkv"_s, u"avi"_s, u"mov"_s, u"wmv"_s,
         u"flv"_s };
-    return videoExtensions.contains(suffix);
+    return k_videoExtensions.contains(suffix);
 }
 
 } // namespace caelestia::images

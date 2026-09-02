@@ -211,6 +211,8 @@ void QuickShareDiscovery::onItemNew(
     }
 }
 
+// TODO: split this up (cognitive complexity 28 against a threshold of 25).
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 void QuickShareDiscovery::onServiceResolved(const QDBusMessage& msg) {
     QList<QVariant> args = msg.arguments();
     if (args.size() >= 10) {

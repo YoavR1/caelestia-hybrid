@@ -32,11 +32,15 @@ namespace caelestia::services {
 
 using Qt::StringLiterals::operator""_s;
 
-static void writeLengthPrefixed(QTcpSocket* socket, const QByteArray& data) {
+namespace {
+
+void writeLengthPrefixed(QTcpSocket* socket, const QByteArray& data) {
     uint32_t length = qToBigEndian(static_cast<uint32_t>(data.size()));
     socket->write(reinterpret_cast<const char*>(&length), 4);
     socket->write(data);
 }
+
+} // namespace
 
 QuickShareConnection::QuickShareConnection(QTcpSocket* socket, QObject* parent)
     : QObject(parent)
@@ -161,7 +165,7 @@ void QuickShareConnection::sendFile(const QString& filePath) {
 
     fileMeta->set_size(fileInfo.size());
 
-    qint64 filePayloadId = static_cast<qint64>(QRandomGenerator::global()->generate64());
+    auto filePayloadId = static_cast<qint64>(QRandomGenerator::global()->generate64());
     filePayloadId = qAbs(filePayloadId);
     fileMeta->set_payload_id(filePayloadId);
     fileMeta->set_id(filePayloadId);
@@ -200,7 +204,7 @@ void QuickShareConnection::sendEncryptedSharingFrame(const sharing::nearby::Fram
     frameData.resize(static_cast<qsizetype>(frame.ByteSizeLong()));
     (void)frame.SerializeToArray(frameData.data(), static_cast<int>(frameData.size()));
 
-    qint64 const payloadId = static_cast<qint64>(QRandomGenerator::global()->generate64());
+    auto const payloadId = static_cast<qint64>(QRandomGenerator::global()->generate64());
     qint64 const bodySize = frameData.size();
 
     location::nearby::connections::PayloadTransferFrame ptf1;
@@ -368,9 +372,11 @@ void QuickShareConnection::handleOfflineFrame(const QByteArray& data) {
             if (info.size() >= 18) {
                 const auto visibility = (static_cast<unsigned char>(info[0]) >> 3) & 0x01;
                 if (visibility == 0) {
-                    const int nameLen = static_cast<unsigned char>(info[17]);
+                    // info is a protobuf std::string, so stay in its size type for the
+                    // bounds check and convert once at the QString boundary.
+                    const size_t nameLen = static_cast<unsigned char>(info[17]);
                     if (nameLen > 0 && info.size() >= 18 + nameLen) {
-                        m_deviceName = QString::fromUtf8(info.data() + 18, nameLen);
+                        m_deviceName = QString::fromUtf8(info.data() + 18, static_cast<qsizetype>(nameLen));
                     }
                 }
             }
@@ -441,10 +447,6 @@ void QuickShareConnection::handlePostHandshake(const QByteArray& data) {
     if (!frame.ParseFromArray(data.constData(), static_cast<int>(data.size()))) {
         qWarning() << "QuickShareConnection: Failed to parse plaintext CONNECTION_RESPONSE";
         return;
-    }
-
-    if (frame.v1().has_connection_response()) {
-    } else {
     }
 
     // If we are the Server (receiver), we must send our CONNECTION_RESPONSE now.
@@ -553,7 +555,7 @@ QByteArray QuickShareConnection::unwrapSecureMessage(const QByteArray& secureMes
         reinterpret_cast<const unsigned char*>(headerAndBodyBytes.constData()),
         static_cast<size_t>(headerAndBodyBytes.size()), hmacResult, &hmacLen);
 
-    if (static_cast<int>(hmacLen) != secMsg.signature().size() ||
+    if (static_cast<size_t>(hmacLen) != secMsg.signature().size() ||
         memcmp(hmacResult, secMsg.signature().data(), hmacLen) != 0) {
         qWarning() << "QuickShareConnection: HMAC verification failed";
         return {};
@@ -592,6 +594,7 @@ QByteArray QuickShareConnection::unwrapSecureMessage(const QByteArray& secureMes
 
     // Not a braced init list: protobuf's size() is size_t and QByteArray's is qsizetype,
     // and braces make that narrowing an error rather than a conversion.
+    // NOLINTNEXTLINE(modernize-return-braced-init-list)
     return QByteArray(d2dMsg.message().data(), static_cast<qsizetype>(d2dMsg.message().size()));
 }
 
@@ -611,15 +614,16 @@ void QuickShareConnection::handleEncryptedFrame(const QByteArray& data) {
     const auto& v1 = offlineFrame.v1();
     if (v1.has_payload_transfer()) {
         handlePayloadTransfer(plaintext);
-    } else if (v1.type() == location::nearby::connections::V1Frame::KEEP_ALIVE) {
     } else if (v1.type() == location::nearby::connections::V1Frame::DISCONNECTION) {
-        if (v1.has_disconnection() && v1.disconnection().has_request_safe_to_disconnect()) {
-        }
         emit transferFinished(true);
-    } else {
     }
+    // Everything else, KEEP_ALIVE included, needs no action.
 }
 
+// TODO: split this up. clang-tidy measures its cognitive complexity at 70 against a
+// threshold of 25, and it is the hardest part of the protocol to follow. Left as-is for
+// now because there is no way to exercise a real transfer from this tree.
+// NOLINTNEXTLINE(readability-function-cognitive-complexity)
 void QuickShareConnection::handlePayloadTransfer(const QByteArray& plaintext) {
     location::nearby::connections::OfflineFrame offlineFrame;
     if (!offlineFrame.ParseFromArray(plaintext.constData(), static_cast<int>(plaintext.size())))
@@ -720,10 +724,10 @@ void QuickShareConnection::handlePayloadTransfer(const QByteArray& plaintext) {
                             QFile file(m_outgoingFilePath);
                             if (file.open(QIODevice::ReadOnly)) {
                                 qint64 offset = 0;
-                                const qint64 CHUNK_SIZE = 1024LL * 1024; // 1MB chunks
+                                const qint64 chunkSize = 1024LL * 1024; // 1MB chunks
 
                                 while (!file.atEnd()) {
-                                    QByteArray const fileData = file.read(CHUNK_SIZE);
+                                    QByteArray const fileData = file.read(chunkSize);
 
                                     location::nearby::connections::PayloadTransferFrame ptfFile;
                                     auto* headerF = ptfFile.mutable_payload_header();

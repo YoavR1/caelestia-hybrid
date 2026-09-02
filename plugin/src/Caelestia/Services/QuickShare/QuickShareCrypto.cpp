@@ -23,11 +23,20 @@ Q_LOGGING_CATEGORY(lcQuickShareCrypto, "caelestia.quickshare.crypto", QtInfoMsg)
 #include "securemessage.pb.h"
 #include "ukey.pb.h"
 
+// TODO: migrate the peer-key handling off the EC_KEY API. OpenSSL 3.0 deprecated all of
+// it in favour of EVP_PKEY/OSSL_PARAM, and it still works, but it will eventually be
+// removed. Doing it means rewriting the UKEY2 handshake's key import and export, and
+// nothing in this tree can exercise a real Quick Share transfer to check the result --
+// so it is recorded here rather than attempted blind.
+// NOLINTBEGIN(clang-diagnostic-deprecated-declarations)
+
 namespace caelestia::services {
 
 using Qt::StringLiterals::operator""_s;
 
-static QByteArray hkdfInternal(
+namespace {
+
+QByteArray hkdfInternal(
     const EVP_MD* md, const QByteArray& salt, const QByteArray& ikm, const QByteArray& info, size_t outLen) {
     EVP_PKEY_CTX* pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, nullptr);
     if (!pctx)
@@ -61,8 +70,8 @@ static QByteArray hkdfInternal(
     }
     QByteArray out;
     out.resize(static_cast<qsizetype>(outLen));
-    size_t out_len = outLen;
-    if (EVP_PKEY_derive(pctx, reinterpret_cast<unsigned char*>(out.data()), &out_len) <= 0) {
+    size_t outLenLocal = outLen;
+    if (EVP_PKEY_derive(pctx, reinterpret_cast<unsigned char*>(out.data()), &outLenLocal) <= 0) {
         EVP_PKEY_CTX_free(pctx);
         return {};
     }
@@ -70,15 +79,13 @@ static QByteArray hkdfInternal(
     return out;
 }
 
-static QByteArray hkdfSha512(const QByteArray& salt, const QByteArray& ikm, const QByteArray& info, size_t outLen) {
-    return hkdfInternal(EVP_sha512(), salt, ikm, info, outLen);
-}
-
-static QByteArray hkdfSha256(const QByteArray& salt, const QByteArray& ikm, const QByteArray& info, size_t outLen) {
+QByteArray hkdfSha256(const QByteArray& salt, const QByteArray& ikm, const QByteArray& info, size_t outLen) {
     return hkdfInternal(EVP_sha256(), salt, ikm, info, outLen);
 }
 
-QuickShareCrypto::QuickShareCrypto() {}
+} // namespace
+
+QuickShareCrypto::QuickShareCrypto() = default;
 
 QuickShareCrypto::~QuickShareCrypto() {
     if (m_dhKey) {
@@ -169,8 +176,9 @@ QString QuickShareCrypto::pinCode() const {
     int hash = 0;
     int multiplier = 1;
     for (const char byte : m_authString) {
-        // NOLINTNEXTLINE(bugprone-signed-char-misuse): Nearby Share specifies this hash over
-        // signed bytes, so the reinterpretation is the protocol rather than a mistake.
+        // Nearby Share specifies this hash over signed bytes, so the reinterpretation is
+        // the protocol rather than a mistake.
+        // NOLINTNEXTLINE(bugprone-signed-char-misuse)
         int const signedByte = static_cast<int>(static_cast<signed char>(byte));
         hash = (hash + signedByte * multiplier) % kHashModulo;
         multiplier = (multiplier * kHashBaseMultiplier) % kHashModulo;
@@ -351,12 +359,6 @@ QByteArray QuickShareCrypto::generateClientInit() {
     unsigned char hash[SHA512_DIGEST_LENGTH];
     SHA512(reinterpret_cast<const unsigned char*>(finishFrameSerialized.data()), finishFrameSerialized.size(), hash);
 
-    {
-        QString hex;
-        for (int i = 0; i < SHA512_DIGEST_LENGTH; ++i)
-            hex += QString(u"%1"_s).arg(hash[i], 2, 16, u'0');
-    }
-
     securegcm::Ukey2ClientInit clientInit;
     clientInit.set_version(1);
     QByteArray randData;
@@ -527,3 +529,5 @@ QByteArray QuickShareCrypto::decryptPayload(const QByteArray& ciphertextBytes) {
 }
 
 } // namespace caelestia::services
+
+// NOLINTEND(clang-diagnostic-deprecated-declarations)

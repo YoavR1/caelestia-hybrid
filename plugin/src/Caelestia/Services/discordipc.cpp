@@ -11,13 +11,17 @@ namespace caelestia {
 
 using Qt::StringLiterals::operator""_s;
 
-enum class Opcode : int32_t {
+namespace {
+
+enum class Opcode : quint8 {
     Handshake = 0,
     Frame = 1,
     Close = 2,
     Ping = 3,
     Pong = 4
 };
+
+} // namespace
 
 DiscordIpc::DiscordIpc(QObject* parent)
     : QObject(parent)
@@ -92,7 +96,7 @@ void DiscordIpc::onSocketDisconnected() {
     }
 }
 
-void DiscordIpc::onError(QLocalSocket::LocalSocketError) {
+void DiscordIpc::onError(QLocalSocket::LocalSocketError /*error*/) {
     emit errorOccurred(m_socket->errorString());
     onSocketDisconnected();
 }
