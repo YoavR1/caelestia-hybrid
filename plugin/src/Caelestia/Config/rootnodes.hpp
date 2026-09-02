@@ -14,6 +14,7 @@
 #include "common.hpp"
 #include "dashboardconfig.hpp"
 #include "generalconfig.hpp"
+#include "hybridconfig.hpp"
 #include "launcherconfig.hpp"
 #include "lockconfig.hpp"
 #include "nexusconfig.hpp"
@@ -50,6 +51,9 @@ class ConfigRoot : public settings::RootNode {
     CONFIG_SUBOBJECT(SidebarConfig, sidebar)
     CONFIG_SUBOBJECT(UtilitiesConfig, utilities)
     CONFIG_SUBOBJECT(UserPaths, paths)
+
+    // The hybrid feature system (D3). Global: flags do not vary per monitor.
+    CONFIG_GLOBAL_SUBOBJECT(HybridConfig, hybrid)
 
     // MiDnight-only sections
     CONFIG_SUBOBJECT(AiConfig, ai)

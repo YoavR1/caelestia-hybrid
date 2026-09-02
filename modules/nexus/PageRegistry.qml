@@ -101,6 +101,14 @@ QtObject {
             category: "shell"
         },
 
+        // Hybrid
+        {
+            label: qsTr("Hybrid"),
+            icon: "merge",
+            description: qsTr("Features imported from each fork, and which one wins"),
+            category: "hybrid"
+        },
+
         // About
         {
             label: qsTr("About"),

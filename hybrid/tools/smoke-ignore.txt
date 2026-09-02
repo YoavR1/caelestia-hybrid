@@ -60,11 +60,6 @@ Tokens\.(sizes|rounding|padding|spacing) accessed without a screen set
 # upstream's macro back, so these are visible again. WallpaperPauser is the loudest.
 Config\.\w+ accessed without a screen set
 
-# The `hybrid` key in hybrid/presets/*.json is the Phase 3 feature-flag schema, which does
-# not exist in the config yet. Upstream's rewritten settings module validates keys and
-# quarantines what it does not know, so it says so once per boot. Delete this entry when
-# Phase 3 lands a HybridConfig node -- if it still fires then, the node is wrong.
-caelestia\.settings: Unknown option "hybrid"
 
 # KNOWN BUG: the app database is queried before it is opened. Comes from the appdb
 # path that upstream has since restructured (plugin layout rearrange, #1896), so this

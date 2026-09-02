@@ -271,6 +271,15 @@ QtObject {
             }
         },
 
+        // Hybrid
+        Component {
+            StackPage {
+                Component {
+                    HybridPage {}
+                }
+            }
+        },
+
         // About
         Component {
             StackPage {
