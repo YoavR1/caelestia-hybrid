@@ -40,9 +40,13 @@ python3 scripts/qml-lint-conventions.py        # has a --fix mode; see T9
 
 # 3. QML lint — any output at all is a failure
 touch .qmlls.ini
+_t=$(mktemp -d)                       # isolate: this still writes to state/cache
+XDG_STATE_HOME="$_t/state" XDG_CACHE_HOME="$_t/cache" \
 QT_QPA_PLATFORM=offscreen QML2_IMPORT_PATH="$PWD/build/qml:$QML2_IMPORT_PATH" timeout 3 qs -p .
+rm -rf "$_t"
 #   ^ this is TOOLING GENERATION, not a test. It writes .qmlls.ini and is expected to
-#     fail on PanelWindow. Never read its exit code.
+#     fail on PanelWindow. Never read its exit code. Isolate XDG_STATE_HOME/XDG_CACHE_HOME
+#     anyway — even a failed boot touches ~/.local/state/caelestia/apps.sqlite.
 /usr/lib/qt6/bin/qmllint --import disable -I <buildDir> -I <importPaths from .qmlls.ini> <files>
 
 # 4. Preset smoke matrix — the project's real gate
