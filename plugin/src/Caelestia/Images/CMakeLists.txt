@@ -5,6 +5,7 @@ qml_module(caelestia-images
         cachingimageprovider.hpp
         imagecacher.cpp
         imagecacher.hpp
+        imageanalyser.cpp
         iutils.cpp
         iutils.hpp
     LIBRARIES

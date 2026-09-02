@@ -1,19 +1,19 @@
 #pragma once
 
-#include "configobject.hpp"
-
 #include <qmap.h>
 #include <qstring.h>
 #include <qstringlist.h>
 #include <qvariant.h>
 
+#include "settings/objectnode.hpp"
+#include "common.hpp"
+
 namespace caelestia::config {
 
 using Qt::StringLiterals::operator""_s;
 
-class SessionIcons : public ConfigObject {
-    Q_OBJECT
-    QML_ANONYMOUS
+class SessionIcons : public settings::ObjectNode {
+    CONFIG_NODE(SessionIcons, settings::ObjectNode)
 
     CONFIG_PROPERTY(QString, logout, u"logout"_s)
     CONFIG_PROPERTY(QString, shutdown, u"power_settings_new"_s)
@@ -42,9 +42,8 @@ private:
     QStringList m_customIconKeys;
 };
 
-class SessionCommands : public ConfigObject {
-    Q_OBJECT
-    QML_ANONYMOUS
+class SessionCommands : public settings::ObjectNode {
+    CONFIG_NODE(SessionCommands, settings::ObjectNode)
 
     CONFIG_PROPERTY(QStringList, logout, { u"logout"_s })
     CONFIG_PROPERTY(QStringList, shutdown, { u"poweroff"_s })
@@ -73,9 +72,8 @@ private:
     QStringList m_customCommandKeys;
 };
 
-class SessionConfig : public ConfigObject {
-    Q_OBJECT
-    QML_ANONYMOUS
+class SessionConfig : public settings::ObjectNode {
+    CONFIG_NODE(SessionConfig, settings::ObjectNode)
 
     CONFIG_PROPERTY(bool, enabled, true)
     CONFIG_PROPERTY(int, dragThreshold, 30)

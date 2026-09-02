@@ -1,18 +1,18 @@
 #pragma once
 
-#include "configlist.hpp"
-#include "configobject.hpp"
-
 #include <qstring.h>
-#include <qvariant.h>
+#include <qstringlist.h>
+#include <qvariantlist.h>
+
+#include "settings/objectnode.hpp"
+#include "common.hpp"
 
 namespace caelestia::config {
 
 using Qt::StringLiterals::operator""_s;
 
-class UtilitiesToasts : public ConfigObject {
-    Q_OBJECT
-    QML_ANONYMOUS
+class UtilitiesToasts : public settings::ObjectNode {
+    CONFIG_NODE(UtilitiesToasts, settings::ObjectNode)
 
     CONFIG_PROPERTY(QString, fullscreen, u"off"_s)
     CONFIG_GLOBAL_PROPERTY(bool, configLoaded, true)
@@ -29,28 +29,18 @@ class UtilitiesToasts : public ConfigObject {
     CONFIG_GLOBAL_PROPERTY(bool, nowPlaying, false)
     CONFIG_GLOBAL_PROPERTY(bool, transparency, false)
     CONFIG_GLOBAL_PROPERTY(qreal, transparencyBase, 0.85)
-
-public:
-    explicit UtilitiesToasts(QObject* parent = nullptr)
-        : ConfigObject(parent) {}
 };
 
-class UtilitiesVpn : public ConfigObject {
-    Q_OBJECT
-    QML_ANONYMOUS
+class UtilitiesVpn : public settings::ObjectNode {
+    CONFIG_NODE(UtilitiesVpn, settings::ObjectNode)
 
     CONFIG_GLOBAL_PROPERTY(bool, enabled, false)
-    CONFIG_GLOBAL_PROPERTY(QVariantList, provider)
-    CONFIG_GLOBAL_PROPERTY(QString, selectedProvider, u""_s)
-
-public:
-    explicit UtilitiesVpn(QObject* parent = nullptr)
-        : ConfigObject(parent) {}
+    CONFIG_GLOBAL_PROPERTY(QVariantList, provider, {})
+    CONFIG_GLOBAL_PROPERTY(QString, selectedProvider, QString())
 };
 
-class UtilitiesGameMode : public ConfigObject {
-    Q_OBJECT
-    QML_ANONYMOUS
+class UtilitiesGameMode : public settings::ObjectNode {
+    CONFIG_NODE(UtilitiesGameMode, settings::ObjectNode)
 
     CONFIG_GLOBAL_PROPERTY(bool, disableHyprlandAnimations, true)
     CONFIG_GLOBAL_PROPERTY(bool, disableHyprlandBlur, true)
@@ -64,29 +54,19 @@ class UtilitiesGameMode : public ConfigObject {
     CONFIG_GLOBAL_PROPERTY(bool, disableShimeji, true)
 
     CONFIG_GLOBAL_PROPERTY(bool, autoEnable, true)
-    CONFIG_GLOBAL_PROPERTY(QStringList, autoEnableRegexes)
-
-public:
-    explicit UtilitiesGameMode(QObject* parent = nullptr)
-        : ConfigObject(parent) {}
+    CONFIG_GLOBAL_PROPERTY(QStringList, autoEnableRegexes, {})
 };
 
-class UtilitiesCards : public ConfigObject {
-    Q_OBJECT
-    QML_ANONYMOUS
+class UtilitiesCards : public settings::ObjectNode {
+    CONFIG_NODE(UtilitiesCards, settings::ObjectNode)
 
     CONFIG_PROPERTY(bool, keepAwake, true)
     CONFIG_PROPERTY(bool, recorder, true)
     CONFIG_PROPERTY(bool, quickToggles, true)
-
-public:
-    explicit UtilitiesCards(QObject* parent = nullptr)
-        : ConfigObject(parent) {}
 };
 
-class UtilitiesConfig : public ConfigObject {
-    Q_OBJECT
-    QML_ANONYMOUS
+class UtilitiesConfig : public settings::ObjectNode {
+    CONFIG_NODE(UtilitiesConfig, settings::ObjectNode)
 
     CONFIG_PROPERTY(bool, enabled, true)
     CONFIG_PROPERTY(int, maxToasts, 4)
@@ -95,28 +75,20 @@ class UtilitiesConfig : public ConfigObject {
     CONFIG_SUBOBJECT(UtilitiesVpn, vpn)
     CONFIG_SUBOBJECT(UtilitiesGameMode, gameMode)
     CONFIG_LIST(EntryList, quickToggles,
-        {
+        DEFAULT_ARG({
             LIST_ENTRY(wifi, true),
             LIST_ENTRY(bluetooth, true),
-            LIST_ENTRY(quickshare, true),
             LIST_ENTRY(mic, true),
             LIST_ENTRY(settings, true),
             LIST_ENTRY(gameMode, true),
             LIST_ENTRY(dnd, true),
             LIST_ENTRY(vpn, false),
+            LIST_ENTRY(quickshare, true),
             LIST_ENTRY(wallpaper, true),
             LIST_ENTRY(badapple, true),
             LIST_ENTRY(pauseWallpaper, true),
             LIST_ENTRY(pipPause, true),
-        })
-
-public:
-    explicit UtilitiesConfig(QObject* parent = nullptr)
-        : ConfigObject(parent)
-        , m_cards(new UtilitiesCards(this))
-        , m_toasts(new UtilitiesToasts(this))
-        , m_vpn(new UtilitiesVpn(this))
-        , m_gameMode(new UtilitiesGameMode(this)) {}
+        }))
 };
 
 } // namespace caelestia::config

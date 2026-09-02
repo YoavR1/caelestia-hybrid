@@ -46,25 +46,26 @@ Dependencies:
 -   [`brightnessctl`](https://github.com/Hummer12007/brightnessctl)
 -   [`app2unit`](https://github.com/Vladimir-csp/app2unit)
 -   [`libcava`](https://github.com/LukashonakV/cava)
--   [`networkmanager`](https://networkmanager.dev)
--   [`lm-sensors`](https://github.com/lm-sensors/lm-sensors)
--   [`fish`](https://github.com/fish-shell/fish-shell)
+-   [`networkmanager`](https://gitlab.freedesktop.org/NetworkManager/NetworkManager)
+-   [`lm_sensors`](https://github.com/lm-sensors/lm-sensors)
 -   [`aubio`](https://github.com/aubio/aubio)
--   [`libpipewire`](https://pipewire.org)
--   `glibc`
--   `qt6-declarative`
--   `gcc-libs`
--   [`material-symbols`](https://fonts.google.com/icons)
--   [`caskaydia-cove-nerd`](https://www.nerdfonts.com/font-downloads)
--   [`swappy`](https://github.com/jtheoof/swappy)
+-   [`libpipewire`](https://github.com/PipeWire/pipewire)
 -   [`libqalculate`](https://github.com/Qalculate/libqalculate)
--   [`bash`](https://www.gnu.org/software/bash)
+-   [`power-profiles-daemon`](https://gitlab.freedesktop.org/upower/power-profiles-daemon)
+-   [`ttf-material-symbols-variable`](https://github.com/google/material-design-icons)
+-   [`ttf-rubik-vf`](https://github.com/googlefonts/rubik)
+-   [`ttf-cascadia-code-nerd`](https://github.com/ryanoasis/nerd-fonts)
 -   `qt6-base`
 -   `qt6-declarative`
 Build dependencies:
 
--   [`cmake`](https://cmake.org)
+-   [`cmake`](https://gitlab.kitware.com/cmake/cmake)
 -   [`ninja`](https://github.com/ninja-build/ninja)
+-   `qt6-shadertools`
+
+> [!IMPORTANT]
+> The commands below (and in the "Updating" section) assume `$XDG_CONFIG_HOME` is set.
+> If it is unset, substitute it with the path to your config folder (typically `~/.config`).
 
 To install the shell, you can either use [pkgit](https://git.symlinx.net/pkgit) or the [AUR (In Testing)](https://aur.archlinux.org/packages/midnight-shell-git)
 
@@ -104,16 +105,16 @@ sudo cmake --install build
 ```
 
 > [!TIP]
-> You can customise the installation location via the `cmake` flags `INSTALL_LIBDIR`, `INSTALL_QMLDIR` and
-> `INSTALL_QSCONFDIR` for the libraries (the beat detector), QML plugin and Quickshell config directories
-> respectively. If changing the library directory, remember to set the `CAELESTIA_LIB_DIR` environment
-> variable to the custom directory when launching the shell.
+> You can customise the installation location via the CMake flags `INSTALL_LIBDIR`, `INSTALL_QMLDIR`, and
+> `INSTALL_QSCONFDIR` for the libraries (e.g. the version helper), QML plugin, and Quickshell config directories
+> respectively. If you set the `INSTALL_LIBDIR` flag, the `CAELESTIA_LIB_DIR` variable must also be set to
+> the same directory in your system's environment.
 >
-> e.g. installing to `~/.config/quickshell/caelestia` for easy local changes:
+> For example, installing to `~/.config/quickshell/caelestia` for easy local changes:
 >
 > ```sh
 > mkdir -p ~/.config/quickshell/caelestia
-> cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/ -DINSTALL_QSCONFDIR=~/.config/quickshell/caelestia
+> cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/ -DINSTALL_QSCONFDIR="$HOME/.config/quickshell/caelestia"
 > cmake --build build
 > sudo cmake --install build
 > sudo chown -R $USER ~/.config/quickshell/caelestia
@@ -260,9 +261,12 @@ If you're migrating from the official caelestia shell to this fork, you may need
 
 ## Usage
 
-The shell can be started via the `caelestia shell -d` command or `qs -c caelestia`.
-If the entire caelestia dots are installed, the shell will be autostarted on login
-via an `exec-once` in the hyprland config.
+You can start the shell by running `caelestia shell -d` (preferred) or `qs -c caelestia -n -d`.
+You may omit `-d` from the command to keep the shell attached to the current terminal if necessary,
+though you likely want it to be detached (so it doesn't close when the terminal is closed).
+
+If using the [Caelestia dotfiles][dots-repo], the shell will be autostarted on login
+via a `hl.on("hyprland.start", ...)` function in the Hyprland config.
 
 ### Shortcuts/IPC
 
@@ -271,57 +275,29 @@ If using the entire caelestia dots, the keybinds are already configured for you.
 Otherwise, [this file](https://github.com/caelestia-dots/caelestia/blob/main/hypr/hyprland/keybinds.lua#L52-L67)
 contains an example on how to use global shortcuts.
 
-All IPC commands can be accessed via `caelestia shell ...`. For example
+All IPC commands can be accessed via `caelestia shell ...`, for example:
 
 ```sh
 caelestia shell mpris getActive trackTitle
 ```
 
-The list of IPC commands can be shown via `caelestia shell -s`:
-
-```
-$ caelestia shell -s
-target drawers
-  function toggle(drawer: string): void
-  function list(): string
-target notifs
-  function clear(): void
-target lock
-  function lock(): void
-  function unlock(): void
-  function isLocked(): bool
-target mpris
-  function playPause(): void
-  function getActive(prop: string): string
-  function next(): void
-  function stop(): void
-  function play(): void
-  function list(): string
-  function pause(): void
-  function previous(): void
-target picker
-  function openFreeze(): void
-  function open(): void
-target wallpaper
-  function set(path: string): void
-  function get(): string
-  function list(): string
-```
+You can view the list of available IPC commands by running `caelestia shell -s`.
 
 ### PFP/Wallpapers
 
-The profile picture for the dashboard is read from the file `~/.face`, so to set
-it you can copy your image to there or set it via the dashboard.
+The profile picture for the dashboard is read from the file `~/.face`. You can set it by clicking it in the dashboard,
+or by manually copying or symlinking your image to the path.
 
 The wallpapers for the wallpaper switcher are read from `~/Pictures/Wallpapers`
-by default. To change it, change the wallpapers path in `~/.config/caelestia/shell.json`.
+by default. To change it, modify `paths.wallpaperDir` in `~/.config/caelestia/shell.json`.
 
-To set the wallpaper, you can use the command `caelestia wallpaper`. Use `caelestia wallpaper -h` for more info about
-the command.
+To set the wallpaper, you can type `>wallpaper` in the launcher to open the wallpaper switcher.
+Alternatively, you can also use `caelestia wallpaper -f <path_to_wallpaper>` to set the wallpaper directly.
+Use `caelestia wallpaper -h` for more info about this command.
 
 ## Updating
 
-If installed via the AUR package, simply update your system (e.g. using `yay`).
+### Packaged install (AUR)
 
 If you installed via `pkgit`, you can update using `pkgit -u`.
 > [!NOTE]
@@ -347,17 +323,24 @@ or your AUR helper's uninstall command.
 
 ## Configuring
 
-All configuration options should be put in `~/.config/caelestia/shell.json`. This file is _not_ created by
-default, you must create it manually. Options that you omit from the config file will use their default
+All configuration options belong in `~/.config/caelestia/shell.json`. This file is _not_ created by
+default; you must create it manually. Options that you omit from the config file will use their default
 values.
 
 ### Per-monitor configuration
 
-You can configure options per-monitor in `~/.config/caelestia/monitors/<screen-name>/shell.json`. Options
-set in this file will **override** the respective options in the global config. Otherwise, the options will
-use their values from the global config.
+You can configure per-monitor options in `~/.config/caelestia/monitors/<monitor_name>/shell.json`.
+List the names of your available monitors by running:
 
-For example, to disable the bar on DP-1:
+```sh
+hyprctl monitors -j | jq -r '.[].name'
+```
+
+Options set in these files will **override** the respective options in the global config. Any options not present in
+per-monitor configs will inherit their values from the global config.
+
+
+For example, to automatically hide the bar on the monitor named `DP-1`:
 
 **`~/.config/caelestia/monitors/DP-1/shell.json`**
 
@@ -370,7 +353,7 @@ For example, to disable the bar on DP-1:
 ```
 
 > [!NOTE]
-> Not all options are respect per-monitor overrides. Most notably, the following options will only read
+> Not all options respect per-monitor overrides. Most notably, the following options will only read
 > from the global config, and ignore the respective option in per-monitor config files.
 >
 > <details><summary>Ignored options</summary>
@@ -397,13 +380,15 @@ For example, to disable the bar on DP-1:
 
 ### Example configuration
 
-> [!NOTE]
-> The example configuration includes ALL configuration options in `shell.json`. You are
-> **not** recommended to copy and paste this entire configuration into `shell.json`.
+> [!WARNING]
+> The example configuration includes **ALL** configuration options in `shell.json`. It is
+> **not** recommended to copy and paste this entire configuration into `shell.json`,
+> as options or their default values may change across updates, resulting in a stale config.
+>
 > This is meant to serve as a reference of all the available options, and you should
-> only add the ones you want to change to `shell.json`.
+> <ins>only add the ones you want to change</ins> to `shell.json`.
 
-<details><summary>Example</summary>
+<details><summary>Example config</summary>
 
 ```json
 {
@@ -1303,23 +1288,23 @@ For example, to disable the bar on DP-1:
 
 ### Advanced configuration
 
-> [!WARNING]
-> Do NOT change any of these options if you do not know what you are doing. These options control the
-> tokens used internally within the shell, and can cause visual issues if changed. The existence of
-> the options are also not guaranteed across versions, and may change or be removed without notice.
+> [!CAUTION]
+> Do NOT change any of these options unless you know what you are doing. These options control the
+> tokens used internally within the shell, and can cause visual issues if modified incorrectly.
+> The available options may change or be removed without notice across versions.
 
 A separate `~/.config/caelestia/shell-tokens.json` file allows editing the internal tokens without
-touching the source code of the shell. These tokens affect, for example, individual rounding,
-spacing, padding, font size, animation duration and easing curves tokens, and the sizes of certain
-components. The appearance scale values in `shell.json` are multiplied against these base
+touching the source code of the shell. These tokens affect the dimensions and appearance of visual elements,
+including individual rounding, spacing, padding, font size, animation durations and curves, and the sizes of
+certain components. The appearance scale values in `shell.json` are multiplied against these base
 token values to produce the final computed values.
 
 Per-monitor token overrides are also available at
-`~/.config/caelestia/monitors/<screen-name>/shell-tokens.json`.
+`~/.config/caelestia/monitors/<monitor_name>/shell-tokens.json`.
 
 ### Home Manager Module
 
-For NixOS users, a home manager module is also available.
+For NixOS users, a Home Manager module is also available.
 
 <details><summary><code>home.nix</code></summary>
 
@@ -1349,7 +1334,7 @@ programs.caelestia = {
 };
 ```
 
-The module automatically adds Caelestia shell to the path with **full functionality**. The CLI is not required, however you have the option to enable and configure it.
+The module automatically adds the shell to the path with **full functionality**. The CLI is not required; however, you can enable and configure it.
 
 </details>
 
@@ -1357,10 +1342,9 @@ The module automatically adds Caelestia shell to the path with **full functional
 
 ### Need help or support?
 
-You can join the community Discord server for assistance and discussion:
-https://discord.gg/BGDCFCmMBk
+You can join the Caelestia Discord server for assistance and discussion [here][discord].
 
-### My screen is flickering, help pls!
+### I want to make my own changes to the Hyprland config!
 
 Try disabling VRR in the hyprland config. You can do this by adding the following to `~/.config/caelestia/hypr-user.conf`:
 
@@ -1386,18 +1370,18 @@ You can add your custom hyprland configs to `~/.config/caelestia/hypr-user.conf`
 
 See the [manual installation](#manual-installation) section for this fork.
 
-### I want to disable XXX feature!
+### I want to disable ___ feature!
 
 Please read the [configuring](#configuring) section in the readme.
 If there is no corresponding option, make feature request.
 
-### How do I make my colour scheme change with my wallpaper?
+### How do I make my colour scheme change to match my wallpaper?
 
-Set a wallpaper via the launcher or `caelestia wallpaper` and set the scheme to the dynamic scheme via the launcher
-or `caelestia scheme set`. e.g.
+Set a wallpaper via `>wallpaper` in the launcher or `caelestia wallpaper`, and set the scheme to the dynamic scheme via 
+`>scheme` in the launcher or `caelestia scheme set`, e.g.:
 
 ```sh
-caelestia wallpaper -f <path/to/file>
+caelestia wallpaper -f <path_to_wallpaper>
 caelestia scheme set -n dynamic
 ```
 
@@ -1409,7 +1393,7 @@ the launcher only shows an odd number of wallpapers at one time. If you only hav
 
 ## Credits
 
-Thanks to the Hyprland discord community (especially the homies in #rice-discussion) for all the help and suggestions
+Thanks to the Hyprland Discord community (especially the homies in #rice-discussion) for all the help and suggestions
 for improving these dots!
 
 A special thanks to [@outfoxxed](https://github.com/outfoxxed) for making Quickshell and the effort put into fixing issues
@@ -1418,7 +1402,7 @@ and implementing various feature requests.
 Another special thanks to [@end_4](https://github.com/end-4) for his [config](https://github.com/end-4/dots-hyprland)
 which helped me a lot with learning how to use Quickshell.
 
-Finally another thank you to all the configs I took inspiration from (only one for now):
+Finally, another thank you to all the configs I took inspiration from (only one for now):
 
 -   [Axenide/Ax-Shell](https://github.com/Axenide/Ax-Shell)
 
@@ -1431,3 +1415,6 @@ Finally another thank you to all the configs I took inspiration from (only one f
    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=dim-ghub/midnight-shell&type=Date" />
  </picture>
 </a>
+
+[dots-repo]: https://github.com/caelestia-dots/caelestia
+[discord]: https://caelestiashell.com/discord

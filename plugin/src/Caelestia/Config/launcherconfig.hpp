@@ -1,18 +1,19 @@
 #pragma once
 
-#include "configobject.hpp"
-
 #include <qstring.h>
 #include <qstringlist.h>
-#include <qvariant.h>
+#include <qvariantlist.h>
+
+#include "settings/objectnode.hpp"
+#include "common.hpp"
 
 namespace caelestia::config {
 
 using Qt::StringLiterals::operator""_s;
+using settings::vmap;
 
-class LauncherUseFuzzy : public ConfigObject {
-    Q_OBJECT
-    QML_ANONYMOUS
+class LauncherUseFuzzy : public settings::ObjectNode {
+    CONFIG_NODE(LauncherUseFuzzy, settings::ObjectNode)
 
     CONFIG_GLOBAL_PROPERTY(bool, apps, false)
     CONFIG_GLOBAL_PROPERTY(bool, actions, false)
@@ -21,15 +22,10 @@ class LauncherUseFuzzy : public ConfigObject {
     CONFIG_GLOBAL_PROPERTY(bool, wallpapers, false)
     CONFIG_GLOBAL_PROPERTY(bool, emoji, false)
     CONFIG_GLOBAL_PROPERTY(bool, clipboard, false)
-
-public:
-    explicit LauncherUseFuzzy(QObject* parent = nullptr)
-        : ConfigObject(parent) {}
 };
 
-class LauncherConfig : public ConfigObject {
-    Q_OBJECT
-    QML_ANONYMOUS
+class LauncherConfig : public settings::ObjectNode {
+    CONFIG_NODE(LauncherConfig, settings::ObjectNode)
 
     CONFIG_PROPERTY(bool, enabled, true)
     CONFIG_PROPERTY(bool, showOnHover, false)
@@ -38,16 +34,16 @@ class LauncherConfig : public ConfigObject {
     CONFIG_GLOBAL_PROPERTY(QString, specialPrefix, u"@"_s)
     CONFIG_GLOBAL_PROPERTY(QString, actionPrefix, u">"_s)
     CONFIG_GLOBAL_PROPERTY(bool, enableDangerousActions, false)
-    CONFIG_GLOBAL_PROPERTY(bool, windowSwitcherActiveWorkspaceOnly, true)
     CONFIG_PROPERTY(int, dragThreshold, 50)
     CONFIG_GLOBAL_PROPERTY(bool, vimKeybinds, false)
-    CONFIG_GLOBAL_PROPERTY(QStringList, favouriteApps)
-    CONFIG_GLOBAL_PROPERTY(QStringList, hiddenApps)
-    CONFIG_GLOBAL_PROPERTY(QStringList, favouriteEmojis)
-    CONFIG_GLOBAL_PROPERTY(QStringList, favouriteClips)
+    CONFIG_GLOBAL_PROPERTY(QStringList, favouriteApps, {})
+    CONFIG_GLOBAL_PROPERTY(QStringList, hiddenApps, {})
+    CONFIG_GLOBAL_PROPERTY(bool, windowSwitcherActiveWorkspaceOnly, true)
+    CONFIG_GLOBAL_PROPERTY(QStringList, favouriteEmojis, {})
+    CONFIG_GLOBAL_PROPERTY(QStringList, favouriteClips, {})
     CONFIG_SUBOBJECT(LauncherUseFuzzy, useFuzzy)
     CONFIG_GLOBAL_PROPERTY(QVariantList, actions,
-        {
+        DEFAULT_ARG({
             vmap({
                 { u"name"_s, u"Calculator"_s },
                 { u"icon"_s, u"calculate"_s },
@@ -124,12 +120,6 @@ class LauncherConfig : public ConfigObject {
                 { u"command"_s, QStringList{ u"suspendThenHibernate"_s } },
             }),
             vmap({
-                { u"name"_s, u"Settings"_s },
-                { u"icon"_s, u"settings"_s },
-                { u"description"_s, u"Configure the shell"_s },
-                { u"command"_s, QStringList{ u"caelestia"_s, u"shell"_s, u"nexus"_s, u"open"_s } },
-            }),
-            vmap({
                 { u"name"_s, u"Emoji"_s },
                 { u"icon"_s, u"emoji_emotions"_s },
                 { u"description"_s, u"Pick an emoji to copy"_s },
@@ -160,12 +150,13 @@ class LauncherConfig : public ConfigObject {
                 { u"description"_s, u"Switch your animation style"_s },
                 { u"command"_s, QStringList{ u"autocomplete"_s, u"animations"_s } },
             }),
-        })
-
-public:
-    explicit LauncherConfig(QObject* parent = nullptr)
-        : ConfigObject(parent)
-        , m_useFuzzy(new LauncherUseFuzzy(this)) {}
+            vmap({
+                { u"name"_s, u"Settings"_s },
+                { u"icon"_s, u"settings"_s },
+                { u"description"_s, u"Configure the shell"_s },
+                { u"command"_s, QStringList{ u"caelestia"_s, u"shell"_s, u"nexus"_s, u"open"_s } },
+            }),
+        }))
 };
 
 } // namespace caelestia::config

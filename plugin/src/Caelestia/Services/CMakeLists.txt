@@ -46,6 +46,12 @@ qml_module(caelestia-services
     LIBRARIES
         Qt6::DBus
         Qt6::Network
+        networkusage.cpp
+        hyprdevices.cpp
+        hyprextras.cpp
+    LIBRARIES
+        Qt::DBus
+        Qt::Network
         PkgConfig::Pipewire
         PkgConfig::Aubio
         PkgConfig::Cava
@@ -55,7 +61,9 @@ qml_module(caelestia-services
         OpenSSL::SSL
         caelestia-core
         caelestia-config
-        caelestia-internal
+    DEPENDENCIES
+        Caelestia
+        Caelestia.Config
 )
 
 target_include_directories(caelestia-services PRIVATE QuickShare ${CMAKE_CURRENT_BINARY_DIR})

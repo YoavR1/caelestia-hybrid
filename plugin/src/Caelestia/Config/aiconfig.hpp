@@ -1,15 +1,15 @@
 #pragma once
 
-#include "configobject.hpp"
+#include "settings/objectnode.hpp"
+#include "common.hpp"
 #include <qstring.h>
 
 namespace caelestia::config {
 
 using Qt::StringLiterals::operator""_s;
 
-class AiConfig : public ConfigObject {
-    Q_OBJECT
-    QML_ANONYMOUS
+class AiConfig : public settings::ObjectNode {
+    CONFIG_NODE(AiConfig, settings::ObjectNode)
 
     CONFIG_PROPERTY(QString, ollamaUrl, u"http://localhost:11434"_s)
     CONFIG_PROPERTY(QString, ollamaModel, u"llama3"_s)
@@ -26,11 +26,6 @@ class AiConfig : public ConfigObject {
     CONFIG_PROPERTY(QString, orionModel, u"qwen3.5:9b"_s)
 
     CONFIG_PROPERTY(QString, activeProvider, u"ollama"_s)
-    CONFIG_PROPERTY(QString, activeOllamaModel, u"llama3"_s)
-
-public:
-    explicit AiConfig(QObject* parent = nullptr)
-        : ConfigObject(parent) {}
-};
+    CONFIG_PROPERTY(QString, activeOllamaModel, u"llama3"_s)};
 
 } // namespace caelestia::config
