@@ -34,20 +34,13 @@ cmake -B build -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 cmake --build build
 
 # 2. Format — zero tolerance, same as upstream CI
-find . -path ./build -prune -o -name '*.qml' -print | xargs /usr/lib/qt6/bin/qmlformat --check
+for f in **/*.qml; /usr/lib/qt6/bin/qmlformat $f | diff -u $f - || exit 1; end
 find plugin extras -name '*.cpp' -o -name '*.hpp' | xargs clang-format --dry-run --Werror
-python3 scripts/qml-lint-conventions.py        # has a --fix mode; see T9
+python3 scripts/qml-lint-conventions.py        # --fix handles all but section-order
+./hybrid/tools/qml-section-order.py            # the missing section-order fixer
 
 # 3. QML lint — any output at all is a failure
-touch .qmlls.ini
-_t=$(mktemp -d)                       # isolate: this still writes to state/cache
-XDG_STATE_HOME="$_t/state" XDG_CACHE_HOME="$_t/cache" \
-QT_QPA_PLATFORM=offscreen QML2_IMPORT_PATH="$PWD/build/qml:$QML2_IMPORT_PATH" timeout 3 qs -p .
-rm -rf "$_t"
-#   ^ this is TOOLING GENERATION, not a test. It writes .qmlls.ini and is expected to
-#     fail on PanelWindow. Never read its exit code. Isolate XDG_STATE_HOME/XDG_CACHE_HOME
-#     anyway — even a failed boot touches ~/.local/state/caelestia/apps.sqlite.
-/usr/lib/qt6/bin/qmllint --import disable -I <buildDir> -I <importPaths from .qmlls.ini> <files>
+./hybrid/tools/qml-lint.sh                     # or --summary for category counts
 
 # 4. Preset smoke matrix — the project's real gate
 ./hybrid/tools/smoke-matrix.sh
@@ -56,6 +49,17 @@ rm -rf "$_t"
 Steps 2 and 3 mirror `.github/workflows/check-format.yml` and `lint.yml`. If those workflows
 have drifted from what is written here, **the workflow is the source of truth** — read it and
 update this skill.
+
+**`qmlformat` has no `--check`.** It exits 0 and prints `Unknown option 'check'`, so a check
+written that way passes while testing nothing. Upstream compares against `diff` instead, which
+is what the loop above does — `qml-lint.sh` and the two fixers already do the right thing.
+
+`qml-lint.sh` wraps the fiddly part of step 3: the `-I` paths come from `.qmlls.ini`, which
+`qs` writes **only if the file already exists** (hence upstream's `touch`) and then replaces
+with a symlink into that run's VFS, which goes dangling later. The boot that generates it is
+expected to fail on PanelWindow — its exit code is meaningless — and it is run with
+`XDG_STATE_HOME`/`XDG_CACHE_HOME` isolated, because even a failed boot writes to
+`~/.local/state/caelestia/apps.sqlite`.
 
 ## Reading smoke-matrix results
 
