@@ -185,6 +185,29 @@ needs a decision, re-read it — usually it does not.
 33.5k lines that are not `qmllint`-clean and not `clang-format`-clean. Re-enabling in Phase 0 will
 surface a backlog — budget for it, and fix rather than re-disable.
 
+**Measured backlog** (`scripts/qml-lint-conventions.py`, same script in all three trees):
+
+| Tree | Violations | Changed lines | Density |
+|---|---|---|---|
+| upstream | **0** | — | clean |
+| OP | 227 | +8892 | 1 per 39 |
+| MiDnight | 1034 | +33543 | 1 per 32 |
+
+Entirely fork-introduced, and of similar density in both — this is not evidence the baseline
+choice was wrong. `--fix` cleared 540 of MiDnight's (all `missing-section-separator`,
+`import-order`, `file-structure`) and is already applied. **494 remain**: 489 `section-order`
+plus 5 `blank-before-close-brace`, which the fixer deliberately leaves alone because they move
+code rather than whitespace.
+
+Two notes for whoever finishes this:
+
+- Running the fixer on Windows rewrites files as CRLF (`Path.write_text` uses `os.linesep`).
+  Normalise afterwards.
+- Only **2 files** overlap between the violation set (88 QML files) and the incoming upstream
+  range (22 QML files) — `services/Colours.qml` and `shell.qml`. So a style pass does *not*
+  meaningfully increase Phase 2 conflict surface; upstream's churn is 159/197 files in C++.
+  Do not defer the cleanup out of merge-conflict fear.
+
 **MiDnight only disabled the workflows; it did not weaken them.** `lint.yml` and
 `check-format.yml` are byte-identical to upstream at the merge base `ad8dca0a`. The `lint-cpp`
 clang-tidy job that upstream's current `lint.yml` has was added on 2026-09-01
