@@ -21,6 +21,7 @@ Item {
     required property int rounding
 
     readonly property bool showWallpapers: search.text.startsWith(`${GlobalConfig.launcher.actionPrefix}wallpaper `) || search.text === `${GlobalConfig.launcher.actionPrefix}wallpaper`
+
     onShowWallpapersChanged: {
         if (showWallpapers) {
             for (let category of Wallpapers.categories) {
@@ -32,9 +33,13 @@ Item {
             }
         }
     }
+
     readonly property bool showWindowSwitcher: search.text.startsWith(`${GlobalConfig.launcher.actionPrefix}windows `) || search.text === `${GlobalConfig.launcher.actionPrefix}windows`
+
     readonly property bool showKeybinds: search.text.startsWith(`${GlobalConfig.launcher.actionPrefix}keybinds `) || search.text === `${GlobalConfig.launcher.actionPrefix}keybinds`
+
     readonly property bool showAnimations: search.text.startsWith(`${GlobalConfig.launcher.actionPrefix}animations `) || search.text === `${GlobalConfig.launcher.actionPrefix}animations`
+
     readonly property var currentList: showWallpapers ? wallpaperList.item : (showWindowSwitcher ? windowSwitcherList.item : (showAnimations ? animationsList.item : (showKeybinds ? keybindsList.item : appList.item)))
 
     property string currentWallpaperTab: "Main"
@@ -46,6 +51,7 @@ Item {
         }
         return res;
     }
+
     property string animState: showAnimations ? "animations" : (showWindowSwitcher ? "windowSwitcher" : (showKeybinds ? "keybinds" : (showWallpapers ? "wallpapers" : "apps")))
 
     anchors.horizontalCenter: parent.horizontalCenter
@@ -223,6 +229,7 @@ Item {
 
         Flickable {
             id: tabsFlickable
+
             anchors.fill: parent
             contentWidth: tabsRow.implicitWidth
             contentHeight: parent.height
@@ -236,14 +243,17 @@ Item {
 
             Row {
                 id: tabsRow
+
                 spacing: Tokens.spacing.large
 
                 Repeater {
                     id: tabsRepeater
+
                     model: root.wallpaperTabs
 
                     delegate: Item {
                         id: tab
+
                         required property var modelData
                         required property int index
 
@@ -277,6 +287,7 @@ Item {
 
                         StyledText {
                             id: label
+
                             anchors.centerIn: parent
                             text: tab.modelData.text
                             color: tab.current ? Colours.palette.m3primary : Colours.palette.m3onSurfaceVariant
@@ -293,6 +304,7 @@ Item {
                 anchors.topMargin: 5
 
                 property int currentIndex: Math.max(0, root.wallpaperTabs.findIndex(t => t.id === root.currentWallpaperTab))
+
                 property Item currentTab: tabsRepeater.itemAt(currentIndex)
 
                 implicitWidth: currentTab ? currentTab.implicitWidth : 0

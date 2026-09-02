@@ -140,9 +140,11 @@ Singleton {
     Connections {
         target: GlobalConfig.utilities.toasts
         ignoreUnknownSignals: true
+
         function onTransparencyChanged(): void {
             root.requestReloadHyprRules();
         }
+
         function onTransparencyBaseChanged(): void {
             root.requestReloadHyprRules();
         }

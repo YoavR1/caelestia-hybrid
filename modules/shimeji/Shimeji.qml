@@ -1,11 +1,11 @@
 import QtQuick
 import Quickshell
-import Quickshell.Wayland
 import Quickshell.Io
+import Quickshell.Wayland
 import Caelestia.Config
 import Caelestia.Internal
-import qs.components.containers
 import qs.components
+import qs.components.containers
 import qs.services
 import qs.utils
 

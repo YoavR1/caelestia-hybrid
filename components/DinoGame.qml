@@ -20,31 +20,48 @@ Item {
 
     // Game state
     property bool isPlaying: false
+
     property bool isGameOver: false
+
     property int score: 0
+
     property int highScore: 0
 
     // Animations
     property int animationFrame: 0
+
     property real animAccumulator: 0
+
     property bool isDucking: false
 
     // Physics constants
     readonly property real gravity: 2000
+
     readonly property real jumpForce: -600
+
     readonly property real initialSpeed: 300
+
     readonly property real maxSpeed: 800
 
     // Dynamic state variables
     property real dinoY: ground.y - 42
+
     property real dinoVelocityY: 0
+
     property real gameSpeed: initialSpeed
+
     property var activeObstacles: []
+
     property real spawnTimer: 0
+
     property real nextSpawnTime: 1.5
+
     property real scoreTimer: 0
+
     property real lastTime: 0
+
     property int _pOffset: 0
+
     property bool _dSync: false
 
     onActiveFocusChanged: {
@@ -225,6 +242,7 @@ Item {
 
     Timer {
         id: gameTimer
+
         interval: 16
         repeat: true
         running: false
@@ -323,6 +341,7 @@ Item {
 
     MouseArea {
         id: playArea
+
         anchors.fill: parent
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton
@@ -344,6 +363,7 @@ Item {
 
     IconButton {
         id: exitBtn
+
         anchors.top: parent.top
         anchors.left: parent.left
         icon: "close"
@@ -356,6 +376,7 @@ Item {
 
     RowLayout {
         id: scoreBoard
+
         anchors.top: parent.top
         anchors.right: parent.right
         spacing: Tokens.spacing.medium
@@ -366,6 +387,7 @@ Item {
             color: Colours.palette.m3outline
             font: Tokens.font.mono.builders.small.weight(Font.Medium).build()
             opacity: highScore > 0 ? 0.7 : 0
+
             Behavior on opacity { Anim { type: Anim.DefaultEffects } }
         }
 
@@ -378,6 +400,7 @@ Item {
 
     Rectangle {
         id: ground
+
         height: 2
         color: Colours.palette.m3outlineVariant
         anchors.bottom: parent.bottom
@@ -388,6 +411,7 @@ Item {
 
     Item {
         id: dino
+
         x: 40
         y: dinoY
         width: isDucking ? 59 : 44
@@ -414,6 +438,7 @@ Item {
 
     Component {
         id: obstacleComponent
+
         Item {
             property int obsType: 0
             property int obsFrame: 0

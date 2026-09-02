@@ -131,6 +131,7 @@ StyledListView {
 
     Timer {
         id: previewTimer
+
         interval: 100
         onTriggered: {
             if (!root.currentItem || !root.currentItem.modelData) return;

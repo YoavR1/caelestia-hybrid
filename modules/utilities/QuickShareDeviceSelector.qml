@@ -11,8 +11,8 @@ import qs.components
 import qs.components.containers
 import qs.components.controls
 import qs.components.effects
-import qs.services
 import qs.components.filedialog
+import qs.services
 
 Loader {
     id: root
@@ -25,6 +25,7 @@ Loader {
 
     FileDialog {
         id: fileDialog
+
         title: qsTr("Select a file to send")
         
         property string targetDeviceId: ""
@@ -43,6 +44,7 @@ Loader {
     }
 
     opacity: root.props.quickShareDeviceSelectorOpen ? 1 : 0
+
     active: opacity > 0
     
     onActiveChanged: {
@@ -136,6 +138,7 @@ Loader {
                     
                     Connections {
                         target: QuickShare
+
                         function onNearbyDevicesChanged() {
                             deviceList.model = null
                             deviceList.model = QuickShare.nearbyDevices

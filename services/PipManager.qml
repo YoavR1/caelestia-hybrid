@@ -4,8 +4,8 @@ import QtQuick
 import QtQml
 import Quickshell
 import Quickshell.Hyprland
-import qs.services
 import Caelestia.Config
+import qs.services
 
 Singleton {
     id: root
@@ -20,6 +20,7 @@ Singleton {
 
     Timer {
         id: updateDebouncer
+
         interval: 100 // Wait for Wayland exclusive zone & QML bindings to settle
         running: false
         repeat: false
@@ -28,6 +29,7 @@ Singleton {
 
     Connections {
         target: Hyprland
+
         function onRawEvent(event: HyprlandEvent): void {
             const n = event.name;
             if (n === "closewindow" || n === "openwindow" || n === "windowtitle" || n === "changefloatingmode" || n === "activewindow" || n === "configreloaded" || n === "workspace" || n === "focusedmon") {
@@ -38,8 +40,10 @@ Singleton {
 
     Instantiator {
         model: Hyprland.monitors.values
+
         Connections {
             target: modelData
+
             function onLastIpcObjectChanged(): void {
                 updateDebouncer.restart();
             }
@@ -48,15 +52,18 @@ Singleton {
 
     Connections {
         target: GlobalConfig.services
+
         function onPipPositionChanged(): void {
             root.tempPipPosition = ""; // Reset temporary override on explicit setting change
             root.lastPipMoveTime = Date.now(); // Block drag-detection from falsely re-triggering
             root.checkPip();
         }
+
         function onPipFollowFocusChanged(): void {
             root.lastPipMoveTime = Date.now();
             root.checkPip();
         }
+
         function onPipPausedChanged(): void {
             if (!GlobalConfig.services.pipPaused) {
                 root.checkPip();
@@ -66,6 +73,7 @@ Singleton {
 
     Connections {
         target: GlobalConfig.bar
+
         function onPositionChanged(): void {
             updateDebouncer.restart();
         }
@@ -73,6 +81,7 @@ Singleton {
 
     Connections {
         target: GlobalConfig.border
+
         function onThicknessChanged(): void {
             updateDebouncer.restart();
         }

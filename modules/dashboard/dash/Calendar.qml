@@ -1,8 +1,8 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Effects
 import QtQuick.Controls
+import QtQuick.Effects
 import QtQuick.Layouts
 import QtQuick.Shapes
 import M3Shapes
@@ -232,6 +232,7 @@ CustomMouseArea {
 
                     Rectangle {
                         id: holidayIndicator
+
                         readonly property var holiday: {
                             if (!PastafarianCalendar.events) return null;
                             const dateStr = Qt.formatDate(dayItem.model.date, "yyyy-MM-dd");
@@ -255,6 +256,7 @@ CustomMouseArea {
                     
                     HoverHandler {
                         id: hover
+
                         enabled: !!holidayIndicator.holiday
                         onHoveredChanged: {
                             if (hovered) {
@@ -338,6 +340,7 @@ CustomMouseArea {
 
         Shape {
             id: bgShape
+
             anchors.fill: parent
             layer.enabled: true
             layer.samples: 4
@@ -350,9 +353,13 @@ CustomMouseArea {
             }
             
             readonly property real r: Tokens.rounding.large
+
             readonly property real ir: Tokens.rounding.medium
+
             readonly property real tbh: holidayText.implicitHeight + Tokens.padding.medium * 2
+
             readonly property real nw: customTooltip.pillSize
+
             readonly property real br: customTooltip.br
 
             ShapePath {
@@ -387,6 +394,7 @@ CustomMouseArea {
         
         StyledText {
             id: holidayText
+
             text: root.lastHoveredHoliday ? root.lastHoveredHoliday.subject : ""
             anchors.top: parent.top
             anchors.horizontalCenter: parent.horizontalCenter
@@ -412,6 +420,7 @@ CustomMouseArea {
 
             StyledText {
                 id: dupText
+
                 anchors.centerIn: parent
                 horizontalAlignment: Text.AlignHCenter
                 text: root.lastHoveredModel ? grid.locale.toString(root.lastHoveredModel.day) : ""

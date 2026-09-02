@@ -5,8 +5,8 @@ import Caelestia.Config
 import qs.components
 import qs.components.controls
 import qs.services
-import qs.modules.nexus.common
 import qs.modules.launcher.services
+import qs.modules.nexus.common
 
 PageBase {
     id: root
@@ -34,9 +34,12 @@ PageBase {
 
         Variants {
             id: schemeItems
+
             model: Schemes.list
+
             MenuItem {
                 required property var modelData
+
                 text: `${modelData.name} ${modelData.flavour}`
                 onClicked: {
                     Quickshell.execDetached(["caelestia", "scheme", "set", "-n", modelData.name, "-f", modelData.flavour]);
@@ -46,9 +49,12 @@ PageBase {
 
         Variants {
             id: variantItems
+
             model: root.variantData
+
             MenuItem {
                 required property var modelData
+
                 text: modelData.label
                 onClicked: {
                     Quickshell.execDetached(["caelestia", "scheme", "set", "-v", modelData.name]);

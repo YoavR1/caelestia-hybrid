@@ -2,8 +2,8 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
-import qs.utils
 import Caelestia
+import qs.utils
 
 Singleton {
     id: root
@@ -41,6 +41,7 @@ Singleton {
 
     Connections {
         target: Nmcli
+
         function onIsConnectedChanged() {
             if (Nmcli.isConnected && !root.loaded) {
                 root.reload();

@@ -27,6 +27,7 @@ StyledRect {
 
     ColumnLayout {
         id: layout
+
         anchors.fill: parent
         anchors.margins: Tokens.padding.large
         spacing: Tokens.spacing.medium

@@ -5,6 +5,7 @@ import qs.modules.nexus.common
 
 PageBase {
     id: root
+
     title: qsTr("Shimeji characters")
     isSubPage: true
 

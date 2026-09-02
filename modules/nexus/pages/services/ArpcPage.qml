@@ -1,18 +1,18 @@
 import QtQuick
 import QtQuick.Layouts
-import Caelestia.Config
-import qs.components
-import qs.components.controls
-import qs.components.containers
-import qs.components.images
-import qs.utils
-import qs.services
-import qs.modules.nexus.common
 import Quickshell
 import Quickshell.Hyprland
-import Quickshell.Widgets
 import Quickshell.Io
+import Quickshell.Widgets
 import Caelestia
+import Caelestia.Config
+import qs.components
+import qs.components.containers
+import qs.components.controls
+import qs.components.images
+import qs.services
+import qs.utils
+import qs.modules.nexus.common
 
 PageBase {
     id: root
@@ -30,6 +30,7 @@ PageBase {
 
     property Process readTokenProc: Process {
         id: readTokenProc
+
         command: ["secret-tool", "lookup", "service", "caelestia-shell", "account", "steamgriddb"]
         stdout: StdioCollector {
             onStreamFinished: {
@@ -42,6 +43,7 @@ PageBase {
 
     ColumnLayout {
         id: layout
+
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
         width: root.cappedWidth
@@ -90,6 +92,7 @@ PageBase {
 
             ConnectedRect {
                 id: bg
+
                 anchors.fill: parent
                 first: true
                 last: true
@@ -97,6 +100,7 @@ PageBase {
 
             RowLayout {
                 id: contentRow
+
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
@@ -126,6 +130,7 @@ PageBase {
                     id: tokenInput
                     Layout.preferredWidth: 200
                     Layout.alignment: Qt.AlignVCenter
+
                     placeholderText: "API Key..."
                     echoMode: TextInput.Password
                     passwordCharacter: "•"
@@ -180,6 +185,7 @@ PageBase {
 
             ListView {
                 id: targetList
+
                 anchors.fill: parent
                 anchors.margins: Tokens.padding.medium
                 orientation: ListView.Vertical
@@ -192,6 +198,7 @@ PageBase {
 
                 delegate: StyledRect {
                     id: delegateRect
+
                     required property string modelData
                     required property int index
 
@@ -202,6 +209,7 @@ PageBase {
 
                     RowLayout {
                         id: itemLayout
+
                         anchors.fill: parent
                         anchors.leftMargin: Tokens.padding.medium
                         anchors.rightMargin: Tokens.padding.medium
@@ -278,6 +286,7 @@ PageBase {
 
             ListView {
                 id: blacklistList
+
                 anchors.fill: parent
                 anchors.margins: Tokens.padding.medium
                 orientation: ListView.Vertical
@@ -290,6 +299,7 @@ PageBase {
 
                 delegate: StyledRect {
                     id: blacklistDelegateRect
+
                     required property string modelData
                     required property int index
 
@@ -300,6 +310,7 @@ PageBase {
 
                     RowLayout {
                         id: blacklistItemLayout
+
                         anchors.fill: parent
                         anchors.leftMargin: Tokens.padding.medium
                         anchors.rightMargin: Tokens.padding.medium
@@ -368,6 +379,7 @@ PageBase {
 
             ColumnLayout {
                 id: manualContent
+
                 anchors.fill: parent
                 anchors.margins: Tokens.padding.medium
                 spacing: Tokens.spacing.medium
@@ -375,6 +387,7 @@ PageBase {
                 StyledTextField {
                     id: manualAppName
                     Layout.fillWidth: true
+
                     placeholderText: "App/game name"
                     text: GlobalConfig.services.arpcAppName
                 }
@@ -382,6 +395,7 @@ PageBase {
                 StyledTextField {
                     id: manualDetails
                     Layout.fillWidth: true
+
                     placeholderText: "Details"
                     text: GlobalConfig.services.arpcDetails
                 }
@@ -389,6 +403,7 @@ PageBase {
                 StyledTextField {
                     id: manualState
                     Layout.fillWidth: true
+
                     placeholderText: "State"
                     text: GlobalConfig.services.arpcState
                 }
@@ -396,6 +411,7 @@ PageBase {
                 StyledTextField {
                     id: manualLargeImage
                     Layout.fillWidth: true
+
                     placeholderText: "Large image key/URL"
                     text: GlobalConfig.services.arpcLargeImage
                 }
@@ -403,6 +419,7 @@ PageBase {
                 StyledTextField {
                     id: manualSmallImage
                     Layout.fillWidth: true
+
                     placeholderText: "Small image key/URL"
                     text: GlobalConfig.services.arpcSmallImage
                 }
@@ -468,6 +485,7 @@ PageBase {
 
                         Connections {
                             target: Hyprland.toplevels
+
                             function onValuesChanged() {
                                 list.updateModel();
                             }

@@ -1,10 +1,10 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import Caelestia
-import Caelestia.Config
 import QtQuick.Effects
 import M3Shapes
+import Caelestia
+import Caelestia.Config
 import qs.components
 import qs.components.images
 import qs.services
@@ -37,10 +37,15 @@ Item {
     }
 
     readonly property string currentSchemeName: (Colours.showPreview ? Colours["previewScheme"] : Colours.scheme) || ""
+
     readonly property string currentVariantName: (Colours.showPreview ? Colours["previewVariant"] : Colours.variant) || ""
+
     readonly property string currentFlavourName: (Colours.showPreview ? Colours["previewFlavour"] : Colours.flavour) || ""
+
     readonly property bool isDynamicScheme: root.currentSchemeName.startsWith("dynamic")
+
     readonly property bool isDynamicMonochrome: root.isDynamicScheme && root.currentVariantName === "monochrome"
+
     readonly property bool shouldRecolor: !!(Config.background && Config.background["wallpaperRecolor"]) && (!root.isDynamicScheme || root.isDynamicMonochrome)
 
     readonly property var shapes: [MaterialShape.Circle, MaterialShape.Square, MaterialShape.Diamond, MaterialShape.ClamShell, MaterialShape.Pentagon, MaterialShape.Gem, MaterialShape.Clover4Leaf, MaterialShape.SoftBurst, MaterialShape.Cookie6Sided]
@@ -58,6 +63,7 @@ Item {
 
     Timer {
         id: coalesceTimer
+
         interval: 80
         repeat: false
         onTriggered: root.applySourceChange()
@@ -142,12 +148,17 @@ Item {
         id: img
 
         property string path: ""
+
         state: "inactive"
 
         readonly property bool isGif: img.verifiedPath.toLowerCase().endsWith(".gif")
+
         readonly property bool isVideo: Wallpapers.isVideo(path)
+
         readonly property bool animsEnabled: !!Wallpapers.enableAnimation
+
         readonly property string verifiedPath: path || ""
+
         readonly property int fadeMs: 400
 
         property bool renderActive: false
@@ -159,6 +170,7 @@ Item {
 
         Timer {
             id: cleanupTimer
+
             interval: (img.animsEnabled && root.completed) ? 2600 : (img.fadeMs + 20)
             repeat: false
             onTriggered: img.state = "inactive"
@@ -167,6 +179,7 @@ Item {
         states: [
             State {
                 name: "active"
+
                 PropertyChanges {
                     img.opacity: 1
                     img.z: 1
@@ -175,6 +188,7 @@ Item {
             },
             State {
                 name: "background"
+
                 PropertyChanges {
                     img.opacity: 1
                     img.z: 0
@@ -183,6 +197,7 @@ Item {
             },
             State {
                 name: "inactive"
+
                 PropertyChanges {
                     img.opacity: 0
                     img.z: 0
@@ -196,6 +211,7 @@ Item {
                 from: "inactive"
                 to: "active"
                 enabled: root.completed && !img.animsEnabled
+
                 NumberAnimation {
                     property: "opacity"
                     duration: img.fadeMs
@@ -226,19 +242,23 @@ Item {
 
         Loader {
             id: maskLoader
+
             anchors.fill: parent
             active: img.animsEnabled
 
             sourceComponent: Item {
                 id: maskContainer
+
                 anchors.fill: parent
 
                 readonly property Item maskSource: maskSourceItem
 
                 Item {
                     id: maskWrapper
+
                     anchors.fill: parent
                     visible: img.needsMask
+
                     MaterialShape {
                         anchors.centerIn: parent
                         width: img.maxRadius * 2
@@ -251,6 +271,7 @@ Item {
 
                 ShaderEffectSource {
                     id: maskSourceItem
+
                     sourceItem: maskWrapper
                     anchors.fill: parent
                     hideSource: true
@@ -261,7 +282,9 @@ Item {
         }
 
         readonly property real maxRadius: Math.sqrt(width * width + height * height)
+
         property real maskRadius: 0
+
         property int currentShape: MaterialShape.Circle
 
         onMaxRadiusChanged: {
@@ -271,12 +294,14 @@ Item {
         }
         
         readonly property bool hasReadyContent: thumbImg.status === Image.Ready || isPlayerPlaying || gifImg.status === Image.Ready
+
         readonly property bool needsMask: animsEnabled && img.z === 1 && hasReadyContent && img.maskRadius < (img.maxRadius - 1.5) && !!maskLoader.item
 
         Component.onCompleted: maskRadius = maxRadius
 
         Item {
             id: contentItem
+
             anchors.fill: parent
             opacity: root.weActive ? 0 : 1
 
@@ -300,30 +325,35 @@ Item {
 
                 Behavior on saturation {
                     enabled: img.animsEnabled && img.state === "active"
+
                     Anim {
                         type: Anim.DefaultEffects
                     }
                 }
                 Behavior on colorization {
                     enabled: img.animsEnabled && img.state === "active"
+
                     Anim {
                         type: Anim.DefaultEffects
                     }
                 }
                 Behavior on contrast {
                     enabled: img.animsEnabled && img.state === "active"
+
                     Anim {
                         type: Anim.DefaultEffects
                     }
                 }
                 Behavior on colorizationColor {
                     enabled: img.animsEnabled && img.state === "active"
+
                     CAnim {}
                 }
             }
 
             CachingAnimatedImage {
                 id: gifImg
+
                 anchors.fill: parent
                 path: img.verifiedPath
                 source: img.verifiedPath || ""
@@ -339,6 +369,7 @@ Item {
 
             CachingImage {
                 id: thumbImg
+
                 anchors.fill: parent
                 path: img.verifiedPath
                 source: {
@@ -362,6 +393,7 @@ Item {
 
             Loader {
                 id: videoChannelLoader
+
                 anchors.fill: parent
                 asynchronous: true
 
@@ -370,6 +402,7 @@ Item {
 
                 Timer {
                     id: resumeTimer
+
                     interval: 150
                     repeat: false
                     onTriggered: {
@@ -410,6 +443,7 @@ Item {
 
         Anim {
             id: maskAnim
+
             target: img
             property: "maskRadius"
             from: 0

@@ -2,8 +2,8 @@ pragma ComponentBehavior: Bound
 
 import "cards"
 import QtQuick
-import QtQuick.Layouts
 import QtQuick.Controls as QQC2
+import QtQuick.Layouts
 import Caelestia.Config
 import qs.components
 import qs.services
@@ -65,9 +65,11 @@ Item {
 
             sourceComponent: ColumnLayout {
                 id: mediaLayout
+
                 spacing: Tokens.spacing.small
 
                 property int currentIndex: 0
+
                 property bool animEnabled: false
                 
                 onCurrentIndexChanged: {
@@ -77,11 +79,13 @@ Item {
 
                 Timer {
                     id: animDisableTimer
+
                     interval: 400
                     onTriggered: mediaLayout.animEnabled = false
                 }
 
                 property real lastValidItemHeight: 0
+
                 property real nonAnimHeight: {
                     const swipeItem = mediaFlickable.currentItem ? mediaFlickable.currentItem.item : null;
                     const itemHeight = swipeItem ? (swipeItem.nonAnimHeight ?? swipeItem.implicitHeight) : lastValidItemHeight;
@@ -97,12 +101,14 @@ Item {
                 
                 Behavior on nonAnimHeight {
                     enabled: mediaLayout.animEnabled
+
                     Anim {}
                 }
 
                 Flickable {
                     id: mediaFlickable
                     Layout.fillWidth: true
+
                     clip: true
                     interactive: mediaRepeater.count > 1
 
@@ -153,6 +159,7 @@ Item {
 
                     Row {
                         id: mediaRow
+
                         spacing: Tokens.spacing.medium
 
                         Repeater {
@@ -175,6 +182,7 @@ Item {
                             Loader {
                                 required property int index
                                 required property string modelData
+
                                 active: true
                                 sourceComponent: modelData === "record" ? recordComp : quickShareComp
                                 
@@ -189,6 +197,7 @@ Item {
 
                     Behavior on implicitHeight {
                         enabled: mediaLayout.animEnabled
+
                         Anim {}
                     }
                 }
@@ -196,6 +205,7 @@ Item {
                 Item {
                     id: indicatorRow
                     Layout.alignment: Qt.AlignHCenter
+
                     implicitWidth: bgRow.implicitWidth
                     implicitHeight: mediaRepeater.count > 1 ? bgRow.implicitHeight : 0
                     opacity: mediaRepeater.count > 1 ? 1 : 0
@@ -203,15 +213,18 @@ Item {
                     
                     Behavior on implicitHeight {
                         enabled: mediaLayout.animEnabled
+
                         Anim {}
                     }
                     Behavior on opacity {
                         enabled: mediaLayout.animEnabled
+
                         Anim {}
                     }
 
                     Row {
                         id: bgRow
+
                         spacing: Tokens.spacing.small
 
                         Repeater {
@@ -219,6 +232,7 @@ Item {
 
                             StyledRect {
                                 required property int index
+
                                 width: Tokens.spacing.medium
                                 height: Tokens.spacing.small
                                 radius: Tokens.rounding.full
@@ -258,6 +272,7 @@ Item {
 
     Component {
         id: recordComp
+
         Record {
             objectName: "utilitiesScreenRecorder"
             props: root.props
@@ -267,6 +282,7 @@ Item {
 
     Component {
         id: quickShareComp
+
         QuickShareList {
             objectName: "utilitiesQuickShare"
             props: root.props

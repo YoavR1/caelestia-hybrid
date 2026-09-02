@@ -1,9 +1,9 @@
 import QtQuick
 import QtQuick.Layouts
-import qs.components.controls
-import qs.modules.nexus.common
-import qs.services
 import Caelestia.Config
+import qs.components.controls
+import qs.services
+import qs.modules.nexus.common
 
 PageBase {
     id: root

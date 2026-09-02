@@ -1,9 +1,12 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Controls
 import QtQuick.Effects
 import QtQuick.Layouts
-import QtQuick.Controls
+import Quickshell
+import M3Shapes
+import Caelestia.Blobs
 import Caelestia.Config
 import qs.components
 import qs.components.containers
@@ -11,9 +14,6 @@ import qs.components.controls
 import qs.components.effects
 import qs.services
 import qs.utils
-import Quickshell
-import M3Shapes
-import Caelestia.Blobs
 
 Item {
     id: root
@@ -22,18 +22,26 @@ Item {
     ListModel { id: historySessionsModel }
 
     property bool isHistoryTab: false
+
     property string currentChatId: ""
+
     property var currentRequest: null
+
     property bool isStreaming: false
     
 
     Timer {
         id: typingTimer
+
         interval: 16
         repeat: true
+
         property string fullText: ""
+
         property string currentText: ""
+
         property int charIndex: 0
+
         property int targetIdx: -1
         
         onTriggered: {
@@ -84,13 +92,19 @@ Item {
     }
 
     property var ollamaModelsList: []
+
     property bool isTyping: false
+
     property bool isThinking: false
+
     property string currentThoughtText: ""
+
     property bool isThoughtExpanded: false
+
     onIsTypingChanged: {
         if (isTyping) listView.positionViewAtEnd();
     }
+
     property bool inAgentLoop: false
 
     function runAgentCommand(cmd, type) {
@@ -119,7 +133,9 @@ Item {
     }
 
     property int runningToolsCount: 0
+
     property string accumulatedToolResults: ""
+
     property string accumulatedToolImage: ""
 
     function handleAgentProcessResult(type, stdout, stderr, cmd) {
@@ -811,12 +827,14 @@ Item {
 
     Item {
         id: mainWrapper
+
         anchors.fill: parent
         anchors.margins: Tokens.padding.medium
 
          // Mode Switcher Row (Chat / History)
          RowLayout {
              id: modeSwitcherRow
+
              anchors.top: parent.top
              anchors.left: parent.left
              anchors.right: parent.right
@@ -826,6 +844,7 @@ Item {
 
              StyledRect {
                  id: modeSwitcherBg
+
                  implicitWidth: modeRow.width
                  implicitHeight: 32
                  radius: Tokens.rounding.full
@@ -835,8 +854,10 @@ Item {
                      z: -1
                      anchors.fill: parent
                      radius: Tokens.rounding.full
+
                      ShaderEffectSource {
                          id: switcherBlurSource
+
                          sourceItem: contentStack
                          sourceRect: {
                              var p = parent.mapToItem(contentStack, 0, 0);
@@ -864,10 +885,12 @@ Item {
 
                  Row {
                      id: modeRow
+
                      height: parent.height
 
                      Item {
                          id: chatTab
+
                          height: parent.height
                          width: !isHistoryTab ? 40 : chatContent.implicitWidth + Tokens.padding.medium * 2
                          
@@ -881,8 +904,10 @@ Item {
 
                          Row {
                              id: chatContent
+
                              anchors.centerIn: parent
                              spacing: Tokens.spacing.small
+
                              MaterialIcon {
                                  anchors.verticalCenter: parent.verticalCenter
                                  text: "chat"
@@ -901,6 +926,7 @@ Item {
 
                      Item {
                          id: historyTab
+
                          height: parent.height
                          width: isHistoryTab ? 40 : historyContent.implicitWidth + Tokens.padding.medium * 2
                          
@@ -914,8 +940,10 @@ Item {
 
                          Row {
                              id: historyContent
+
                              anchors.centerIn: parent
                              spacing: Tokens.spacing.small
+
                              MaterialIcon {
                                  anchors.verticalCenter: parent.verticalCenter
                                  text: "history"
@@ -939,6 +967,7 @@ Item {
              // Model Selector Split Button
              SplitButton {
                  id: modelSelector
+
                  type: SplitButton.Tonal
                  verticalPadding: 4
                  Layout.preferredWidth: implicitWidth
@@ -956,12 +985,14 @@ Item {
 
                  Variants {
                      id: modelVariants
+
                      model: {
                          return root.ollamaModelsList && root.ollamaModelsList.length > 0 ? root.ollamaModelsList : ["llama3", "mistral", "phi3", "gemma"];
                      }
 
                      delegate: MenuItem {
                          required property string modelData
+
                          text: modelData
                      }
                  }
@@ -972,6 +1003,7 @@ Item {
          
          Item {
              id: contentStack
+
              anchors.top: modeSwitcherRow.bottom
              anchors.bottom: parent.bottom
              anchors.left: parent.left
@@ -983,10 +1015,12 @@ Item {
                  anchors.fill: parent
                  opacity: !isHistoryTab ? 1 : 0
                  visible: opacity > 0
+
                  Behavior on opacity { NumberAnimation { duration: 250; easing.type: Easing.InOutQuad } }
 
                  VerticalFadeListView {
                      id: listView
+
                      anchors.top: parent.top
                      anchors.bottom: inputBoxRow.top
                      anchors.left: parent.left
@@ -1000,7 +1034,9 @@ Item {
                          anchors.centerIn: parent
                          opacity: chatHistory.count === 0 && !isTyping && !isThinking ? 1.0 : 0.0
                          visible: opacity > 0
+
                          Behavior on opacity { NumberAnimation { duration: 250; easing.type: Easing.InOutQuad } }
+
                          spacing: Tokens.spacing.large
 
                          Item {
@@ -1010,6 +1046,7 @@ Item {
 
                              Logo {
                                  id: emptyStateLogo
+
                                  anchors.fill: parent
                                  visible: false // hide original for MultiEffect to take over
                              }
@@ -1026,6 +1063,7 @@ Item {
                              id: greetingText
                              Layout.alignment: Qt.AlignHCenter
                              Layout.maximumWidth: listView.width - (Tokens.padding.large * 2)
+
                              horizontalAlignment: Text.AlignHCenter
                              wrapMode: Text.Wrap
                              font: Tokens.font.title.medium
@@ -1065,6 +1103,7 @@ Item {
 
                          StyledRect {
                              id: bubbleBg
+
                              y: Tokens.spacing.medium / 2
                              width: Math.min(listView.width * 0.85, footerCol.implicitWidth + Tokens.padding.medium * 2 + 8)
                              height: footerCol.implicitHeight + Tokens.padding.medium * 2
@@ -1079,6 +1118,7 @@ Item {
 
                              Column {
                                  id: footerCol
+
                                  anchors.fill: parent
                                  anchors.margins: Tokens.padding.medium
                                  spacing: Tokens.spacing.small
@@ -1097,15 +1137,18 @@ Item {
                                          width: mainText.implicitWidth
                                          height: mainText.implicitHeight
                                          // The bubble smoothly expands/shrinks as the text width changes
+
                                          Behavior on width { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
                                          
                                          StyledText {
                                              id: mainText
+
                                              text: displayedText
                                              color: Colours.palette.m3onSurfaceVariant
                                              font: Tokens.font.body.small
                                              
                                              property string displayedText: root.currentActionText
+
                                              property string nextText: ""
 
                                              transform: Translate { id: textTrans; y: 0 }
@@ -1113,6 +1156,7 @@ Item {
 
                                              Connections {
                                                  target: root
+
                                                  function onCurrentActionTextChanged() {
                                                      if (root.currentActionText !== mainText.displayedText) {
                                                          mainText.nextText = root.currentActionText;
@@ -1123,6 +1167,7 @@ Item {
 
                                              SequentialAnimation {
                                                  id: switchAnim
+
                                                  ParallelAnimation {
                                                      NumberAnimation { target: textTrans; property: "y"; to: -8; duration: 150; easing.type: Easing.InCubic }
                                                      NumberAnimation { target: mainText; property: "opacity"; to: 0.0; duration: 150; easing.type: Easing.InCubic }
@@ -1138,6 +1183,7 @@ Item {
                                              SequentialAnimation {
                                                  running: isThinking && !switchAnim.running
                                                  loops: Animation.Infinite
+
                                                  NumberAnimation { target: mainText; property: "opacity"; from: 1.0; to: 0.4; duration: 800; easing.type: Easing.InOutSine }
                                                  NumberAnimation { target: mainText; property: "opacity"; from: 0.4; to: 1.0; duration: 800; easing.type: Easing.InOutSine }
                                              }
@@ -1154,14 +1200,18 @@ Item {
                                          visible: root.currentThoughtText !== ""
                                          width: thoughtRowFooter.implicitWidth
                                          height: thoughtRowFooter.implicitHeight
+
                                          Row {
                                              id: thoughtRowFooter
+
                                              spacing: Tokens.spacing.small
+
                                              MaterialIcon {
                                                  text: "expand_more"
                                                  color: Colours.palette.m3onSurfaceVariant
                                                  font: Tokens.font.icon.small
                                                  rotation: root.isThoughtExpanded ? 180 : 0
+
                                                  Behavior on rotation { NumberAnimation { duration: 150; easing.type: Easing.OutQuad } }
                                              }
                                          }
@@ -1175,6 +1225,7 @@ Item {
                                  }
                                  Item {
                                      id: footerThoughtContentWrapper
+
                                      width: footerThoughtContent.width
                                      height: root.isThoughtExpanded ? footerThoughtContent.implicitHeight : 0
                                      clip: true
@@ -1183,6 +1234,7 @@ Item {
 
                                      TextEdit {
                                          id: footerThoughtContent
+
                                          width: Math.min(implicitWidth, listView.width * 0.85 - Tokens.padding.medium * 2)
                                          textFormat: Text.MarkdownText
                                          text: root.currentThoughtText
@@ -1228,12 +1280,14 @@ Item {
                          
                          ParallelAnimation {
                              id: popInAnim
+
                              NumberAnimation { target: delegateItem; property: "scale"; from: 0.8; to: 1.0; duration: 300; easing.type: Easing.OutBack }
                              NumberAnimation { target: delegateItem; property: "opacity"; from: 0.0; to: 1.0; duration: 200; easing.type: Easing.OutQuad }
                          }
                          
                          SequentialAnimation {
                              id: popDoneAnim
+
                              NumberAnimation { target: delegateItem; property: "scale"; from: 1.0; to: 1.02; duration: 100; easing.type: Easing.OutQuad }
                              NumberAnimation { target: delegateItem; property: "scale"; from: 1.02; to: 1.0; duration: 150; easing.type: Easing.OutSine }
                          }
@@ -1244,7 +1298,9 @@ Item {
 
                          StyledRect {
                              id: bubbleRect
+
                              readonly property real maxBubbleWidth: delegateItem.width * 0.85
+
                              anchors.right: delegateItem.isUser ? parent.right : undefined
                              anchors.left: delegateItem.isUser ? undefined : parent.left
                              
@@ -1262,12 +1318,14 @@ Item {
                              
                              Column {
                                  id: bubbleLayout
+
                                  anchors.top: parent.top
                                  anchors.left: parent.left
                                  anchors.margins: Tokens.padding.medium
                                  spacing: Tokens.spacing.small
 
                                  property string delegateThought: delegateItem.thoughtText
+
                                  property bool isExpanded: false
 
                                  Item {
@@ -1278,7 +1336,9 @@ Item {
 
                                      Row {
                                          id: thoughtRow
+
                                          spacing: Tokens.spacing.small
+
                                          Text {
                                              text: "Thought Process"
                                              color: Colours.palette.m3onSurfaceVariant
@@ -1286,10 +1346,12 @@ Item {
                                          }
                                          MaterialIcon {
                                              id: thoughtArrow
+
                                              text: "expand_more"
                                              color: Colours.palette.m3onSurfaceVariant
                                              font: Tokens.font.icon.small
                                              rotation: bubbleLayout.isExpanded ? 180 : 0
+
                                              Behavior on rotation { NumberAnimation { duration: 150; easing.type: Easing.OutQuad } }
                                          }
                                      }
@@ -1302,6 +1364,7 @@ Item {
 
                                  Item {
                                      id: thoughtContentWrapper
+
                                      width: thoughtContent.width
                                      height: bubbleLayout.isExpanded ? thoughtContent.implicitHeight : 0
                                      clip: true
@@ -1310,12 +1373,14 @@ Item {
 
                                      TextEdit {
                                          id: thoughtContent
+
                                          width: Math.min(implicitWidth, bubbleRect.maxBubbleWidth - Tokens.padding.medium * 2)
                                          textFormat: Text.MarkdownText
                                          
                                          property string fullThought: bubbleLayout.delegateThought
                                          
                                          property bool cursorVisible: true
+
                                          Timer {
                                              running: !delegateItem.isFinished
                                              repeat: true
@@ -1326,12 +1391,19 @@ Item {
                                          text: delegateItem.isFinished ? fullThought : fullThought + (cursorVisible ? "▌" : "")
                                          
                                          color: Colours.palette.m3onSurfaceVariant
+
                                          font: Tokens.font.body.small
+
                                          wrapMode: Text.Wrap
+
                                          readOnly: true
+
                                          selectByMouse: true
+
                                          selectionColor: Colours.palette.m3primary
+
                                          selectedTextColor: Colours.palette.m3onPrimary
+
                                          opacity: bubbleLayout.isExpanded ? 1.0 : 0.0
                                          
                                          Behavior on opacity {
@@ -1345,12 +1417,14 @@ Item {
 
                                  TextEdit {
                                      id: messageText
+
                                      textFormat: Text.MarkdownText
                                      width: Math.min(implicitWidth, bubbleRect.maxBubbleWidth - Tokens.padding.medium * 2)
                                      
                                      property string fullText: delegateItem.text !== undefined ? delegateItem.text : ""
                                      
                                      property bool cursorVisible: true
+
                                      Timer {
                                          running: !delegateItem.isFinished
                                          repeat: true
@@ -1361,11 +1435,17 @@ Item {
                                      text: delegateItem.isFinished ? fullText : fullText + (cursorVisible ? "▌" : "")
                                      
                                      color: delegateItem.isUser ? Colours.palette.m3onPrimary : Colours.palette.m3onSurface
+
                                      font: Tokens.font.body.small
+
                                      wrapMode: Text.Wrap
+
                                      readOnly: true
+
                                      selectByMouse: true
+
                                      selectionColor: Colours.palette.m3primary
+
                                      selectedTextColor: Colours.palette.m3onPrimary
 
                                      MouseArea {
@@ -1384,6 +1464,7 @@ Item {
                  // Input Box Row
                  StyledRect {
                      id: inputBoxRow
+
                      anchors.bottom: parent.bottom
                      anchors.left: parent.left
                      anchors.right: parent.right
@@ -1396,8 +1477,10 @@ Item {
                          z: -1
                          anchors.fill: parent
                          radius: 24
+
                          ShaderEffectSource {
                              id: inputBlurSource
+
                              sourceItem: contentStack
                              sourceRect: {
                                  var p = parent.mapToItem(contentStack, 0, 0);
@@ -1414,6 +1497,7 @@ Item {
 
                      StateLayer {
                          id: inputStateLayer
+
                          anchors.fill: parent
                          radius: 24
                          hoverEnabled: false
@@ -1434,6 +1518,7 @@ Item {
                              
                              TextArea {
                                  id: inputArea
+
                                  verticalAlignment: TextInput.AlignVCenter
                                  placeholderText: qsTr("Ask assistant...")
                                  color: Colours.palette.m3onSurface
@@ -1481,6 +1566,7 @@ Item {
 
                                  MouseArea {
                                      id: sendMouse
+
                                      anchors.fill: parent
                                      hoverEnabled: true
                                      cursorShape: (inputArea.text.length > 0 || root.isTyping) ? Qt.PointingHandCursor : Qt.ArrowCursor
@@ -1509,6 +1595,7 @@ Item {
                                  color: Colours.palette.m3onSurfaceVariant
                                  font: Tokens.font.icon.small
                                  opacity: (inputArea.text.length > 0 || root.isTyping) ? 0 : 1
+
                                  Behavior on opacity { Anim { type: Anim.DefaultEffects } }
                              }
                          }
@@ -1521,6 +1608,7 @@ Item {
                  anchors.fill: parent
                  opacity: isHistoryTab ? 1 : 0
                  visible: opacity > 0
+
                  Behavior on opacity { NumberAnimation { duration: 250; easing.type: Easing.InOutQuad } }
 
                  GridView {
@@ -1598,6 +1686,7 @@ Item {
                                          radius: 12
                                          color: Colours.palette.m3onSurfaceVariant
                                          opacity: deleteMouseArea.containsMouse ? 0.12 : 0.0
+
                                          Behavior on opacity { NumberAnimation { duration: 150 } }
                                      }
 
@@ -1610,6 +1699,7 @@ Item {
 
                                      MouseArea {
                                          id: deleteMouseArea
+
                                          anchors.fill: parent
                                          hoverEnabled: true
                                          cursorShape: Qt.PointingHandCursor
@@ -1624,6 +1714,7 @@ Item {
                  // "Clear All" button
                  StyledRect {
                      id: clearAllButton
+
                      anchors.bottom: parent.bottom
                      anchors.left: parent.left
                      width: clearAllLayout.implicitWidth + Tokens.padding.large * 2
@@ -1638,8 +1729,10 @@ Item {
 
                      RowLayout {
                          id: clearAllLayout
+
                          anchors.centerIn: parent
                          spacing: Tokens.spacing.small
+
                          MaterialIcon {
                              text: "delete"
                              color: Colours.palette.m3onErrorContainer
@@ -1656,6 +1749,7 @@ Item {
                  // "New Chat" button
                  StyledRect {
                      id: newChatButton
+
                      anchors.bottom: parent.bottom
                      anchors.right: parent.right
                      width: newChatLayout.implicitWidth + Tokens.padding.large * 2
@@ -1670,8 +1764,10 @@ Item {
 
                      RowLayout {
                          id: newChatLayout
+
                          anchors.centerIn: parent
                          spacing: Tokens.spacing.small
+
                          MaterialIcon {
                              text: "add"
                              color: Colours.palette.m3onPrimaryContainer

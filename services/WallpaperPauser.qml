@@ -4,10 +4,9 @@ import QtQuick
 import QtCore
 import Quickshell
 import Quickshell.Hyprland
-import Quickshell.Services.UPower
 import Quickshell.Io
+import Quickshell.Services.UPower
 import Caelestia.Config
-
 import qs.services
 import qs.utils
 
@@ -21,15 +20,23 @@ Singleton {
 
     Settings {
         id: pauserSettings
+
         location: `${Paths.state}/wallpaper/pauser.ini`
         category: "WallpaperPauser"
+
         property alias manualPause: root.manualPause
+
         property alias pauseOnBattery: root.pauseOnBattery
+
         property alias pauseOnWindowOverlap: root.pauseOnWindowOverlap
+
         property alias hwDecoder: root.hwDecoder
     }
+
     property bool paused: false
+
     property bool _loaded: false
+
     property string pauseReason: "None"
 
     Process {
@@ -88,12 +95,15 @@ Singleton {
 
     Connections {
         target: Hyprland
+
         function onFocusedWorkspaceChanged() {
             root.recalculate();
         }
+
         function onFocusedMonitorChanged() {
             root.recalculate();
         }
+
         function onRawEvent(event) {
             const n = event.name;
             if (n.startsWith("workspace") || n.startsWith("activewindow") || n.startsWith("createworkspace") || n.startsWith("destroyworkspace") || ["fullscreen", "changefloatingmode", "minimize", "movewindow", "openwindow", "closewindow", "moveworkspace", "focusedmon"].includes(n)) {
@@ -104,6 +114,7 @@ Singleton {
 
     Connections {
         target: UPower
+
         function onOnBatteryChanged() {
             recalcTimer.restart();
         }
@@ -111,6 +122,7 @@ Singleton {
 
     Timer {
         id: recalcTimer
+
         interval: 50
         onTriggered: root.recalculate()
     }
@@ -118,9 +130,11 @@ Singleton {
     // Startup timer to ensure we catch the asynchronously loaded Hyprland and Quickshell state
     Timer {
         id: startupTimer
+
         interval: 1000
         repeat: true
         running: true
+
         property int attempts: 0
         onTriggered: {
             root.recalculate();

@@ -38,7 +38,9 @@ Singleton {
 
     // DMI vendor/model, combined into a single human-readable device name
     property string boardVendor
+
     property string boardName
+
     readonly property string device: {
         if (!boardName)
             return boardVendor;

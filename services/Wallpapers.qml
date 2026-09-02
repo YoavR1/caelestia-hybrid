@@ -40,6 +40,7 @@ Searcher {
 
     Timer {
         id: colorReleaseTimer
+
         interval: 180 
         repeat: false
         onTriggered: {
@@ -282,8 +283,11 @@ Searcher {
     }
 
     list: wallpapers.entries
+
     key: "relativePath"
+
     useFuzzy: GlobalConfig.launcher.useFuzzy.wallpapers
+
     extraOpts: useFuzzy ? ({}) : ({
             forward: false
         })
@@ -373,16 +377,19 @@ Searcher {
     }
 
     property alias weVolume: weSettings.volume
+
     property alias weSilent: weSettings.silent
     
     Settings {
         id: weSettings
+
         property real volume: 0.15
         property bool silent: false
     }
 
     FileSystemModel {
         id: wallpapers
+
         recursive: true
         path: Paths.wallsdir
         filter: FileSystemModel.Files
@@ -392,6 +399,7 @@ Searcher {
 
     FileSystemModel {
         id: weWallpapers
+
         recursive: true
         path: Quickshell.env("HOME") + "/.local/share/Steam/steamapps/workshop/content/431960"
         filter: FileSystemModel.Files
@@ -435,7 +443,9 @@ Searcher {
     }
 
     property bool _refreshing: false
+
     property bool restoreWallpaperMode: false
+
     property var itemBusters: ({})
 
     FileView {

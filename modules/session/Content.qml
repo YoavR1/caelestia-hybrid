@@ -26,6 +26,7 @@ Column {
 
         SessionButton {
             id: topBtn
+
             required property var modelData
             required property int index
 

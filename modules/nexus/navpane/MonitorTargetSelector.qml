@@ -27,10 +27,12 @@ StyledRect {
 
     Variants {
         id: screenVariants
+
         model: ["", ...Screens.screens.map(s => s.name)]
 
         MenuItem {
             required property string modelData
+
             text: modelData === "" ? qsTr("Global") : modelData
             icon: modelData === "" ? "globe" : "desktop_windows"
             onClicked: root.nState.targetScreen = modelData

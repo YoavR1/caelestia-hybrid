@@ -338,6 +338,7 @@ Item {
             delegate: EntryWrapper {
                 Layout.fillWidth: true
                 visible: !root.fullscreen
+
                 Dock {
                     bar: root
                 }
@@ -381,6 +382,7 @@ Item {
             roleValue: "github"
             delegate: EntryWrapper {
                 visible: enabled && !root.fullscreen && GithubStore.available
+
                 GithubActivity {
                     popouts: root.popouts
                 }
@@ -390,6 +392,7 @@ Item {
             roleValue: "spotify"
             delegate: EntryWrapper {
                 visible: enabled && !root.fullscreen && (!Config.bar.spotify.autoHide || Players.list.length > 0)
+
                 Spotify {
                     objectName: "taskbarSpotify"
                     popouts: root.popouts

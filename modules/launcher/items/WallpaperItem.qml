@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import Caelestia.Config
 import Caelestia.Models
 import qs.components
@@ -7,7 +8,6 @@ import qs.components.effects
 import qs.components.images
 import qs.services
 import qs.utils
-import Quickshell.Io
 
 Item {
     id: root
@@ -29,6 +29,7 @@ Item {
 
     Process {
         id: thumbGenerator
+
         command: ["bash", "-c", `mkdir -p "$(dirname "${thumbImg.path.toString().replace("file://", "")}")" && ffmpeg -i "${root.modelData.path}" -vframes 1 -q:v 2 "${thumbImg.path.toString().replace("file://", "")}" -y`]
         onExited: {
             let oldSource = thumbImg.path;
@@ -79,6 +80,7 @@ Item {
 
         CachingImage {
             id: thumbImg
+
             anchors.fill: parent
             path: Wallpapers.getThumbnailPath(root.modelData.path)
             smooth: !root.PathView.view.moving

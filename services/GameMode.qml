@@ -49,7 +49,9 @@ Singleton {
 
     Connections {
         target: GlobalConfig.utilities.gameMode
+
         function onAutoEnableChanged(): void { root.evaluateAutoEnable(); }
+
         function onAutoEnableRegexesChanged(): void { root.evaluateAutoEnable(); }
     }
 

@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "../../services"
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -8,7 +9,6 @@ import Caelestia
 import Caelestia.Config
 import qs.components
 import qs.components.filedialog
-import "../../services"
 
 Item {
     id: root

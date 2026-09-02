@@ -11,8 +11,8 @@ import Caelestia.Services
 import qs.components
 import qs.components.controls
 import qs.components.effects
-import qs.components.widgets
 import qs.components.images
+import qs.components.widgets
 import qs.services
 import qs.utils
 
@@ -142,7 +142,9 @@ ColumnLayout {
                 anchors.centerIn: parent
 
                 readonly property color fgColour: Colours.palette.m3primary
+
                 readonly property color bgColour: Colours.palette.m3secondaryContainer
+
                 readonly property real pos: Math.max(0, Math.min(1, root.currentVolume))
 
                 readonly property real filledHeight: Math.max(0, (height - handle.implicitHeight - handle.anchors.bottomMargin) * pos)

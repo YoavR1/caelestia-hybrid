@@ -17,6 +17,7 @@ Item {
     property real offsetScale: shouldBeActive ? 0 : 1
 
     visible: offsetScale < 0.999
+
     property real slideAmount: (-implicitWidth - Config.border.thickness - Tokens.spacing.medium) * offsetScale
     anchors.leftMargin: slideAmount
     anchors.rightMargin: slideAmount

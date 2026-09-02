@@ -5,8 +5,8 @@ import Quickshell.Widgets
 import Caelestia
 import Caelestia.Config
 import qs.components
-import qs.components.controls
 import qs.components.containers
+import qs.components.controls
 import qs.services
 import qs.utils
 import qs.modules.nexus.common
@@ -26,6 +26,7 @@ PageBase {
     property var defaults: ({})
     
     readonly property string configPath: Quickshell.env("HOME") + "/.config/caelestia/hypr-vars.lua"
+
     readonly property string defaultsPath: Quickshell.env("HOME") + "/.config/hypr/variables.lua"
 
     function saveVar(key, val) {

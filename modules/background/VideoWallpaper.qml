@@ -53,6 +53,7 @@ Item {
 
     VideoOutput {
         id: outputA
+
         anchors.fill: parent
         fillMode: VideoOutput.PreserveAspectCrop
         visible: root._usePlayerA
@@ -103,6 +104,7 @@ Item {
 
     VideoOutput {
         id: outputB
+
         anchors.fill: parent
         fillMode: VideoOutput.PreserveAspectCrop
         visible: !root._usePlayerA
@@ -146,6 +148,7 @@ Item {
     // before the main thread blocks on FFmpeg/Vulkan initialization (~2s).
     Timer {
         id: deferredPlayTimer
+
         interval: 100  // ~6 frames at 60fps — enough for picker click feedback
         repeat: false
         onTriggered: root._executeDeferredSwap()

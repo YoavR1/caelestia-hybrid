@@ -5,9 +5,9 @@ import QtQuick.Layouts
 import Caelestia
 import Caelestia.Config
 import Caelestia.Models
+import qs.components.controls
 import qs.services
 import qs.utils
-import qs.components.controls
 import qs.modules.nexus.common
 
 PageBase {

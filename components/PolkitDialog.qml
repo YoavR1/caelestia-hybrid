@@ -1,17 +1,17 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Services.Polkit 0.1
+import M3Shapes
 import Caelestia.Config
-import QtQuick.Effects
 import qs.components
 import qs.components.containers
 import qs.components.controls
 import qs.services
-import M3Shapes
 
 StyledWindow {
     id: root
@@ -90,6 +90,7 @@ StyledWindow {
 
     ParallelAnimation {
         id: openAnim
+
         SequentialAnimation {
             ParallelAnimation {
                 Anim { target: dialogContainer; property: "opacity"; to: 1; duration: Tokens.anim.durations.small }
@@ -202,6 +203,7 @@ StyledWindow {
                 
                 ColumnLayout {
                     id: titleLayout
+
                     anchors.fill: parent
                     anchors.margins: Tokens.padding.large
                     spacing: 0
@@ -240,6 +242,7 @@ StyledWindow {
                     
                     StyledText {
                         id: commandLabel
+
                         anchors.fill: parent
                         anchors.margins: Tokens.padding.small
                         anchors.leftMargin: Tokens.padding.large
@@ -266,6 +269,7 @@ StyledWindow {
             StyledRect {
                 id: passwordRect
                 Layout.alignment: Qt.AlignHCenter
+
                 implicitWidth: {
                     const emptyW = nonAnimPlaceholder.width + iconWrapper.implicitWidth + enterButton.implicitWidth + passwordInputLayout.spacing * 2 + Tokens.padding.medium * 2;
                     return root.buffer.length > 0 ? root.passwordMaxWidth : Math.min(root.passwordMaxWidth, emptyW);
@@ -334,6 +338,7 @@ StyledWindow {
                     Item {
                         id: iconWrapper
                         Layout.fillHeight: true
+
                         implicitWidth: height
                         
                         MaterialIcon {
@@ -397,6 +402,7 @@ StyledWindow {
 
                             Behavior on implicitWidth {
                                 id: imWidthBehavior
+
                                 Anim {}
                             }
                         }

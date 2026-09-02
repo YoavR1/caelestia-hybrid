@@ -80,6 +80,7 @@ Item {
 
     AudioOutput {
         id: audioOutput
+
         muted: root.shouldMute
     }
 

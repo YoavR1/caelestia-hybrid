@@ -9,8 +9,8 @@ import Quickshell.Widgets
 import Caelestia
 import Caelestia.Config
 import qs.components
-import qs.components.effects
 import qs.components.controls
+import qs.components.effects
 import qs.services
 import qs.utils
 
@@ -62,6 +62,7 @@ Item {
     }
 
     readonly property int padding: Tokens.padding.medium
+
     readonly property int spacing: Tokens.spacing.small
 
     anchors.fill: parent

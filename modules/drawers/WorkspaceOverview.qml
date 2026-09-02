@@ -1,12 +1,12 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Layouts
 import QtQuick.Controls
 import QtQuick.Effects
+import QtQuick.Layouts
 import Quickshell
-import Quickshell.Wayland
 import Quickshell.Hyprland
+import Quickshell.Wayland
 import Quickshell.Widgets
 import Caelestia.Config
 import qs.components
@@ -15,6 +15,7 @@ import qs.components.controls
 import qs.components.effects
 import qs.services
 import qs.utils
+
 Item {
     id: root
 
@@ -25,6 +26,7 @@ Item {
 
     anchors.top: parent.top
     anchors.bottom: parent.bottom
+
     property real slideAmount: (-implicitWidth - Config.border.thickness - Tokens.spacing.medium) * offsetScale
     anchors.leftMargin: slideAmount
     anchors.rightMargin: slideAmount
@@ -54,6 +56,7 @@ Item {
                 id: wsList
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+
                 clip: true
                 spacing: Tokens.spacing.medium
 
@@ -61,6 +64,7 @@ Item {
 
                 delegate: Item {
                     id: wsDelegate
+
                     required property int index
                     readonly property int workspaceId: index + 1
                     // Fallback to Hyprland.activeWorkspace if monitor activeWorkspace is not ready yet
@@ -68,6 +72,7 @@ Item {
                     readonly property bool isActive: activeWsId === workspaceId
                     
                     property int activeDrags: 0
+
                     z: activeDrags > 0 ? 100 : 0
                     
                     property list<var> windows: Hyprland.toplevels.values.filter(t => {
@@ -85,10 +90,15 @@ Item {
                         if (ws && ws.monitor) return ws.monitor.lastIpcObject;
                         return Hypr.monitorFor(root.screen)?.lastIpcObject;
                     }
+
                     property bool isPortrait: hlMonitor && hlMonitor.transform % 2 !== 0
+
                     property real mw: hlMonitor && hlMonitor.width ? (isPortrait ? hlMonitor.height : hlMonitor.width) : 1920
+
                     property real mh: hlMonitor && hlMonitor.height ? (isPortrait ? hlMonitor.width : hlMonitor.height) : 1080
+
                     property real mx: hlMonitor && hlMonitor.x ? hlMonitor.x : 0
+
                     property real my: hlMonitor && hlMonitor.y ? hlMonitor.y : 0
                     
                     property real inactiveOffsetX: {
@@ -98,6 +108,7 @@ Item {
                         let center = firstWindow.at[0] - mx + firstWindow.size[0]/2;
                         return Math.floor(center / mw) * mw;
                     }
+
                     property real inactiveOffsetY: {
                         if (isActive || windows.length === 0) return 0;
                         let firstWindow = windows[0].lastIpcObject;
@@ -119,6 +130,7 @@ Item {
                         }
                         return min === mw ? 0 : min;
                     }
+
                     property real contentMaxX: {
                         if (windows.length === 0) return mw;
                         let max = 0;
@@ -131,6 +143,7 @@ Item {
                         }
                         return max > 0 ? max : mw;
                     }
+
                     property real contentMinY: {
                         if (windows.length === 0) return 0;
                         let min = mh;
@@ -143,6 +156,7 @@ Item {
                         }
                         return min === mh ? 0 : min;
                     }
+
                     property real contentMaxY: {
                         if (windows.length === 0) return mh;
                         let max = 0;
@@ -162,18 +176,24 @@ Item {
                         if (w > mw * 0.8 && w < mw) return w;
                         return mw;
                     }
+
                     property real targetMh: {
                         if (windows.length === 0) return mh;
                         let h = contentMaxY - contentMinY;
                         if (h > mh * 0.8 && h < mh) return h;
                         return mh;
                     }
+
                     property real targetMinX: targetMw < mw ? contentMinX : 0
+
                     property real targetMinY: targetMh < mh ? contentMinY : 0
 
                     property real effectiveMw: targetMw
+
                     property real effectiveMh: targetMh
+
                     property real effectiveMinX: targetMinX
+
                     property real effectiveMinY: targetMinY
 
                     Behavior on effectiveMw { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
@@ -182,10 +202,12 @@ Item {
                     Behavior on effectiveMinY { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
 
                     width: ListView.view.width
+
                     implicitHeight: width * (effectiveMh / effectiveMw)
 
                     Item {
                         id: bgContainer
+
                         anchors.fill: parent
                         clip: true
 
@@ -196,6 +218,7 @@ Item {
 
                         Image {
                             id: wallpaperImage
+
                             width: (wsDelegate.mw / wsDelegate.effectiveMw) * parent.width
                             height: (wsDelegate.mh / wsDelegate.effectiveMh) * parent.height
                             x: -(wsDelegate.effectiveMinX / wsDelegate.effectiveMw) * parent.width
@@ -217,9 +240,11 @@ Item {
 
                     Item {
                         id: maskItem
+
                         anchors.fill: parent
                         visible: false
                         layer.enabled: true
+
                         Rectangle {
                             anchors.fill: parent
                             radius: Tokens.rounding.large
@@ -263,9 +288,11 @@ Item {
 
                         Repeater {
                             id: windowRepeater
+
                             model: wsDelegate.windows
                             delegate: Item {
                                 id: windowContainer
+
                                 required property var modelData
                                 
                                 property var ipc: modelData.lastIpcObject
@@ -276,6 +303,7 @@ Item {
                                 property real rawLogicalH: ipc && ipc.size ? ipc.size[1] : 0
                                 
                                 property bool isDragging: dragArea.drag.active
+
                                 onIsDraggingChanged: {
                                     if (isDragging) wsDelegate.activeDrags++;
                                     else wsDelegate.activeDrags--;
@@ -288,17 +316,22 @@ Item {
                                 Behavior on rawLogicalH { NumberAnimation { duration: 300; easing.type: Easing.OutCubic } }
                                 
                                 x: ((rawLogicalX - wsDelegate.effectiveMinX) / wsDelegate.effectiveMw * parent.width)
+
                                 y: ((rawLogicalY - wsDelegate.effectiveMinY) / wsDelegate.effectiveMh * parent.height)
+
                                 width: (rawLogicalW / wsDelegate.effectiveMw * parent.width)
+
                                 height: (rawLogicalH / wsDelegate.effectiveMh * parent.height)
 
                                 Item {
                                     id: windowVisualProxy
+
                                     width: parent.width
                                     height: parent.height
                                     
                                     opacity: dragArea.drag.active ? 0.8 : 1
                                     scale: dragArea.drag.active ? 1.05 : 1
+
                                     Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutBack } }
                                     Behavior on opacity { NumberAnimation { duration: 150 } }
                                     
@@ -310,6 +343,7 @@ Item {
 
                                     StyledRect {
                                         id: windowBg
+
                                         anchors.fill: parent
                                         color: Colours.palette.m3surfaceContainer
                                         radius: Tokens.rounding.medium
@@ -317,6 +351,7 @@ Item {
 
                                     Rectangle {
                                         id: windowMask
+
                                         anchors.fill: parent
                                         radius: Tokens.rounding.medium
                                         layer.enabled: true
@@ -387,6 +422,7 @@ Item {
 
                                 MouseArea {
                                     id: dragArea
+
                                     anchors.fill: parent
                                     hoverEnabled: true
                                     drag.target: windowVisualProxy
@@ -394,7 +430,9 @@ Item {
                                     cursorShape: Qt.PointingHandCursor
                                     
                                     property bool wasDragged: false
+
                                     property real pressX: 0
+
                                     property real pressY: 0
 
                                     onPressed: (mouse) => {
@@ -431,6 +469,7 @@ Item {
 
                     StyledText {
                         id: wsIdText
+
                         visible: windowRepeater.count === 0
                         text: workspaceId.toString()
                         font: Tokens.font.title.large

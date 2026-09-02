@@ -58,11 +58,15 @@ VerticalFadeFlickable {
                 clip: true
 
                 readonly property bool isCurrentPage: modelData.originalIndex === root.nState.currentPageIdx
+
                 readonly property bool isCategoryStart: index === 0 || list.model[index - 1].category !== modelData.category
+
                 readonly property bool isCategoryEnd: index === list.model.length - 1 || list.model[index + 1].category !== modelData.category
 
                 property real animHeight: 1
+
                 property real animSlide: 1
+
                 property bool isUnlocking: false
 
                 Component.onCompleted: {
@@ -81,12 +85,14 @@ VerticalFadeFlickable {
 
                 Timer {
                     id: unlockTimer
+
                     interval: 20
                     onTriggered: item.isUnlocking = false
                 }
 
                 NumberAnimation {
                     id: heightAnim
+
                     target: item
                     property: "animHeight"
                     to: 1
@@ -98,6 +104,7 @@ VerticalFadeFlickable {
 
                 NumberAnimation {
                     id: slideAnim
+
                     target: item
                     property: "animSlide"
                     to: 1
@@ -113,6 +120,7 @@ VerticalFadeFlickable {
                     const targetH = h % 2 === 0 ? h : h + 1;
                     return targetH * animHeight;
                 }
+
                 opacity: modelData.originalIndex === 2 ? animSlide : 1.0
 
                 transform: Translate {
@@ -122,8 +130,11 @@ VerticalFadeFlickable {
                 color: isCurrentPage ? Colours.palette.m3secondaryContainer : Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
 
                 topLeftRadius: stateLayer.pressed ? Tokens.rounding.medium : isCurrentPage ? Tokens.rounding.extraLargeIncreased : (isUnlocking && modelData.originalIndex === 2) ? Tokens.rounding.extraLarge : isCategoryStart ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
+
                 topRightRadius: stateLayer.pressed ? Tokens.rounding.medium : isCurrentPage ? Tokens.rounding.extraLargeIncreased : (isUnlocking && modelData.originalIndex === 2) ? Tokens.rounding.extraLarge : isCategoryStart ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
+
                 bottomLeftRadius: stateLayer.pressed ? Tokens.rounding.medium : isCurrentPage ? Tokens.rounding.extraLargeIncreased : (isUnlocking && modelData.originalIndex === 1) ? Tokens.rounding.extraLarge : isCategoryEnd ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
+
                 bottomRightRadius: stateLayer.pressed ? Tokens.rounding.medium : isCurrentPage ? Tokens.rounding.extraLargeIncreased : (isUnlocking && modelData.originalIndex === 1) ? Tokens.rounding.extraLarge : isCategoryEnd ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
 
                 RadiusBehavior on topLeftRadius {}

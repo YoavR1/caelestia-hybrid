@@ -1,4 +1,5 @@
 pragma Singleton
+
 import QtQuick
 import Caelestia
 import Caelestia.Config

@@ -22,16 +22,19 @@ Item {
 
     Connections {
         target: GlobalConfig.ai
+
         function onEnableOllamaChanged() { checkTabs(); }
     }
 
     Connections {
         target: GlobalConfig.sidebar
+
         function onShowNewsChanged() { checkTabs(); }
     }
 
     Connections {
         target: root.screenState
+
         function onSidebarChanged() {
             if (root.screenState.sidebar) {
                 root.activeTab = Visibilities.initialSidebarTab;
@@ -78,6 +81,7 @@ Item {
                 Item {
                     id: headerContainer
                     Layout.fillWidth: true
+
                     implicitHeight: 64
                     clip: true
                     visible: tabRepeater.count > 1
@@ -90,6 +94,7 @@ Item {
 
                         Repeater {
                             id: tabRepeater
+
                             model: {
                                 var tabs = [
                                     { id: "notifications", label: qsTr("Notifications"), icon: "notifications" }
@@ -115,6 +120,7 @@ Item {
 
                                 StateLayer {
                                     id: stateLayer
+
                                     anchors.fill: parent
                                     anchors.margins: 4
                                     radius: Tokens.rounding.medium
@@ -132,6 +138,7 @@ Item {
                                         color: tabBtn.active ? Colours.palette.m3primary : stateLayer.containsMouse ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant
                                         fontStyle: Tokens.font.icon.small
                                         fill: tabBtn.active ? 1 : 0
+
                                         Behavior on fill { Anim { type: Anim.DefaultEffects } }
                                     }
 
@@ -149,6 +156,7 @@ Item {
                     // Sliding Indicator
                     Item {
                         id: indicator
+
                         anchors.verticalCenter: parent.bottom
                         implicitHeight: 6
                         
@@ -159,6 +167,7 @@ Item {
                             }
                             return 0;
                         }
+
                         readonly property real tabWidth: (headerContainer.width - Tokens.padding.medium * 2) / tabRepeater.count
                         width: tabWidth - Tokens.padding.medium * 2
                         x: Tokens.padding.medium + activeIndex * tabWidth + (tabWidth - width) / 2
@@ -210,6 +219,7 @@ Item {
 
                     AiAssistant {
                         id: aiAssistant
+
                         anchors.top: parent.top
                         anchors.bottom: parent.bottom
                         width: parent.width
@@ -219,6 +229,7 @@ Item {
 
                         Connections {
                             target: aiAssistant
+
                             function onIsStreamingChanged() {
                                 root.sidebarStreaming = aiAssistant.isStreaming;
                             }

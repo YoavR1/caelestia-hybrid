@@ -1,14 +1,14 @@
 pragma Singleton
 
 import QtQuick
-import Caelestia.Config
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Io
 import Caelestia
+import Caelestia.Config
 import Caelestia.Services
-import qs.utils
 import qs.services
+import qs.utils
 
 Item {
     id: root
@@ -17,6 +17,7 @@ Item {
     property string clientId: GlobalConfig.services.arpcClientId || "1126685412586733678"
 
     property string steamGridDbKey: ""
+
     onSteamGridDbKeyChanged: {
         if (root.currentSteamAppId !== "") {
             root.currentSteamData = null;
@@ -43,12 +44,14 @@ Item {
 
     Connections {
         target: DiscordIpc
+
         function onConnectedChanged() {
             if (DiscordIpc.connected) {
                 console.log("Discord ARPC connected");
                 root.updatePresence();
             }
         }
+
         function onErrorOccurred(errorString) {
             console.log("Discord ARPC error: " + errorString);
         }
@@ -72,32 +75,48 @@ Item {
     Connections {
         target: Hyprland.toplevels
         ignoreUnknownSignals: true
+
         function onValuesChanged() { root.updatePresence(); }
     }
 
     Connections {
         target: GlobalConfig.services
+
         function onArpcSteamAutoDetectChanged() { root.updatePresence(); }
+
         function onArpcTargetWindowsChanged() { root.updatePresence(); }
+
         function onArpcCaelestiaInfoChanged() { root.updatePresence(); }
+
         function onArpcSteamBlacklistChanged() { root.updatePresence(); }
+
         function onArpcAppNameChanged() { root.updatePresence(); }
+
         function onArpcDetailsChanged() { root.updatePresence(); }
+
         function onArpcStateChanged() { root.updatePresence(); }
+
         function onArpcLargeImageChanged() { root.updatePresence(); }
+
         function onArpcSmallImageChanged() { root.updatePresence(); }
+
         function onArpcManualOverrideChanged() { root.updatePresence(); }
     }
 
     Connections {
         target: Colours
+
         function onSchemeChanged() { root.updatePresence(); }
+
         function onLightChanged() { root.updatePresence(); }
+
         function onVariantChanged() { root.updatePresence(); }
     }
 
     property string currentSteamAppId: ""
+
     property var currentSteamData: null
+
     property bool fetchingSteam: false
 
     function updatePresence() {

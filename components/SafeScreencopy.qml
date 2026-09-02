@@ -39,6 +39,7 @@ Item {
 
     Timer {
         id: stableTimer
+
         interval: 150
         repeat: false
         onTriggered: root._isStable = true
@@ -64,6 +65,7 @@ Item {
 
     ScreencopyView {
         id: view
+
         anchors.fill: parent
         captureSource: root._effectiveSource
         live: root.live && root._effectiveSource !== null

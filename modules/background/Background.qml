@@ -2,8 +2,8 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
-import Quickshell.Wayland
 import Quickshell.Io
+import Quickshell.Wayland
 import Caelestia.Config
 import qs.components
 import qs.components.containers
@@ -57,6 +57,7 @@ Variants {
 
             Process {
                 id: weProc
+
                 property string weDir: wallpaper.item ? wallpaper.item.weDir : ""
                 property bool weActive: wallpaper.item ? wallpaper.item.weActive : false
                 

@@ -9,14 +9,19 @@ StyledSwitch {
     id: root
 
     property bool showDelete: false
+
     signal deleted()
 
     property var configNode
+
     property string propertyName: ""
 
     property string subtext
+
     property alias first: bg.first
+
     property alias last: bg.last
+
     readonly property alias bg: bg
 
     Layout.fillWidth: true
@@ -69,6 +74,7 @@ StyledSwitch {
 
                 StyledText {
                     id: label
+
                     text: root.text
                     font: root.font
                     elide: Text.ElideRight
@@ -77,6 +83,7 @@ StyledSwitch {
 
                 IconButton {
                     id: delBtn
+
                     icon: "delete"
                     type: IconButton.Text
                     font: Tokens.font.icon.small

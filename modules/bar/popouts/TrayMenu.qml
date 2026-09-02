@@ -69,6 +69,7 @@ StackView {
 
         QsMenuOpener {
             id: menuOpener
+
             menu: menu.handle
         }
 
@@ -96,6 +97,7 @@ StackView {
 
         Instantiator {
             id: groupInstantiator
+
             model: menuOpener.children
             
             Item {
@@ -105,8 +107,10 @@ StackView {
             }
 
             onObjectAdded: menu.updateGroups()
+
             onObjectRemoved: menu.updateGroups()
             // In case the model itself changes completely
+
             onModelChanged: menu.updateGroups()
         }
 
