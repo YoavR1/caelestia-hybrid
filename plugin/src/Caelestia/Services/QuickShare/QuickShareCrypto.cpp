@@ -41,25 +41,26 @@ static QByteArray hkdfInternal(
         return {};
     }
     if (!salt.isEmpty()) {
-        if (EVP_PKEY_CTX_set1_hkdf_salt(pctx, reinterpret_cast<const unsigned char*>(salt.constData()), salt.size()) <=
-            0) {
+        if (EVP_PKEY_CTX_set1_hkdf_salt(
+                pctx, reinterpret_cast<const unsigned char*>(salt.constData()), static_cast<int>(salt.size())) <= 0) {
             EVP_PKEY_CTX_free(pctx);
             return {};
         }
     }
-    if (EVP_PKEY_CTX_set1_hkdf_key(pctx, reinterpret_cast<const unsigned char*>(ikm.constData()), ikm.size()) <= 0) {
+    if (EVP_PKEY_CTX_set1_hkdf_key(
+            pctx, reinterpret_cast<const unsigned char*>(ikm.constData()), static_cast<int>(ikm.size())) <= 0) {
         EVP_PKEY_CTX_free(pctx);
         return {};
     }
     if (!info.isEmpty()) {
-        if (EVP_PKEY_CTX_add1_hkdf_info(pctx, reinterpret_cast<const unsigned char*>(info.constData()), info.size()) <=
-            0) {
+        if (EVP_PKEY_CTX_add1_hkdf_info(
+                pctx, reinterpret_cast<const unsigned char*>(info.constData()), static_cast<int>(info.size())) <= 0) {
             EVP_PKEY_CTX_free(pctx);
             return {};
         }
     }
     QByteArray out;
-    out.resize(outLen);
+    out.resize(static_cast<qsizetype>(outLen));
     size_t out_len = outLen;
     if (EVP_PKEY_derive(pctx, reinterpret_cast<unsigned char*>(out.data()), &out_len) <= 0) {
         EVP_PKEY_CTX_free(pctx);
@@ -104,7 +105,7 @@ void QuickShareCrypto::deriveKeys(const QByteArray& peerPublicKeyBytes) {
         EC_POINT* point = EC_POINT_new(group);
         if (point) {
             if (EC_POINT_oct2point(group, point, reinterpret_cast<const unsigned char*>(peerPublicKeyBytes.constData()),
-                    peerPublicKeyBytes.size(), nullptr)) {
+                    static_cast<size_t>(peerPublicKeyBytes.size()), nullptr)) {
                 EC_KEY* ecKey = EC_KEY_new();
                 EC_KEY_set_group(ecKey, group);
                 EC_KEY_set_public_key(ecKey, point);
@@ -127,7 +128,7 @@ void QuickShareCrypto::deriveKeys(const QByteArray& peerPublicKeyBytes) {
     unsigned int mdLen = 0;
     EVP_MD_CTX* mdctx = EVP_MD_CTX_new();
     EVP_DigestInit_ex(mdctx, EVP_sha256(), nullptr);
-    EVP_DigestUpdate(mdctx, sharedSecret.constData(), sharedSecret.size());
+    EVP_DigestUpdate(mdctx, sharedSecret.constData(), static_cast<size_t>(sharedSecret.size()));
     EVP_DigestFinal_ex(mdctx, reinterpret_cast<unsigned char*>(derivedSecret.data()), &mdLen);
     EVP_MD_CTX_free(mdctx);
 
@@ -167,7 +168,7 @@ QString QuickShareCrypto::pinCode() const {
 
     int hash = 0;
     int multiplier = 1;
-    for (unsigned char const byte : m_authString) {
+    for (const char byte : m_authString) {
         // NOLINTNEXTLINE(bugprone-signed-char-misuse): Nearby Share specifies this hash over
         // signed bytes, so the reinterpretation is the protocol rather than a mistake.
         int const signedByte = static_cast<int>(static_cast<signed char>(byte));
@@ -187,7 +188,7 @@ QByteArray QuickShareCrypto::extractSharedSecret(EVP_PKEY* peerKey) {
     size_t secretLen = 0;
     EVP_PKEY_derive(ctx, nullptr, &secretLen);
     QByteArray secret;
-    secret.resize(secretLen);
+    secret.resize(static_cast<qsizetype>(secretLen));
     EVP_PKEY_derive(ctx, reinterpret_cast<unsigned char*>(secret.data()), &secretLen);
     EVP_PKEY_CTX_free(ctx);
     return secret;
@@ -208,7 +209,7 @@ void QuickShareCrypto::initServer() {
 QByteArray QuickShareCrypto::processClientInit(const QByteArray& data) {
     m_clientInitMsgData = data;
     securegcm::Ukey2Message msg;
-    if (!msg.ParseFromArray(data.constData(), data.size()))
+    if (!msg.ParseFromArray(data.constData(), static_cast<int>(data.size())))
         return {};
     if (msg.message_type() != securegcm::Ukey2Message::CLIENT_INIT)
         return {};
@@ -223,7 +224,7 @@ QByteArray QuickShareCrypto::processClientInit(const QByteArray& data) {
 QByteArray QuickShareCrypto::processServerInit(const QByteArray& data) {
     m_serverInitMsgData = data;
     securegcm::Ukey2Message msg;
-    if (!msg.ParseFromArray(data.constData(), data.size()))
+    if (!msg.ParseFromArray(data.constData(), static_cast<int>(data.size())))
         return {};
     if (msg.message_type() != securegcm::Ukey2Message::SERVER_INIT)
         return {};
@@ -249,8 +250,8 @@ QByteArray QuickShareCrypto::processServerInit(const QByteArray& data) {
 
     QByteArray peerPublicKeyBytes;
     peerPublicKeyBytes.append(static_cast<char>(0x04));
-    peerPublicKeyBytes.append(xRaw.data(), xRaw.size());
-    peerPublicKeyBytes.append(yRaw.data(), yRaw.size());
+    peerPublicKeyBytes.append(xRaw.data(), static_cast<qsizetype>(xRaw.size()));
+    peerPublicKeyBytes.append(yRaw.data(), static_cast<qsizetype>(yRaw.size()));
 
     deriveKeys(peerPublicKeyBytes);
     m_handshakeComplete = true;
@@ -259,7 +260,7 @@ QByteArray QuickShareCrypto::processServerInit(const QByteArray& data) {
 
 bool QuickShareCrypto::processClientFinished(const QByteArray& data) {
     securegcm::Ukey2Message msg;
-    if (!msg.ParseFromArray(data.constData(), data.size()))
+    if (!msg.ParseFromArray(data.constData(), static_cast<int>(data.size())))
         return false;
     if (msg.message_type() != securegcm::Ukey2Message::CLIENT_FINISH)
         return false;
@@ -285,8 +286,8 @@ bool QuickShareCrypto::processClientFinished(const QByteArray& data) {
 
     QByteArray peerPublicKeyBytes;
     peerPublicKeyBytes.append(static_cast<char>(0x04));
-    peerPublicKeyBytes.append(xRaw2.data(), xRaw2.size());
-    peerPublicKeyBytes.append(yRaw2.data(), yRaw2.size());
+    peerPublicKeyBytes.append(xRaw2.data(), static_cast<qsizetype>(xRaw2.size()));
+    peerPublicKeyBytes.append(yRaw2.data(), static_cast<qsizetype>(yRaw2.size()));
 
     deriveKeys(peerPublicKeyBytes);
 
@@ -302,7 +303,7 @@ QByteArray QuickShareCrypto::generateClientInit() {
             const EC_GROUP* group = EC_KEY_get0_group(ecKey);
             const EC_POINT* point = EC_KEY_get0_public_key(ecKey);
             size_t const len = EC_POINT_point2oct(group, point, POINT_CONVERSION_UNCOMPRESSED, nullptr, 0, nullptr);
-            QByteArray pubKeyBytes(len, '\0');
+            QByteArray pubKeyBytes(static_cast<qsizetype>(len), '\0');
             EC_POINT_point2oct(group, point, POINT_CONVERSION_UNCOMPRESSED,
                 reinterpret_cast<unsigned char*>(pubKeyBytes.data()), len, nullptr);
 
@@ -328,8 +329,9 @@ QByteArray QuickShareCrypto::generateClientInit() {
             *genericPubKey.mutable_ec_p256_public_key() = ecPubKey;
 
             QByteArray serializedGenPubKey;
-            serializedGenPubKey.resize(genericPubKey.ByteSizeLong());
-            if (!genericPubKey.SerializeToArray(serializedGenPubKey.data(), serializedGenPubKey.size()))
+            serializedGenPubKey.resize(static_cast<qsizetype>(genericPubKey.ByteSizeLong()));
+            if (!genericPubKey.SerializeToArray(
+                    serializedGenPubKey.data(), static_cast<int>(serializedGenPubKey.size())))
                 qCWarning(lcQuickShareCrypto, "Failed to serialise the generic public key");
             clientFinished.set_public_key(serializedGenPubKey.constData(), serializedGenPubKey.size());
             EC_KEY_free(ecKey);
@@ -372,8 +374,8 @@ QByteArray QuickShareCrypto::generateClientInit() {
     msg.set_message_data(clientInit.SerializeAsString());
 
     QByteArray out;
-    out.resize(msg.ByteSizeLong());
-    if (!msg.SerializeToArray(out.data(), out.size()))
+    out.resize(static_cast<qsizetype>(msg.ByteSizeLong()));
+    if (!msg.SerializeToArray(out.data(), static_cast<int>(out.size())))
         qCWarning(lcQuickShareCrypto, "Failed to serialise a Ukey2 message");
     m_clientInitMsgData = out;
     return out;
@@ -396,7 +398,7 @@ QByteArray QuickShareCrypto::generateServerInit() {
             const EC_POINT* point = EC_KEY_get0_public_key(ecKey);
             size_t const len = EC_POINT_point2oct(group, point, POINT_CONVERSION_UNCOMPRESSED, nullptr, 0, nullptr);
             QByteArray pubKeyBytes;
-            pubKeyBytes.resize(len);
+            pubKeyBytes.resize(static_cast<qsizetype>(len));
             EC_POINT_point2oct(group, point, POINT_CONVERSION_UNCOMPRESSED,
                 reinterpret_cast<unsigned char*>(pubKeyBytes.data()), len, nullptr);
 
@@ -424,8 +426,9 @@ QByteArray QuickShareCrypto::generateServerInit() {
             *genericPubKey.mutable_ec_p256_public_key() = ecPubKey;
 
             QByteArray serializedGenPubKey;
-            serializedGenPubKey.resize(genericPubKey.ByteSizeLong());
-            if (!genericPubKey.SerializeToArray(serializedGenPubKey.data(), serializedGenPubKey.size()))
+            serializedGenPubKey.resize(static_cast<qsizetype>(genericPubKey.ByteSizeLong()));
+            if (!genericPubKey.SerializeToArray(
+                    serializedGenPubKey.data(), static_cast<int>(serializedGenPubKey.size())))
                 qCWarning(lcQuickShareCrypto, "Failed to serialise the generic public key");
 
             serverInit.set_public_key(serializedGenPubKey.constData(), serializedGenPubKey.size());
@@ -438,8 +441,8 @@ QByteArray QuickShareCrypto::generateServerInit() {
     msg.set_message_data(serverInit.SerializeAsString());
 
     QByteArray out;
-    out.resize(msg.ByteSizeLong());
-    if (!msg.SerializeToArray(out.data(), out.size()))
+    out.resize(static_cast<qsizetype>(msg.ByteSizeLong()));
+    if (!msg.SerializeToArray(out.data(), static_cast<int>(out.size())))
         qCWarning(lcQuickShareCrypto, "Failed to serialise a Ukey2 message");
     m_serverInitMsgData = out;
     return out;
@@ -455,7 +458,7 @@ QByteArray QuickShareCrypto::encryptPayload(const QByteArray& plaintext) {
 
     QByteArray iv;
     iv.resize(16);
-    RAND_bytes(reinterpret_cast<unsigned char*>(iv.data()), iv.size());
+    RAND_bytes(reinterpret_cast<unsigned char*>(iv.data()), static_cast<int>(iv.size()));
 
     EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
     EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, reinterpret_cast<const unsigned char*>(m_encodeKey.constData()),
@@ -466,7 +469,7 @@ QByteArray QuickShareCrypto::encryptPayload(const QByteArray& plaintext) {
     int len1 = 0;
     int len2 = 0;
     EVP_EncryptUpdate(ctx, reinterpret_cast<unsigned char*>(ciphertext.data()), &len1,
-        reinterpret_cast<const unsigned char*>(plaintext.constData()), plaintext.size());
+        reinterpret_cast<const unsigned char*>(plaintext.constData()), static_cast<int>(plaintext.size()));
     EVP_EncryptFinal_ex(ctx, reinterpret_cast<unsigned char*>(ciphertext.data()) + len1, &len2);
     EVP_CIPHER_CTX_free(ctx);
     ciphertext.resize(len1 + len2);
@@ -476,7 +479,7 @@ QByteArray QuickShareCrypto::encryptPayload(const QByteArray& plaintext) {
     hmac.resize(32);
     unsigned int hmacLen = 0;
     HMAC(EVP_sha256(), m_hmacEncodeKey.constData(), static_cast<int>(m_hmacEncodeKey.size()),
-        reinterpret_cast<const unsigned char*>(hmacData.constData()), hmacData.size(),
+        reinterpret_cast<const unsigned char*>(hmacData.constData()), static_cast<size_t>(hmacData.size()),
         reinterpret_cast<unsigned char*>(hmac.data()), &hmacLen);
 
     return iv + ciphertext + hmac;
@@ -498,7 +501,7 @@ QByteArray QuickShareCrypto::decryptPayload(const QByteArray& ciphertextBytes) {
     expectedHmac.resize(32);
     unsigned int hmacLen = 0;
     HMAC(EVP_sha256(), m_hmacDecodeKey.constData(), static_cast<int>(m_hmacDecodeKey.size()),
-        reinterpret_cast<const unsigned char*>(hmacData.constData()), hmacData.size(),
+        reinterpret_cast<const unsigned char*>(hmacData.constData()), static_cast<size_t>(hmacData.size()),
         reinterpret_cast<unsigned char*>(expectedHmac.data()), &hmacLen);
 
     if (hmac != expectedHmac) {
@@ -515,7 +518,7 @@ QByteArray QuickShareCrypto::decryptPayload(const QByteArray& ciphertextBytes) {
     int len1 = 0;
     int len2 = 0;
     EVP_DecryptUpdate(ctx, reinterpret_cast<unsigned char*>(plaintext.data()), &len1,
-        reinterpret_cast<const unsigned char*>(ciphertext.constData()), ciphertext.size());
+        reinterpret_cast<const unsigned char*>(ciphertext.constData()), static_cast<int>(ciphertext.size()));
     EVP_DecryptFinal_ex(ctx, reinterpret_cast<unsigned char*>(plaintext.data()) + len1, &len2);
     EVP_CIPHER_CTX_free(ctx);
     plaintext.resize(len1 + len2);

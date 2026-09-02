@@ -140,7 +140,7 @@ bool QuickShareDiscovery::advertise(const QString& deviceName, int port) {
         static_cast<uint>(0), // flags
         serviceName, u"_FC9F5ED42C8A._tcp"_s, u"local"_s,
         QString(), // host
-        QVariant::fromValue<quint16>(port), QVariant::fromValue(txtRecord));
+        QVariant::fromValue<quint16>(static_cast<quint16>(port)), QVariant::fromValue(txtRecord));
 
     if (reply.type() == QDBusMessage::ErrorMessage) {
         qWarning() << "QuickShareDiscovery: AddService failed:" << reply.errorMessage();
@@ -248,7 +248,7 @@ void QuickShareDiscovery::onServiceResolved(const QDBusMessage& msg) {
         if (args[8].userType() == QMetaType::UShort) {
             device.port = args[8].value<quint16>();
         } else {
-            device.port = args[8].toUInt();
+            device.port = static_cast<int>(args[8].toUInt());
         }
 
         emit deviceFound(device);

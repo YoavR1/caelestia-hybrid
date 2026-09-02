@@ -100,7 +100,7 @@ QuickShareConnection::QuickShareConnection(const QString& host, int port, QObjec
 
         req->set_endpoint_info(endpointInfo.constData(), endpointInfo.size());
         QByteArray request;
-        request.resize(frame.ByteSizeLong());
+        request.resize(static_cast<qsizetype>(frame.ByteSizeLong()));
         (void)frame.SerializeToArray(request.data(), static_cast<int>(request.size()));
 
         writeLengthPrefixed(m_socket, request);
@@ -161,7 +161,7 @@ void QuickShareConnection::sendFile(const QString& filePath) {
 
     fileMeta->set_size(fileInfo.size());
 
-    qint64 filePayloadId = QRandomGenerator::global()->generate64();
+    qint64 filePayloadId = static_cast<qint64>(QRandomGenerator::global()->generate64());
     filePayloadId = qAbs(filePayloadId);
     fileMeta->set_payload_id(filePayloadId);
     fileMeta->set_id(filePayloadId);
@@ -197,10 +197,10 @@ void QuickShareConnection::sendEncryptedSharingFrame(sharing::nearby::V1Frame::F
 
 void QuickShareConnection::sendEncryptedSharingFrame(const sharing::nearby::Frame& frame) {
     QByteArray frameData;
-    frameData.resize(frame.ByteSizeLong());
+    frameData.resize(static_cast<qsizetype>(frame.ByteSizeLong()));
     (void)frame.SerializeToArray(frameData.data(), static_cast<int>(frameData.size()));
 
-    qint64 const payloadId = QRandomGenerator::global()->generate64();
+    qint64 const payloadId = static_cast<qint64>(QRandomGenerator::global()->generate64());
     qint64 const bodySize = frameData.size();
 
     location::nearby::connections::PayloadTransferFrame ptf1;
@@ -222,7 +222,7 @@ void QuickShareConnection::sendEncryptedSharingFrame(const sharing::nearby::Fram
     *v1a->mutable_payload_transfer() = ptf1;
 
     QByteArray out1;
-    out1.resize(offline1.ByteSizeLong());
+    out1.resize(static_cast<qsizetype>(offline1.ByteSizeLong()));
     (void)offline1.SerializeToArray(out1.data(), static_cast<int>(out1.size()));
     encryptAndSendOfflineFrameBytes(out1);
 
@@ -245,7 +245,7 @@ void QuickShareConnection::sendEncryptedSharingFrame(const sharing::nearby::Fram
     *v1b->mutable_payload_transfer() = ptf2;
 
     QByteArray out2;
-    out2.resize(offline2.ByteSizeLong());
+    out2.resize(static_cast<qsizetype>(offline2.ByteSizeLong()));
     (void)offline2.SerializeToArray(out2.data(), static_cast<int>(out2.size()));
     encryptAndSendOfflineFrameBytes(out2);
 }
@@ -270,7 +270,7 @@ QByteArray QuickShareConnection::buildPayloadTransferFrame(
     }
 
     QByteArray out;
-    out.resize(ptf.ByteSizeLong());
+    out.resize(static_cast<qsizetype>(ptf.ByteSizeLong()));
     (void)ptf.SerializeToArray(out.data(), static_cast<int>(out.size()));
     return out;
 }
@@ -285,7 +285,7 @@ QByteArray QuickShareConnection::buildOfflineFrame(const QByteArray& payloadTran
         qCWarning(lcQuickShareConn, "Failed to parse the payload transfer frame");
 
     QByteArray out;
-    out.resize(offlineFrame.ByteSizeLong());
+    out.resize(static_cast<qsizetype>(offlineFrame.ByteSizeLong()));
     (void)offlineFrame.SerializeToArray(out.data(), static_cast<int>(out.size()));
     return out;
 }
@@ -376,7 +376,8 @@ void QuickShareConnection::handleOfflineFrame(const QByteArray& data) {
             }
         }
         if (m_deviceName.isEmpty() && req.has_endpoint_name()) {
-            m_deviceName = QString::fromUtf8(req.endpoint_name().data(), req.endpoint_name().size());
+            m_deviceName =
+                QString::fromUtf8(req.endpoint_name().data(), static_cast<qsizetype>(req.endpoint_name().size()));
         }
     }
 
@@ -409,7 +410,7 @@ void QuickShareConnection::handleUkey2(const QByteArray& data) {
                 resp->mutable_os_info()->set_type(location::nearby::connections::OsInfo::LINUX);
 
                 QByteArray responseData;
-                responseData.resize(respFrame.ByteSizeLong());
+                responseData.resize(static_cast<qsizetype>(respFrame.ByteSizeLong()));
                 (void)respFrame.SerializeToArray(responseData.data(), static_cast<int>(responseData.size()));
 
                 writeLengthPrefixed(m_socket, responseData);
@@ -458,7 +459,7 @@ void QuickShareConnection::handlePostHandshake(const QByteArray& data) {
         resp->mutable_os_info()->set_type(location::nearby::connections::OsInfo::LINUX);
 
         QByteArray responseData;
-        responseData.resize(respFrame.ByteSizeLong());
+        responseData.resize(static_cast<qsizetype>(respFrame.ByteSizeLong()));
         (void)respFrame.SerializeToArray(responseData.data(), static_cast<int>(responseData.size()));
         writeLengthPrefixed(m_socket, responseData);
 
@@ -477,7 +478,7 @@ QByteArray QuickShareConnection::wrapInSecureMessage(const QByteArray& offlineFr
     d2dMsg.set_sequence_number(m_sendSeq++);
 
     QByteArray d2dData;
-    d2dData.resize(d2dMsg.ByteSizeLong());
+    d2dData.resize(static_cast<qsizetype>(d2dMsg.ByteSizeLong()));
     (void)d2dMsg.SerializeToArray(d2dData.data(), static_cast<int>(d2dData.size()));
 
     QByteArray iv;
@@ -494,7 +495,7 @@ QByteArray QuickShareConnection::wrapInSecureMessage(const QByteArray& offlineFr
     int len1 = 0;
     int len2 = 0;
     EVP_EncryptUpdate(ctx, reinterpret_cast<unsigned char*>(ciphertext.data()), &len1,
-        reinterpret_cast<const unsigned char*>(d2dData.constData()), d2dData.size());
+        reinterpret_cast<const unsigned char*>(d2dData.constData()), static_cast<int>(d2dData.size()));
     EVP_EncryptFinal_ex(ctx, reinterpret_cast<unsigned char*>(ciphertext.data()) + len1, &len2);
     EVP_CIPHER_CTX_free(ctx);
     ciphertext.resize(len1 + len2);
@@ -508,7 +509,7 @@ QByteArray QuickShareConnection::wrapInSecureMessage(const QByteArray& offlineFr
     metadata.set_type(securegcm::DEVICE_TO_DEVICE_MESSAGE);
     metadata.set_version(1);
     QByteArray metadataBytes;
-    metadataBytes.resize(metadata.ByteSizeLong());
+    metadataBytes.resize(static_cast<qsizetype>(metadata.ByteSizeLong()));
     (void)metadata.SerializeToArray(metadataBytes.data(), static_cast<int>(metadataBytes.size()));
     header.set_public_metadata(metadataBytes.constData(), metadataBytes.size());
 
@@ -517,21 +518,21 @@ QByteArray QuickShareConnection::wrapInSecureMessage(const QByteArray& offlineFr
     headerAndBody.set_body(ciphertext.constData(), ciphertext.size());
 
     QByteArray headerAndBodyBytes;
-    headerAndBodyBytes.resize(headerAndBody.ByteSizeLong());
+    headerAndBodyBytes.resize(static_cast<qsizetype>(headerAndBody.ByteSizeLong()));
     (void)headerAndBody.SerializeToArray(headerAndBodyBytes.data(), static_cast<int>(headerAndBodyBytes.size()));
 
     unsigned char hmacResult[32];
     unsigned int hmacLen = 0;
     HMAC(EVP_sha256(), m_crypto.hmacEncodeKey().constData(), static_cast<int>(m_crypto.hmacEncodeKey().size()),
-        reinterpret_cast<const unsigned char*>(headerAndBodyBytes.constData()), headerAndBodyBytes.size(), hmacResult,
-        &hmacLen);
+        reinterpret_cast<const unsigned char*>(headerAndBodyBytes.constData()),
+        static_cast<size_t>(headerAndBodyBytes.size()), hmacResult, &hmacLen);
 
     securemessage::SecureMessage secMsg;
     secMsg.set_header_and_body(headerAndBodyBytes.constData(), headerAndBodyBytes.size());
     secMsg.set_signature(hmacResult, hmacLen);
 
     QByteArray out;
-    out.resize(secMsg.ByteSizeLong());
+    out.resize(static_cast<qsizetype>(secMsg.ByteSizeLong()));
     (void)secMsg.SerializeToArray(out.data(), static_cast<int>(out.size()));
     return out;
 }
@@ -543,13 +544,14 @@ QByteArray QuickShareConnection::unwrapSecureMessage(const QByteArray& secureMes
         return {};
     }
 
-    const QByteArray headerAndBodyBytes(secMsg.header_and_body().data(), secMsg.header_and_body().size());
+    const QByteArray headerAndBodyBytes(
+        secMsg.header_and_body().data(), static_cast<qsizetype>(secMsg.header_and_body().size()));
 
     unsigned char hmacResult[32];
     unsigned int hmacLen = 0;
     HMAC(EVP_sha256(), m_crypto.hmacDecodeKey().constData(), static_cast<int>(m_crypto.hmacDecodeKey().size()),
-        reinterpret_cast<const unsigned char*>(headerAndBodyBytes.constData()), headerAndBodyBytes.size(), hmacResult,
-        &hmacLen);
+        reinterpret_cast<const unsigned char*>(headerAndBodyBytes.constData()),
+        static_cast<size_t>(headerAndBodyBytes.size()), hmacResult, &hmacLen);
 
     if (static_cast<int>(hmacLen) != secMsg.signature().size() ||
         memcmp(hmacResult, secMsg.signature().data(), hmacLen) != 0) {
@@ -564,8 +566,8 @@ QByteArray QuickShareConnection::unwrapSecureMessage(const QByteArray& secureMes
     }
 
     const auto& header = headerAndBody.header();
-    QByteArray const iv(header.iv().data(), header.iv().size());
-    QByteArray const ciphertext(headerAndBody.body().data(), headerAndBody.body().size());
+    QByteArray const iv(header.iv().data(), static_cast<qsizetype>(header.iv().size()));
+    QByteArray const ciphertext(headerAndBody.body().data(), static_cast<qsizetype>(headerAndBody.body().size()));
 
     EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
     EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr,
@@ -577,7 +579,7 @@ QByteArray QuickShareConnection::unwrapSecureMessage(const QByteArray& secureMes
     int len1 = 0;
     int len2 = 0;
     EVP_DecryptUpdate(ctx, reinterpret_cast<unsigned char*>(plaintext.data()), &len1,
-        reinterpret_cast<const unsigned char*>(ciphertext.constData()), ciphertext.size());
+        reinterpret_cast<const unsigned char*>(ciphertext.constData()), static_cast<int>(ciphertext.size()));
     EVP_DecryptFinal_ex(ctx, reinterpret_cast<unsigned char*>(plaintext.data()) + len1, &len2);
     EVP_CIPHER_CTX_free(ctx);
     plaintext.resize(len1 + len2);
@@ -628,7 +630,7 @@ void QuickShareConnection::handlePayloadTransfer(const QByteArray& plaintext) {
     const auto& payloadChunk = payloadTransfer.payload_chunk();
 
     qint64 const payloadId = payloadHeader.id();
-    QByteArray const chunkBody(payloadChunk.body().data(), payloadChunk.body().size());
+    QByteArray const chunkBody(payloadChunk.body().data(), static_cast<qsizetype>(payloadChunk.body().size()));
 
     if (payloadHeader.type() == location::nearby::connections::PayloadTransferFrame::PayloadHeader::FILE) {
         if (!m_fileTransferActive) {
@@ -685,7 +687,8 @@ void QuickShareConnection::handlePayloadTransfer(const QByteArray& plaintext) {
                 hex += QString(u"%1 "_s).arg(static_cast<uchar>(buf[i]), 2, 16, u'0');
 
             sharing::nearby::Frame frame;
-            if (frame.ParseFromArray(m_payloadBuffers[payloadId].constData(), m_payloadBuffers[payloadId].size())) {
+            if (frame.ParseFromArray(
+                    m_payloadBuffers[payloadId].constData(), static_cast<int>(m_payloadBuffers[payloadId].size()))) {
 
                 switch (frame.v1().type()) {
                 case sharing::nearby::V1Frame::PAIRED_KEY_ENCRYPTION: {
@@ -744,7 +747,7 @@ void QuickShareConnection::handlePayloadTransfer(const QByteArray& plaintext) {
                                     *v1F->mutable_payload_transfer() = ptfFile;
 
                                     QByteArray outFile;
-                                    outFile.resize(offlineFile.ByteSizeLong());
+                                    outFile.resize(static_cast<qsizetype>(offlineFile.ByteSizeLong()));
                                     (void)offlineFile.SerializeToArray(
                                         outFile.data(), static_cast<int>(outFile.size()));
                                     encryptAndSendOfflineFrameBytes(outFile);
@@ -777,7 +780,7 @@ void QuickShareConnection::handlePayloadTransfer(const QByteArray& plaintext) {
                                 *v1L->mutable_payload_transfer() = ptfLast;
 
                                 QByteArray outLast;
-                                outLast.resize(offlineLast.ByteSizeLong());
+                                outLast.resize(static_cast<qsizetype>(offlineLast.ByteSizeLong()));
                                 (void)offlineLast.SerializeToArray(outLast.data(), static_cast<int>(outLast.size()));
                                 encryptAndSendOfflineFrameBytes(outLast);
 
@@ -789,7 +792,7 @@ void QuickShareConnection::handlePayloadTransfer(const QByteArray& plaintext) {
                                 v1Disc->mutable_disconnection(); // Create empty disconnection frame
 
                                 QByteArray discBytes;
-                                discBytes.resize(offlineDisc.ByteSizeLong());
+                                discBytes.resize(static_cast<qsizetype>(offlineDisc.ByteSizeLong()));
                                 (void)offlineDisc.SerializeToArray(
                                     discBytes.data(), static_cast<int>(discBytes.size()));
                                 encryptAndSendOfflineFrameBytes(discBytes);
