@@ -33,7 +33,7 @@ StyledWindow {
             return bar;
         })()
 
-    readonly property real floorOffset: Config.bar.position === "bottom" ? (barWrapper?.exclusiveZone ?? (Tokens.sizes.bar.innerWidth + Math.max(Tokens.padding.small, Config.border.thickness))) : 0
+    readonly property real floorOffset: contentItem.Config.bar.position === "bottom" ? (barWrapper?.exclusiveZone ?? (contentItem.Tokens.sizes.bar.innerWidth + Math.max(contentItem.Tokens.padding.small, contentItem.Config.border.thickness))) : 0
 
     function getImgPath(): string {
         if (!modelData)

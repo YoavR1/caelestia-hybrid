@@ -28,7 +28,7 @@ Singleton {
         let reason = "None";
 
         // Rule #0 — Manual / Config Pause
-        if ((typeof Config !== "undefined" && Config.background && Config.background.videoWallpaperPaused) || manualPause) {
+        if (GlobalConfig.background.videoWallpaperPaused || manualPause) {
             newPaused = true;
             reason = "Manual / Config Pause";
         } else if (pauseOnBattery && UPower.onBattery) {

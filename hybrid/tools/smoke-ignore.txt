@@ -34,34 +34,22 @@ QObject: Cannot create children for a parent that is in a different thread
 QObject::installEventFilter\(\): Cannot filter events for objects in a different thread
 
 # =============================================================================
+# The shell fetches weather, GitHub activity and lyrics over the network at startup. A CI
+# container has no internet, and even here the weather API returns 503 often enough to have
+# failed 5 of 12 runs in one sitting. A boot gate must not depend on someone else's uptime.
+#
+# This does hide a genuinely malformed request, so if a feature that talks to the network
+# stops working, read the log with this file emptied before believing the gate.
+caelestia\.requests: \w+: request failed with error
+
 # KNOWN BUGS - real defects, suppressed only so the gate stays useful.
 # Each line here is debt. Delete the entry when the bug is fixed, not before.
 # =============================================================================
 
-# KNOWN BUG (midnight): services/Wallpapers.qml and services/WallpaperPauser.qml are
-# the only files in any of the three trees using QtCore's `Settings` type. Quickshell
-# never calls QCoreApplication::setOrganizationName/setApplicationName, so QSettings
-# fails to initialise (AccessError) and these settings never persist across restarts.
-# Adding an explicit `location:` does NOT help - WallpaperPauser already has one and
-# still fails. Fix is either to set the app identifiers from the C++ plugin, or to
-# port both to the project's own config/FileView persistence.
-Failed to initialize QSettings instance\. Status code is: 1
-The following application identifiers have not been set
-
-# KNOWN BUG: Tokens accessed before a screen is assigned. Fires for PolkitDialog and
-# Anim during early construction; the token values resolve from the global layer
-# instead of the per-screen one. Harmless on a single monitor, likely wrong on multi-
-# monitor setups with per-screen token overrides. Revisit after the Phase 2 config
-# rewrite, which reworks exactly this layering.
-Tokens\.(sizes|rounding|padding|spacing) accessed without a screen set
-
-# Same bug, the Config half of it. MiDnight had deleted upstream's warning from
-# CONFIG_ATTACHED_GETTER rather than fixing what it was reporting; the Phase 2 merge took
-# upstream's macro back, so these are visible again. WallpaperPauser is the loudest.
-Config\.\w+ accessed without a screen set
-
-
-# KNOWN BUG: the app database is queried before it is opened. Comes from the appdb
-# path that upstream has since restructured (plugin layout rearrange, #1896), so this
-# may resolve itself during the Phase 2 merge. Recheck then.
-QSqlQuery::exec: database not open
+# Upstream's components/Anim.qml reads Tokens.anim.durations, and Anim is a
+# NumberAnimation -- not a QQuickItem -- so its attached Tokens can never inherit a
+# screen and always resolves against the global layer. Animation durations do not vary
+# per monitor, so the value is right; upstream's own diagnostic just cannot tell. Fires
+# once per process. Fixing it means changing an upstream file for a cosmetic warning,
+# which is the wrong trade (hard rule 6) -- report it upstream instead.
+Tokens\.\w+ accessed without a screen set on Anim

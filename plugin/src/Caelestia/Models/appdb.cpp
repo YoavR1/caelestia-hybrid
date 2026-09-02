@@ -1,7 +1,10 @@
 #include "appdb.hpp"
 
+#include <qdir.h>
+#include <qfileinfo.h>
 #include <qloggingcategory.h>
 #include <qsqldatabase.h>
+#include <qsqlerror.h>
 #include <qsqlquery.h>
 #include <quuid.h>
 
@@ -150,7 +153,22 @@ void AppDb::setPath(const QString& path) {
     auto db = QSqlDatabase::database(m_uuid, false);
     db.close();
     db.setDatabaseName(newPath);
-    db.open();
+
+    // SQLite will not create the containing directory, and on a fresh install
+    // $XDG_STATE_HOME/caelestia does not exist yet. Without this, open() fails, its
+    // return value was ignored, and the first query reported "QSqlQuery::exec: database
+    // not open" with nothing to say which database or why -- so app launch frequencies
+    // silently never recorded.
+    if (newPath != u":memory:"_s) {
+        const auto dir = QFileInfo(newPath).absolutePath();
+        if (!QDir().mkpath(dir))
+            qCWarning(lcAppDb) << "Failed to create" << dir;
+    }
+
+    if (!db.open()) {
+        qCWarning(lcAppDb, "Failed to open %s: %s", qUtf8Printable(newPath), qUtf8Printable(db.lastError().text()));
+        return;
+    }
 
     QSqlQuery query(db);
     query.exec(u"CREATE TABLE IF NOT EXISTS frequencies (id TEXT PRIMARY KEY, frequency INTEGER)"_s);

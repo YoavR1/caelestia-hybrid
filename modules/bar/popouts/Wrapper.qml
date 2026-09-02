@@ -94,7 +94,7 @@ Item {
         id: popoutState
 
         sidebarOpen: root.screenState.sidebar
-        isHorizontal: Config.bar.position === "top" || Config.bar.position === "bottom"
+        isHorizontal: root.Config.bar.position === "top" || root.Config.bar.position === "bottom"
 
         onDetachRequested: mode => root.detach(mode)
     }

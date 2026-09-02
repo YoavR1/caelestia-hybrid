@@ -3,6 +3,7 @@ qml_module(caelestia-config
     INCLUDE_PREFIX config
     SOURCES
         common.cpp
+        appidentity.cpp
         rootnodes.cpp
         configattached.cpp
         appearanceconfig.cpp

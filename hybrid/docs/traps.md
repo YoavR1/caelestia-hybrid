@@ -352,11 +352,25 @@ QML Settings at @services/Wallpapers.qml[383:5]: Failed to initialize QSettings 
 The following application identifiers have not been set: QList("organizationName", "organizationDomain")
 ```
 
-Wallpaper-engine volume/silent and the pauser's settings therefore never persist across restarts.
+Wallpaper-engine volume/silent and the pauser's settings therefore never persisted across restarts.
 
-Adding an explicit `location:` does **not** fix it — `WallpaperPauser` already has one and still
-fails. The fix is to set the app identifiers from the C++ plugin, or to port both to the project's
-own config / `FileView` persistence. Suppressed in `smoke-ignore.txt` under KNOWN BUGS.
+Adding an explicit `location:` does **not** help — `WallpaperPauser` already had one and still
+failed, which is the clue: the failure is at QSettings construction, before the location matters.
+
+**Fixed** in `plugin/src/Caelestia/Config/appidentity.cpp`, a `Q_COREAPP_STARTUP_FUNCTION` that
+fills in `organizationName` and `organizationDomain` (and `applicationName` if a host ever leaves
+it empty). Quickshell sets `applicationName` to `quickshell` and nothing else, so supplying the
+missing half is the entire fix. Verified by running with a fixed `XDG_CONFIG_HOME` and reading the
+file back:
+
+```
+$XDG_CONFIG_HOME/caelestia/quickshell.conf
+  [General]          silent=false  volume=0.15
+  [WallpaperPauser]  hwDecoder=none  manualPause=false  pauseOnBattery=false  pauseOnWindowOverlap=true
+```
+
+Note the pauser's values land in that file rather than the `location:` it asks for — the location
+is still not applied. They persist, which was the bug; where exactly is cosmetic.
 
 ---
 
