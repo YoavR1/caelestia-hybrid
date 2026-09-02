@@ -182,14 +182,29 @@ never a PR, never an automatic merge into `main`.
 
 ## 5. Testing
 
-Upstream's `lint.yml` already contains the primitive:
+> **Corrected 2026-09-02, on first contact with a real Linux target.** This section previously
+> claimed upstream's `lint.yml` already contained a headless smoke test:
+> ```bash
+> QT_QPA_PLATFORM=offscreen QML2_IMPORT_PATH="…" timeout 2 qs -p .
+> ```
+> It does not. That line sits under a `# Generate tooling` comment, exists to emit `.qmlls.ini`
+> for the linter, and **its exit code is never checked**. Run against this shell it fails
+> immediately with `No PanelWindow backend loaded`, because Quickshell's `PanelWindow` is a
+> wlr-layer-shell surface and `offscreen` provides no Wayland backend. The failure poisons the
+> whole singleton graph (trap T12).
 
-```bash
-QT_QPA_PLATFORM=offscreen QML2_IMPORT_PATH="$PWD/build/qml:$QML2_IMPORT_PATH" timeout 2 qs -p .
-```
+The gate therefore needs a real compositor. `hybrid/tools/smoke-matrix.sh` spawns a **nested
+Hyprland** on its own socket, then for each preset boots the shell against it under an isolated
+`XDG_CONFIG_HOME` and fails on QML errors. It refuses to run against the live session socket, so
+it can never draw over a working desktop, and a cleanup trap tears the compositor down.
 
-A headless full-shell instantiation. `hybrid/tools/smoke-matrix.sh` wraps it: for each preset, boot
-the shell under an isolated `XDG_CONFIG_HOME` and fail on QML errors.
+Measured cost: ~3s compositor startup, then one window per preset. Three presets at a 12s window
+is well under a minute.
+
+**Open item for CI:** a GitHub Actions container has neither a parent Wayland display nor a free
+DRM device, so nested Hyprland cannot start there. Either the runner needs a headless
+wlroots compositor (`cage`, `sway --headless`) or a virtual DRM device (`vkms`). Resolve this
+before wiring `smoke-matrix.sh` into CI; it works locally today.
 
 Because each run costs seconds, arbitrary combinations are affordable — all presets plus a dozen
 randomised `features`/`variants` combos per CI run, including deliberately hostile ones (all on, all

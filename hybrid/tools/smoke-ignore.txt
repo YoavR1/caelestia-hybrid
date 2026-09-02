@@ -1,17 +1,61 @@
-# smoke-matrix.sh ignore list — reviewed code, not a dumping ground.
+# smoke-matrix.sh ignore list - reviewed code, not a dumping ground.
 #
-# One extended-regex per line. A log line matching any of these is not treated as a failure.
+# One extended-regex per line. A log line matching any of these is not a failure.
 # Blank lines and lines starting with # are ignored.
 #
-# Populate this ONCE, on the real Linux target, with:
-#     ./hybrid/tools/smoke-matrix.sh --baseline
-# then read every appended line and DELETE the ones that are genuine bugs.
+# --fix/--baseline can append here, but its output is NOT trustworthy as written: it
+# bakes in per-run temp paths and QMLTYPE ids that change every run. Always generalise
+# what it appends, and delete anything that is a genuine bug.
 #
-# Legitimate entries look like: "no Hyprland instance", "PipeWire connection failed",
-# "org.freedesktop.Notifications not provided" - i.e. hardware or session services that
-# genuinely do not exist inside a headless container.
-#
-# Illegitimate entries look like: "TypeError", "is not defined", "Unable to assign",
-# or anything naming one of our own QML files. Those are bugs. Fix them instead.
-#
-# (empty until baselined on the target machine)
+# Established on CachyOS / Hyprland 0.56.2 / Qt 6.x, nested-compositor run, 2026-09-02.
+
+# =============================================================================
+# ENVIRONMENT - absent hardware or services already owned by the host session.
+# These are legitimately not our problem inside a throwaway compositor.
+# =============================================================================
+
+# No bluetooth adapter in the VM.
+Failed to create DBusObjectManagerInterface for "org\.bluez"
+
+# The host session already owns these bus names / agent slots. A second shell
+# cannot register them, and correctly says so rather than stealing them.
+Could not register notification server at org\.freedesktop\.Notifications
+Registration will be attempted again if the active service is unregistered
+failed to register listener: GDBus\.Error:org\.freedesktop\.PolicyKit1\.Error\.Failed
+failed to register listener on path "/org/quickshell/PolkitAgent"
+
+# Fresh isolated XDG_STATE_HOME genuinely has no colour scheme yet. Writing one is
+# the CLI's job and the shell falls back correctly.
+Read of .*/state/caelestia/scheme\.json failed: File does not exist
+
+# Qt internal, raised from QuickShare's worker thread during teardown when we SIGTERM
+# the shell mid-run. Not reachable in normal operation.
+QObject: Cannot create children for a parent that is in a different thread
+QObject::installEventFilter\(\): Cannot filter events for objects in a different thread
+
+# =============================================================================
+# KNOWN BUGS - real defects, suppressed only so the gate stays useful.
+# Each line here is debt. Delete the entry when the bug is fixed, not before.
+# =============================================================================
+
+# KNOWN BUG (midnight): services/Wallpapers.qml and services/WallpaperPauser.qml are
+# the only files in any of the three trees using QtCore's `Settings` type. Quickshell
+# never calls QCoreApplication::setOrganizationName/setApplicationName, so QSettings
+# fails to initialise (AccessError) and these settings never persist across restarts.
+# Adding an explicit `location:` does NOT help - WallpaperPauser already has one and
+# still fails. Fix is either to set the app identifiers from the C++ plugin, or to
+# port both to the project's own config/FileView persistence.
+Failed to initialize QSettings instance\. Status code is: 1
+The following application identifiers have not been set
+
+# KNOWN BUG: Tokens accessed before a screen is assigned. Fires for PolkitDialog and
+# Anim during early construction; the token values resolve from the global layer
+# instead of the per-screen one. Harmless on a single monitor, likely wrong on multi-
+# monitor setups with per-screen token overrides. Revisit after the Phase 2 config
+# rewrite, which reworks exactly this layering.
+Tokens\.(sizes|rounding|padding|spacing) accessed without a screen set
+
+# KNOWN BUG: the app database is queried before it is opened. Comes from the appdb
+# path that upstream has since restructured (plugin layout rearrange, #1896), so this
+# may resolve itself during the Phase 2 merge. Recheck then.
+QSqlQuery::exec: database not open

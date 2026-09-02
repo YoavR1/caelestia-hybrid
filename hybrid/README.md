@@ -11,7 +11,7 @@ buys a guaranteed future conflict for no benefit.
 hybrid/
 ├── docs/
 │   ├── architecture.md   decision record — read this first
-│   ├── traps.md          T1-T11, the known landmines, with source evidence
+│   ├── traps.md          T1-T15, the known landmines, with source evidence
 │   └── provenance.md     import ledger + asset licensing watchlist
 ├── presets/              preset config layers; smoke-matrix picks these up automatically
 └── tools/

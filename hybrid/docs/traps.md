@@ -208,6 +208,25 @@ Two notes for whoever finishes this:
   meaningfully increase Phase 2 conflict surface; upstream's churn is 159/197 files in C++.
   Do not defer the cleanup out of merge-conflict fear.
 
+**`qmllint` is a second, larger backlog** (measured 2026-09-02 on CachyOS, Qt 6.11.2, against a
+real build — use `/usr/lib/qt6/bin/qmllint`, see T13):
+
+| Category | Count |
+|---|---|
+| `unqualified` | 573 |
+| `unused-imports` | 125 |
+| `missing-property` | 78 |
+| `unresolved-type` | 11 |
+| others (`equality-type-coercion`, `property-override`, `incompatible-type`, …) | ~25 |
+
+~810 warnings total. Upstream's `lint.yml` fails on **any** output, so this must reach zero before
+that gate can go green. `unqualified` dominates and is largely mechanical — it wants `root.`
+prefixes or `pragma ComponentBehavior: Bound` — but unlike the convention fixer there is no
+`--fix`, and it genuinely changes code, so it needs the smoke matrix behind it.
+
+Treat these as two separate burn-downs: conventions (494 left, mechanical) and qmllint (~810,
+needs review). Neither blocks Phase 2; both block a green CI badge.
+
 **MiDnight only disabled the workflows; it did not weaken them.** `lint.yml` and
 `check-format.yml` are byte-identical to upstream at the merge base `ad8dca0a`. The `lint-cpp`
 clang-tidy job that upstream's current `lint.yml` has was added on 2026-09-01
@@ -251,3 +270,82 @@ and is built on the *old* config module, so it needs rework before it lands.
 It cannot host a dock, lockscreen, or wallpaper backend — the entry points do not exist. But when it
 does land, anything we built as a bar entry, popout, status icon or quick toggle should migrate onto
 it. Shape those features accordingly and avoid inventing a competing manifest format.
+
+---
+
+## T12 — `QT_QPA_PLATFORM=offscreen` cannot boot this shell
+
+Quickshell's `PanelWindow` is a **wlr-layer-shell** surface. With no Wayland backend the type is
+unavailable, and because Quickshell resolves the `services/` singletons as one graph, a single
+`PanelWindow` failure cascades into everything:
+
+```
+Failed to load configuration
+  caused by @shell.qml[37:5]: Type ServiceLoader unavailable
+  caused by @services/Audio.qml: Type Brightness unavailable
+  … 12 more …
+  caused by @services/NotifData.qml[67:9]: No PanelWindow backend loaded.
+```
+
+**Read that cascade bottom-up.** The last line is the cause; everything above is fallout.
+
+Upstream's `lint.yml` *does* run `QT_QPA_PLATFORM=offscreen … qs -p .`, which is what misled us.
+It sits under `# Generate tooling`, exists only to emit `.qmlls.ini` for the linter, and its exit
+code is never checked — it is *expected* to fail this way.
+
+`hybrid/tools/smoke-matrix.sh` therefore spawns a nested Hyprland. Notes:
+
+- Hyprland has **no headless flag**, and aquamarine has **no `AQ_BACKENDS` env var** (checked with
+  `strings` on `libaquamarine.so`). It auto-selects: Wayland if `WAYLAND_DISPLAY` is set, else DRM.
+  With neither it dies with `CBackend::create() failed!`.
+- `--socket NAME` does **not** name a new socket; it requires `--wayland-fd` and is for socket
+  handover. Let Hyprland pick, then diff `$XDG_RUNTIME_DIR/wayland-*` before and after.
+- CI has neither a parent display nor a free DRM device, so this will not work in a GitHub Actions
+  container as-is. Needs `cage` / `sway --headless` / `vkms` there.
+
+---
+
+## T13 — `/usr/bin/qmllint` is not Qt's qmllint
+
+On Arch/CachyOS, `/usr/bin/qmllint` is an unrelated tool that reports `qmllint 1.0` and rejects
+`--import`. Qt's is at `/usr/lib/qt6/bin/qmllint` (6.11.2 here). Identical situation for
+`qmlformat`. This is exactly why upstream CI hardcodes `/usr/lib/qt6/bin/`.
+
+A run that "passes" with one line of output and exit 1 is this, not a clean tree.
+
+Related: the Bash tool on this machine runs **zsh**, so `mapfile` and `read -ra` fail in inline
+commands. Wrap them in `bash -c '…'`. The repo's own scripts are unaffected — they have
+`#!/usr/bin/env bash` shebangs.
+
+---
+
+## T14 — MiDnight's `Settings` persistence silently does not work
+
+`services/Wallpapers.qml` and `services/WallpaperPauser.qml` are the **only** files across all
+three trees that use QtCore's `Settings` type. Quickshell never calls
+`QCoreApplication::setOrganizationName`/`setApplicationName`, so QSettings fails to initialise:
+
+```
+QML Settings at @services/Wallpapers.qml[383:5]: Failed to initialize QSettings instance. Status code is: 1
+The following application identifiers have not been set: QList("organizationName", "organizationDomain")
+```
+
+Wallpaper-engine volume/silent and the pauser's settings therefore never persist across restarts.
+
+Adding an explicit `location:` does **not** fix it — `WallpaperPauser` already has one and still
+fails. The fix is to set the app identifiers from the C++ plugin, or to port both to the project's
+own config / `FileView` persistence. Suppressed in `smoke-ignore.txt` under KNOWN BUGS.
+
+---
+
+## T15 — MiDnight deleted `assets/wallpaper.webp` but kept the reference
+
+Fixed 2026-09-02, recorded because it is the shape of bug to expect from the baseline.
+
+`326d9090 "Add multiple featured wallpapers to wallpaper picker"` removed `assets/wallpaper.webp`
+(present in upstream and OP, 5.5 MB) and added `assets/wallpapers/*.png`. But
+`services/Wallpapers.qml:18` still pointed `fallback` at the deleted file, and `fallback` is used
+in four places — including `caelestia wallpaper -f "$fallback"`, so a fresh install asked the CLI
+to set a nonexistent wallpaper.
+
+Now points at `assets/wallpapers/Gravitation.png`. Found by the very first smoke run.

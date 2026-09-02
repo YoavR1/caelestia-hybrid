@@ -1,11 +1,11 @@
 ---
 name: shell-verify
 description: >-
-  The verification gate for Caelestia Hybrid — build, clang-format, qmllint, and the headless
-  offscreen preset smoke matrix. Use before claiming any change is done, after importing a
-  feature, after resolving an upstream merge, and whenever asked whether something builds,
-  passes, or works. Also use when a QML error, binding loop, or startup crash needs
-  reproducing headlessly.
+  The verification gate for Caelestia Hybrid — build, qmlformat, clang-format, qmllint, and the
+  nested-compositor preset smoke matrix. Use before claiming any change is done, after importing
+  a feature, after resolving an upstream merge, and whenever asked whether something builds,
+  passes, or works. Also use when a QML error, binding loop, or startup crash needs reproducing,
+  or when qmllint or qmlformat behave oddly on this machine.
 ---
 
 # Verification gate
@@ -16,6 +16,16 @@ never "should work".
 **This only runs on Linux.** Quickshell needs Qt6 and Wayland. If the working machine is not
 Linux, say so plainly and stop rather than guessing at results.
 
+## Two environment facts that will bite you
+
+**1. `/usr/bin/qmllint` is not Qt's linter.** On Arch/CachyOS it is an unrelated tool reporting
+`qmllint 1.0`, and it rejects `--import`. Qt's lives at `/usr/lib/qt6/bin/`. Same for
+`qmlformat`. This is why upstream CI hardcodes the full path — always do the same.
+
+**2. The Bash tool runs `zsh` here.** `mapfile`, `read -ra` and other bashisms fail. Wrap
+multi-line shell in `bash -c '...'`. The project's own scripts are fine — they have
+`#!/usr/bin/env bash` shebangs.
+
 ## The gate
 
 ```bash
@@ -24,15 +34,18 @@ cmake -B build -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 cmake --build build
 
 # 2. Format — zero tolerance, same as upstream CI
-find . -path ./build -prune -o -name '*.qml' -print | xargs qmlformat --check 2>&1 | tee /dev/stderr | grep -q . && echo "QML FORMAT FAIL"
-find plugin/src -name '*.cpp' -o -name '*.hpp' | xargs clang-format --dry-run --Werror
+find . -path ./build -prune -o -name '*.qml' -print | xargs /usr/lib/qt6/bin/qmlformat --check
+find plugin extras -name '*.cpp' -o -name '*.hpp' | xargs clang-format --dry-run --Werror
+python3 scripts/qml-lint-conventions.py        # has a --fix mode; see T9
 
 # 3. QML lint — any output at all is a failure
 touch .qmlls.ini
-QT_QPA_PLATFORM=offscreen QML2_IMPORT_PATH="$PWD/build/qml:$QML2_IMPORT_PATH" timeout 2 qs -p .
-qmllint --import disable -I build/qml $(find . -path ./build -prune -o -name '*.qml' -print)
+QT_QPA_PLATFORM=offscreen QML2_IMPORT_PATH="$PWD/build/qml:$QML2_IMPORT_PATH" timeout 3 qs -p .
+#   ^ this is TOOLING GENERATION, not a test. It writes .qmlls.ini and is expected to
+#     fail on PanelWindow. Never read its exit code.
+/usr/lib/qt6/bin/qmllint --import disable -I <buildDir> -I <importPaths from .qmlls.ini> <files>
 
-# 4. Headless preset smoke matrix — the project's real gate
+# 4. Preset smoke matrix — the project's real gate
 ./hybrid/tools/smoke-matrix.sh
 ```
 
@@ -42,8 +55,13 @@ update this skill.
 
 ## Reading smoke-matrix results
 
-`smoke-matrix.sh` boots the shell under each preset in an isolated `XDG_CONFIG_HOME` with
-`QT_QPA_PLATFORM=offscreen`, and kills it after a window.
+`smoke-matrix.sh` spawns a **nested Hyprland**, then boots the shell under each preset against
+it in an isolated `XDG_CONFIG_HOME`, and kills it after a window.
+
+It cannot use `QT_QPA_PLATFORM=offscreen`: Quickshell's `PanelWindow` is a wlr-layer-shell
+surface, and with no Wayland backend it is unavailable — which poisons the entire singleton
+graph with `No PanelWindow backend loaded` (trap T12). The runner refuses to use your live
+session socket, so it can never draw over your desktop.
 
 | Result | Meaning |
 |---|---|

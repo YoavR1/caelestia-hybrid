@@ -82,7 +82,7 @@ Findings only, most severe first. For each:
 - **the concrete failure** — inputs or state that produce a wrong result, not "this could be
   fragile"
 - **the fix**, in one line
-- **trap reference** (T1-T11) where one applies
+- **trap reference** (T1-T15) where one applies
 
 If nothing survives scrutiny, say so plainly and briefly. Do not pad with observations, and do
 not report things `qmllint` or `clang-format` would already catch. A short accurate review is
