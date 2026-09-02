@@ -19,34 +19,56 @@ struct Preset {
 };
 
 const Preset& presetFor(HybridPreset::Enum which) {
-    static const Preset recommended{
-        { { u"dock"_s, true }, { u"overview"_s, true }, { u"hotspot"_s, true }, { u"gpuDetection"_s, true },
-            { u"themeManager"_s, true }, { u"clipboard"_s, true }, { u"emojiPicker"_s, true },
-            { u"windowSwitcher"_s, true }, { u"keybindViewer"_s, true }, { u"videoWallpaper"_s, true },
-            { u"wallhaven"_s, true }, { u"floatingLyrics"_s, true }, { u"shimeji"_s, false }, { u"badApple"_s, false },
-            { u"dino"_s, false }, { u"patternLock"_s, false } },
+    static const Preset recommended{ {
+                                         { u"dock"_s, true },
+                                         { u"overview"_s, true },
+                                         { u"clipboard"_s, true },
+                                         { u"emojiPicker"_s, true },
+                                         { u"windowSwitcher"_s, true },
+                                         { u"keybindViewer"_s, true },
+                                         { u"videoWallpaper"_s, true },
+                                         { u"wallhaven"_s, true },
+                                         { u"floatingLyrics"_s, true },
+                                         { u"shimeji"_s, false },
+                                         { u"badApple"_s, false },
+                                         { u"dino"_s, false },
+                                     },
         { { u"lockCentre"_s, HybridVariant::Midnight }, { u"audioPopout"_s, HybridVariant::Op },
-            { u"desktopClock"_s, HybridVariant::Midnight }, { u"colours"_s, HybridVariant::Midnight } }
-    };
+            { u"desktopClock"_s, HybridVariant::Midnight }, { u"colours"_s, HybridVariant::Midnight } } };
 
     // MiDnight as it ships: everything it added, nothing OP added.
-    static const Preset midnight{
-        { { u"dock"_s, false }, { u"overview"_s, false }, { u"hotspot"_s, false }, { u"gpuDetection"_s, false },
-            { u"themeManager"_s, false }, { u"clipboard"_s, true }, { u"emojiPicker"_s, true },
-            { u"windowSwitcher"_s, true }, { u"keybindViewer"_s, true }, { u"videoWallpaper"_s, true },
-            { u"wallhaven"_s, true }, { u"floatingLyrics"_s, true }, { u"shimeji"_s, true }, { u"badApple"_s, true },
-            { u"dino"_s, true }, { u"patternLock"_s, false } },
+    static const Preset midnight{ {
+                                      { u"dock"_s, false },
+                                      { u"overview"_s, false },
+                                      { u"clipboard"_s, true },
+                                      { u"emojiPicker"_s, true },
+                                      { u"windowSwitcher"_s, true },
+                                      { u"keybindViewer"_s, true },
+                                      { u"videoWallpaper"_s, true },
+                                      { u"wallhaven"_s, true },
+                                      { u"floatingLyrics"_s, true },
+                                      { u"shimeji"_s, true },
+                                      { u"badApple"_s, true },
+                                      { u"dino"_s, true },
+                                  },
         { { u"lockCentre"_s, HybridVariant::Midnight }, { u"audioPopout"_s, HybridVariant::Midnight },
-            { u"desktopClock"_s, HybridVariant::Midnight }, { u"colours"_s, HybridVariant::Midnight } }
-    };
+            { u"desktopClock"_s, HybridVariant::Midnight }, { u"colours"_s, HybridVariant::Midnight } } };
 
-    // OP as it ships. patternLock stays off even here -- see the header.
-    static const Preset op{ { { u"dock"_s, true }, { u"overview"_s, true }, { u"hotspot"_s, true },
-                                { u"gpuDetection"_s, true }, { u"themeManager"_s, true }, { u"clipboard"_s, false },
-                                { u"emojiPicker"_s, false }, { u"windowSwitcher"_s, false },
-                                { u"keybindViewer"_s, false }, { u"videoWallpaper"_s, false },
-                                { u"wallhaven"_s, false }, { u"floatingLyrics"_s, false }, { u"shimeji"_s, false },
-                                { u"badApple"_s, false }, { u"dino"_s, false }, { u"patternLock"_s, false } },
+    // OP as it ships.
+    static const Preset op{ {
+                                { u"dock"_s, true },
+                                { u"overview"_s, true },
+                                { u"clipboard"_s, false },
+                                { u"emojiPicker"_s, false },
+                                { u"windowSwitcher"_s, false },
+                                { u"keybindViewer"_s, false },
+                                { u"videoWallpaper"_s, false },
+                                { u"wallhaven"_s, false },
+                                { u"floatingLyrics"_s, false },
+                                { u"shimeji"_s, false },
+                                { u"badApple"_s, false },
+                                { u"dino"_s, false },
+                            },
         { { u"lockCentre"_s, HybridVariant::Op }, { u"audioPopout"_s, HybridVariant::Op },
             { u"desktopClock"_s, HybridVariant::Op }, { u"colours"_s, HybridVariant::Op } } };
 

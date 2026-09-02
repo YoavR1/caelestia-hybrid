@@ -65,6 +65,7 @@ ColumnLayout {
 
                     MouseArea {
                         anchors.fill: parent
+                        enabled: GlobalConfig.hybrid.features.dino
                         cursorShape: Qt.PointingHandCursor
                         onClicked: root.gameActive = true
                     }
@@ -152,7 +153,7 @@ ColumnLayout {
         Loader {
             z: 2
             anchors.fill: parent
-            active: root.gameActive
+            active: root.gameActive && GlobalConfig.hybrid.features.dino
             visible: active
             sourceComponent: DinoGame {
                 dinoSource: Paths.absolutePath(Config.paths.lockNoNotifsPic)

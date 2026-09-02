@@ -31,9 +31,20 @@ HybridVariant::Enum presetVariant(const settings::Node* self, const QString& key
         return detail::presetVariant(self, u## #name##_s);                                                             \
     }))
 
-// One boolean per imported feature. This is the workhorse of the hybrid design (D3): the
-// two forks are ~90% disjoint, so nearly everything they add is a feature that is either
-// present or absent, not a choice between two implementations.
+// One boolean per feature. This is the workhorse of the hybrid design (D3): the two forks
+// are ~90% disjoint, so nearly everything they add is a feature that is either present or
+// absent, not a choice between two implementations.
+//
+// A flag exists here only once something reads it. Four were removed for failing that:
+//
+//   gpuDetection  upstream ships it unconditionally (Services/gpu.cpp, the GpuType enum).
+//                 A toggle for it would be a lie. OP's contribution is enhanced monitoring,
+//                 which is a service merge (D5), not a feature.
+//   hotspot       not imported yet -- Phase 5.
+//   themeManager  not imported yet -- Phase 5.
+//   patternLock   never ships as a toggle. It is a lock-screen bypass (D10, trap T3), and
+//                 a switch offering to enable it is exactly the wrong artefact. Recorded
+//                 in the traps, not in the user's settings schema.
 //
 // Each flag's *default* is the selected preset's value, resolved through the DefaultSpec
 // function above (D8). A user who has never touched a flag follows the preset; one who has
@@ -45,9 +56,6 @@ class HybridFeatures : public settings::ObjectNode {
 
     FEATURE(dock)
     FEATURE(overview)
-    FEATURE(hotspot)
-    FEATURE(gpuDetection)
-    FEATURE(themeManager)
     FEATURE(clipboard)
     FEATURE(emojiPicker)
     FEATURE(windowSwitcher)
@@ -58,7 +66,6 @@ class HybridFeatures : public settings::ObjectNode {
     FEATURE(shimeji)
     FEATURE(badApple)
     FEATURE(dino)
-    FEATURE(patternLock)
 };
 
 // The four components both forks genuinely implement. Capped at ~6 entries (D4): growth

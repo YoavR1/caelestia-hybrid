@@ -60,10 +60,10 @@ PageBase {
             }
         }
 
-        // ------------------------------------------------------------ from OP
+        // ------------------------------------------------------------- panels
 
         SectionHeader {
-            text: qsTr("From OP-Caelestia")
+            text: qsTr("Panels")
         }
 
         ToggleRow {
@@ -77,6 +77,7 @@ PageBase {
         }
 
         ToggleRow {
+            last: true
             text: qsTr("Overview")
             subtext: qsTr("Workspace overview with window thumbnails")
             configNode: root.targetConfig.hybrid.features
@@ -85,38 +86,10 @@ PageBase {
             onToggled: root.targetConfig.hybrid.features.overview = checked
         }
 
-        ToggleRow {
-            text: qsTr("Hotspot")
-            subtext: qsTr("Share this machine's connection over Wi-Fi")
-            configNode: root.targetConfig.hybrid.features
-            propertyName: "hotspot"
-            checked: root.targetConfig.hybrid.features.hotspot
-            onToggled: root.targetConfig.hybrid.features.hotspot = checked
-        }
-
-        ToggleRow {
-            text: qsTr("GPU detection")
-            subtext: qsTr("Detect the GPU vendor instead of assuming one")
-            configNode: root.targetConfig.hybrid.features
-            propertyName: "gpuDetection"
-            checked: root.targetConfig.hybrid.features.gpuDetection
-            onToggled: root.targetConfig.hybrid.features.gpuDetection = checked
-        }
-
-        ToggleRow {
-            last: true
-            text: qsTr("Theme manager")
-            subtext: qsTr("Switch GTK and Qt themes from the shell")
-            configNode: root.targetConfig.hybrid.features
-            propertyName: "themeManager"
-            checked: root.targetConfig.hybrid.features.themeManager
-            onToggled: root.targetConfig.hybrid.features.themeManager = checked
-        }
-
-        // ------------------------------------------------------ from MiDnight
+        // ------------------------------------------------------------ launcher
 
         SectionHeader {
-            text: qsTr("From MiDnight")
+            text: qsTr("Launcher")
         }
 
         ToggleRow {

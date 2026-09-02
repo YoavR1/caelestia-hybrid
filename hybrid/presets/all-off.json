@@ -4,9 +4,6 @@
     "features": {
       "dock": false,
       "overview": false,
-      "hotspot": false,
-      "gpuDetection": false,
-      "themeManager": false,
       "clipboard": false,
       "emojiPicker": false,
       "windowSwitcher": false,
@@ -16,8 +13,7 @@
       "floatingLyrics": false,
       "shimeji": false,
       "badApple": false,
-      "dino": false,
-      "patternLock": false
+      "dino": false
     },
     "variants": {
       "lockCentre": "midnight",

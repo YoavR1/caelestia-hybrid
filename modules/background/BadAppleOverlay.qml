@@ -9,7 +9,7 @@ import qs.services
 import qs.modules.background
 
 Variants {
-    model: Quickshell.screens
+    model: GlobalConfig.hybrid.features.badApple ? Quickshell.screens : []
 
     StyledWindow {
         id: root
