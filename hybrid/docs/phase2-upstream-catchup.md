@@ -1,8 +1,9 @@
 # Phase 2 — upstream catch-up
 
-Merging `caelestia/main` (51 commits) into the MiDnight baseline. Branch
-`phase2/upstream-catchup`. **The merge commit on that branch does not build yet** — one file
-is left, and it is named below. `phase0/scaffold-and-ci` is untouched and fully green.
+Merging `caelestia/main` (51 commits) into the MiDnight baseline, on branch
+`phase2/upstream-catchup`. **Done** — see Status below. The first commit on the branch is a
+merge that deliberately does not build; the two after it are the port and the lint
+burn-down.
 
 Merge base `ad8dca0a`. 197 files, +6549/−5198 incoming. 35 conflicts.
 
@@ -104,10 +105,10 @@ that made it build and boot, and the lint burn-down. All five gates are green: b
 qmlformat 0, clang-format 0, conventions 0, qmllint 0, smoke 6/6 across both compositor
 configs.
 
-## What was left (now done)
+## The last file, and how it shrank
 
-**`plugin/src/Caelestia/Config/sessionconfig.{hpp,cpp}` — 633 lines, the only thing that
-does not compile.** MiDnight added user-defined session buttons: arbitrary keys under
+`plugin/src/Caelestia/Config/sessionconfig.{hpp,cpp}` was the only thing left after the
+merge commit. MiDnight added user-defined session buttons: arbitrary keys under
 `session.icons` and `session.commands`, surfaced to QML as `Config.session.buttons` and
 `Config.session.customButtons` (used by `modules/session/Content.qml` and
 `modules/lock/Resources.qml`). It implements that by overriding seven `ConfigObject`
