@@ -30,7 +30,6 @@ PageBase {
             checked: root.targetConfig.bar.spotify.background
             onToggled: {
                 root.targetConfig.bar.spotify.background = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -42,7 +41,6 @@ PageBase {
             checked: root.targetConfig.bar.spotify.showVisualiser
             onToggled: {
                 root.targetConfig.bar.spotify.showVisualiser = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -57,7 +55,6 @@ PageBase {
             stepSize: 1
             onMoved: v => {
                 root.targetConfig.bar.spotify.maxTitleLength = v;
-                root.targetConfig.save();
             }
         }
 
@@ -69,7 +66,6 @@ PageBase {
             checked: root.targetConfig.bar.spotify.inverted
             onToggled: {
                 root.targetConfig.bar.spotify.inverted = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -81,7 +77,6 @@ PageBase {
             checked: root.targetConfig.bar.spotify.autoHide
             onToggled: {
                 root.targetConfig.bar.spotify.autoHide = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -94,7 +89,6 @@ PageBase {
             checked: root.targetConfig.bar.spotify.horizontalVolume
             onToggled: {
                 root.targetConfig.bar.spotify.horizontalVolume = checked;
-                root.targetConfig.save();
             }
         }
     }

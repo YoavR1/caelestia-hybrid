@@ -31,7 +31,6 @@ PageBase {
             checked: root.targetConfig.launcher.enabled
             onToggled: {
                 root.targetConfig.launcher.enabled = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -43,7 +42,6 @@ PageBase {
             checked: root.targetConfig.launcher.showOnHover
             onToggled: {
                 root.targetConfig.launcher.showOnHover = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -67,7 +65,6 @@ PageBase {
                 root.targetConfig.launcher.actionPrefix = value || ">";
                 if (root.targetConfig.launcher.actionPrefix === ">")
                     clear();
-                root.targetConfig.save();
             }
         }
 
@@ -87,7 +84,6 @@ PageBase {
             stepSize: 1
             onMoved: v => {
                 root.targetConfig.launcher.maxShown = v;
-                root.targetConfig.save();
             }
         }
 
@@ -101,7 +97,6 @@ PageBase {
             stepSize: 1
             onMoved: v => {
                 root.targetConfig.launcher.maxWallpapers = v;
-                root.targetConfig.save();
             }
         }
 
@@ -117,7 +112,6 @@ PageBase {
             stepSize: 5
             onMoved: v => {
                 root.targetConfig.launcher.dragThreshold = v;
-                root.targetConfig.save();
             }
         }
 
@@ -135,7 +129,6 @@ PageBase {
             checked: root.targetConfig.launcher.vimKeybinds
             onToggled: {
                 root.targetConfig.launcher.vimKeybinds = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -148,7 +141,6 @@ PageBase {
             checked: root.targetConfig.launcher.enableDangerousActions
             onToggled: {
                 root.targetConfig.launcher.enableDangerousActions = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -165,7 +157,6 @@ PageBase {
             checked: root.targetConfig.launcher.useFuzzy.apps
             onToggled: {
                 root.targetConfig.launcher.useFuzzy.apps = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -176,7 +167,6 @@ PageBase {
             checked: root.targetConfig.launcher.useFuzzy.actions
             onToggled: {
                 root.targetConfig.launcher.useFuzzy.actions = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -187,7 +177,6 @@ PageBase {
             checked: root.targetConfig.launcher.useFuzzy.schemes
             onToggled: {
                 root.targetConfig.launcher.useFuzzy.schemes = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -198,7 +187,6 @@ PageBase {
             checked: root.targetConfig.launcher.useFuzzy.variants
             onToggled: {
                 root.targetConfig.launcher.useFuzzy.variants = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -210,7 +198,6 @@ PageBase {
             checked: root.targetConfig.launcher.useFuzzy.wallpapers
             onToggled: {
                 root.targetConfig.launcher.useFuzzy.wallpapers = checked;
-                root.targetConfig.save();
             }
         }
     }

@@ -219,14 +219,12 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
             }
             PropertyChanges {
-                target: startSection
-                anchors.leftMargin: root.vPadding
-                anchors.topMargin: 0
+                startSection.anchors.leftMargin: root.vPadding
+                startSection.anchors.topMargin: 0
             }
             PropertyChanges {
-                target: endSection
-                anchors.rightMargin: root.vPadding
-                anchors.bottomMargin: 0
+                endSection.anchors.rightMargin: root.vPadding
+                endSection.anchors.bottomMargin: 0
             }
         },
         State {
@@ -249,14 +247,12 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
             }
             PropertyChanges {
-                target: startSection
-                anchors.topMargin: root.vPadding
-                anchors.leftMargin: 0
+                startSection.anchors.topMargin: root.vPadding
+                startSection.anchors.leftMargin: 0
             }
             PropertyChanges {
-                target: endSection
-                anchors.bottomMargin: root.vPadding
-                anchors.rightMargin: 0
+                endSection.anchors.bottomMargin: root.vPadding
+                endSection.anchors.rightMargin: 0
             }
         }
     ]

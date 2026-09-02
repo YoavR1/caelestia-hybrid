@@ -29,19 +29,12 @@ qml_module(caelestia-services
         lyriccandidate.cpp
         lyrics.cpp
         sessionmanager.cpp
-        sessionmanager.hpp
         discordipc.cpp
-        discordipc.hpp
         QuickShare/QuickShareDiscovery.cpp
-        QuickShare/QuickShareDiscovery.hpp
         QuickShare/QuickShareCrypto.cpp
-        QuickShare/QuickShareCrypto.hpp
         QuickShare/QuickShareConnection.cpp
-        QuickShare/QuickShareConnection.hpp
         QuickShare/quickshare_service.cpp
-        QuickShare/quickshare_service.hpp
         QuickShare/QuickShareBle.cpp
-        QuickShare/QuickShareBle.hpp
         networkusage.cpp
         hyprdevices.cpp
         hyprextras.cpp

@@ -159,7 +159,6 @@ PageBase {
             checked: root.targetConfig.dashboard.enabled
             onToggled: {
                 root.targetConfig.dashboard.enabled = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -172,7 +171,6 @@ PageBase {
             checked: root.targetConfig.dashboard.showOnHover
             onToggled: {
                 root.targetConfig.dashboard.showOnHover = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -194,7 +192,6 @@ PageBase {
             menuItems: root.dashboardShapeItems
             onSelected: item => {
                 root.targetConfig.dashboard.profilePicShape = item.value; // qmllint disable missing-property
-                root.targetConfig.save();
             }
         }
 
@@ -217,7 +214,6 @@ PageBase {
             menuItems: root.lockShapeItems
             onSelected: item => {
                 root.targetConfig.lock.profilePicShape = item.value; // qmllint disable missing-property
-                root.targetConfig.save();
             }
         }
 
@@ -234,7 +230,6 @@ PageBase {
             checked: root.targetConfig.dashboard.showDashboard
             onToggled: {
                 root.targetConfig.dashboard.showDashboard = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -245,7 +240,6 @@ PageBase {
             checked: root.targetConfig.dashboard.showMedia
             onToggled: {
                 root.targetConfig.dashboard.showMedia = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -256,7 +250,6 @@ PageBase {
             checked: root.targetConfig.dashboard.showPerformance
             onToggled: {
                 root.targetConfig.dashboard.showPerformance = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -268,7 +261,6 @@ PageBase {
             checked: root.targetConfig.dashboard.showWeather
             onToggled: {
                 root.targetConfig.dashboard.showWeather = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -281,7 +273,6 @@ PageBase {
             checked: root.targetConfig.dashboard.showTerminal
             onToggled: {
                 root.targetConfig.dashboard.showTerminal = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -301,7 +292,6 @@ PageBase {
             checked: root.targetConfig.dashboard.showHyprlandSplash
             onToggled: {
                 root.targetConfig.dashboard.showHyprlandSplash = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -320,7 +310,6 @@ PageBase {
             checked: root.targetConfig.dashboard.colorizeMediaGif
             onToggled: {
                 root.targetConfig.dashboard.colorizeMediaGif = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -333,7 +322,6 @@ PageBase {
             checked: root.targetConfig.dashboard.useMediaShapes
             onToggled: {
                 root.targetConfig.dashboard.useMediaShapes = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -346,7 +334,6 @@ PageBase {
             checked: root.targetConfig.dashboard.randomizeMediaShapeColors
             onToggled: {
                 root.targetConfig.dashboard.randomizeMediaShapeColors = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -359,7 +346,6 @@ PageBase {
             checked: root.targetConfig.dashboard.syncMediaShapesToBeat
             onToggled: {
                 root.targetConfig.dashboard.syncMediaShapesToBeat = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -373,7 +359,6 @@ PageBase {
             checked: root.targetConfig.dashboard.replaceMediaLyricsWithVisuals
             onToggled: {
                 root.targetConfig.dashboard.replaceMediaLyricsWithVisuals = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -393,7 +378,6 @@ PageBase {
             checked: root.targetConfig.dashboard.showWeatherLocation !== false
             onToggled: {
                 root.targetConfig.dashboard.showWeatherLocation = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -410,7 +394,6 @@ PageBase {
             checked: root.targetConfig.dashboard.performance.showBattery
             onToggled: {
                 root.targetConfig.dashboard.performance.showBattery = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -421,7 +404,6 @@ PageBase {
             checked: root.targetConfig.dashboard.performance.showGpu
             onToggled: {
                 root.targetConfig.dashboard.performance.showGpu = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -432,7 +414,6 @@ PageBase {
             checked: root.targetConfig.dashboard.performance.showCpu
             onToggled: {
                 root.targetConfig.dashboard.performance.showCpu = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -443,7 +424,6 @@ PageBase {
             checked: root.targetConfig.dashboard.performance.showMemory
             onToggled: {
                 root.targetConfig.dashboard.performance.showMemory = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -454,7 +434,6 @@ PageBase {
             checked: root.targetConfig.dashboard.performance.showStorage
             onToggled: {
                 root.targetConfig.dashboard.performance.showStorage = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -466,7 +445,6 @@ PageBase {
             checked: root.targetConfig.dashboard.performance.showNetwork
             onToggled: {
                 root.targetConfig.dashboard.performance.showNetwork = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -488,7 +466,6 @@ PageBase {
             stepSize: 5
             onMoved: v => {
                 root.targetConfig.dashboard.dragThreshold = v;
-                root.targetConfig.save();
             }
         }
     }

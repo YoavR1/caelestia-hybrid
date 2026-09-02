@@ -31,7 +31,6 @@ PageBase {
             checked: root.targetConfig.utilities.gameMode.autoEnable
             onToggled: {
                 root.targetConfig.utilities.gameMode.autoEnable = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -55,7 +54,6 @@ PageBase {
             checked: root.targetConfig.utilities.gameMode.disableHyprlandAnimations
             onToggled: {
                 root.targetConfig.utilities.gameMode.disableHyprlandAnimations = checked;
-                root.targetConfig.save();
             }
         }
         ToggleRow {
@@ -65,7 +63,6 @@ PageBase {
             checked: root.targetConfig.utilities.gameMode.disableHyprlandBlur
             onToggled: {
                 root.targetConfig.utilities.gameMode.disableHyprlandBlur = checked;
-                root.targetConfig.save();
             }
         }
         ToggleRow {
@@ -75,7 +72,6 @@ PageBase {
             checked: root.targetConfig.utilities.gameMode.disableHyprlandGaps
             onToggled: {
                 root.targetConfig.utilities.gameMode.disableHyprlandGaps = checked;
-                root.targetConfig.save();
             }
         }
         ToggleRow {
@@ -85,7 +81,6 @@ PageBase {
             checked: root.targetConfig.utilities.gameMode.disableHyprlandShadows
             onToggled: {
                 root.targetConfig.utilities.gameMode.disableHyprlandShadows = checked;
-                root.targetConfig.save();
             }
         }
         ToggleRow {
@@ -96,7 +91,6 @@ PageBase {
             checked: root.targetConfig.utilities.gameMode.disableWindowTransparency
             onToggled: {
                 root.targetConfig.utilities.gameMode.disableWindowTransparency = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -112,7 +106,6 @@ PageBase {
             checked: root.targetConfig.utilities.gameMode.disableShellTransparency
             onToggled: {
                 root.targetConfig.utilities.gameMode.disableShellTransparency = checked;
-                root.targetConfig.save();
             }
         }
         ToggleRow {
@@ -122,7 +115,6 @@ PageBase {
             checked: root.targetConfig.utilities.gameMode.disableToastTransparency
             onToggled: {
                 root.targetConfig.utilities.gameMode.disableToastTransparency = checked;
-                root.targetConfig.save();
             }
         }
         ToggleRow {
@@ -132,7 +124,6 @@ PageBase {
             checked: root.targetConfig.utilities.gameMode.disableDesktopLyrics
             onToggled: {
                 root.targetConfig.utilities.gameMode.disableDesktopLyrics = checked;
-                root.targetConfig.save();
             }
         }
         ToggleRow {
@@ -142,7 +133,6 @@ PageBase {
             checked: root.targetConfig.utilities.gameMode.disableVisualizer
             onToggled: {
                 root.targetConfig.utilities.gameMode.disableVisualizer = checked;
-                root.targetConfig.save();
             }
         }
         ToggleRow {
@@ -153,7 +143,6 @@ PageBase {
             checked: root.targetConfig.utilities.gameMode.disableShimeji
             onToggled: {
                 root.targetConfig.utilities.gameMode.disableShimeji = checked;
-                root.targetConfig.save();
             }
         }
     }

@@ -71,15 +71,12 @@ PageBase {
             values: root.targetConfig.bar.statusIcons.values
             onItemMoved: (from, to) => {
                 root.targetConfig.bar.statusIcons.move(from, to);
-                root.targetConfig.save();
             }
             onItemRemoved: index => {
                 root.targetConfig.bar.statusIcons.remove(index);
-                root.targetConfig.save();
             }
             onItemToggled: (index, checked) => {
                 root.targetConfig.bar.statusIcons.at(index).enabled = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -108,7 +105,6 @@ PageBase {
                     id: selectedItem,
                     enabled: true
                 });
-                root.targetConfig.save();
             }
         }
 
@@ -127,7 +123,6 @@ PageBase {
             checked: root.targetConfig.bar.popouts.statusIcons
             onToggled: {
                 root.targetConfig.bar.popouts.statusIcons = checked;
-                root.targetConfig.save();
             }
         }
     }

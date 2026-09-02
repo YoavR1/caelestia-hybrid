@@ -466,3 +466,43 @@ Hyprland.usingLua`), whose change signal does. Both were tested.
 both`. Note what that does and does not cover: the axis genuinely flips `usingLua`, but
 nearly every one of the 40 branch sites is inside a click handler, so a boot smoke reaches
 almost none of them.
+
+---
+
+## T18 — qmllint lints against the *installed* shell, not the one you built
+
+`qmllint` always consults Qt's default QML import directory, and it does so **in preference
+to every `-I` path you pass**. This machine has `midnight-shell-git` installed, which ships
+`/usr/lib/qt6/qml/Caelestia/` — the pre-Phase-2 plugin layout. So the linter was resolving
+`Caelestia.*` types from the *package*, not from `./build/qml`.
+
+While the two layouts agreed this was invisible. After the upstream config rewrite moved
+types between modules it produced a contradiction that looks like a qmllint bug and is not:
+
+```
+Info:    Unused import [unused-imports]          import Caelestia.Images
+Warning: Cannot resolve alias "wallLuminance"    analyser.luminance
+```
+
+The import is "unused" because `ImageAnalyser` was never found in it — the installed
+`Caelestia.Images` has `IUtils` but not `ImageAnalyser`, which in that layout lives in the
+root `Caelestia`. `IUtils` resolved; `ImageAnalyser` did not; same module, same file.
+
+**`--bare` is the fix.** It drops the default import directory, after which `-I` order is
+honoured and `./build/qml` wins. `hybrid/tools/qml-lint.sh` passes it. To reproduce the
+problem, drop the flag.
+
+**Two things this hid.** First, `--import disable` — which upstream's CI passes and which
+this project copied — silences the whole `import` category, so `ImageAnalyser was not
+found` never printed and only the "unused import" symptom did. When an unused-import report
+makes no sense, re-run without `--import disable` before believing it.
+
+Second, and worse: `qml-lint.sh --summary` counted diagnostics with `\[[a-z0-9-]+\]$`,
+which does not match the qmllint Quick plugin's `[Quick.property-changes-parsed]` or
+`[syntax.duplicate-ids]`. It reported **`clean, no warnings` on a tree that had 60 of
+them**, including two duplicate-id *errors*. The exit code was right — that path measures
+output size — so the gate itself never passed falsely, but the summary did, and it was
+believed. The class is now `[A-Za-z0-9.-]+`.
+
+Anything counting compiler or linter output needs its category pattern checked against real
+output containing every category, not against the categories you expect.

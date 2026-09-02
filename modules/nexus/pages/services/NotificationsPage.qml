@@ -58,10 +58,9 @@ PageBase {
             configNode: root.targetConfig.notifs
             propertyName: "fullscreen"
             menuItems: root.notifFullscreenItems
-            active: root.notifFullscreenItems[Math.max(0, root.notifFullscreenValues.indexOf(root.targetConfig.notifs.fullscreen))]
+            active: root.notifFullscreenItems[root.targetConfig.notifs.fullscreen]
             onSelected: item => {
-                root.targetConfig.notifs.fullscreen = root.notifFullscreenValues[root.notifFullscreenItems.indexOf(item)];
-                root.targetConfig.save();
+                root.targetConfig.notifs.fullscreen = root.notifFullscreenItems.indexOf(item);
             }
         }
 
@@ -73,7 +72,6 @@ PageBase {
             checked: root.targetConfig.notifs.expire
             onToggled: {
                 root.targetConfig.notifs.expire = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -85,7 +83,6 @@ PageBase {
             checked: root.targetConfig.notifs.openExpanded
             onToggled: {
                 root.targetConfig.notifs.openExpanded = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -100,7 +97,6 @@ PageBase {
             stepSize: 500
             onMoved: v => {
                 root.targetConfig.notifs.defaultExpireTimeout = Math.round(v);
-                root.targetConfig.save();
             }
         }
 
@@ -116,7 +112,6 @@ PageBase {
             stepSize: 1
             onMoved: v => {
                 root.targetConfig.notifs.groupPreviewNum = Math.round(v);
-                root.targetConfig.save();
             }
         }
 
@@ -135,7 +130,6 @@ PageBase {
             active: root.toastFullscreenItems[Math.max(0, root.toastFullscreenValues.indexOf(root.targetConfig.utilities.toasts.fullscreen))]
             onSelected: item => {
                 root.targetConfig.utilities.toasts.fullscreen = root.toastFullscreenValues[root.toastFullscreenItems.indexOf(item)];
-                root.targetConfig.save();
             }
         }
 
@@ -150,7 +144,6 @@ PageBase {
             stepSize: 1
             onMoved: v => {
                 root.targetConfig.utilities.maxToasts = Math.round(v);
-                root.targetConfig.save();
             }
         }
 
@@ -162,7 +155,6 @@ PageBase {
             checked: root.targetConfig.utilities.toasts.transparency
             onToggled: {
                 root.targetConfig.utilities.toasts.transparency = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -176,7 +168,6 @@ PageBase {
             enabled: root.targetConfig.utilities.toasts.transparency
             onMoved: v => {
                 root.targetConfig.utilities.toasts.transparencyBase = v;
-                root.targetConfig.save();
             }
         }
 
@@ -193,7 +184,6 @@ PageBase {
             checked: root.targetConfig.utilities.toasts.chargingChanged
             onToggled: {
                 root.targetConfig.utilities.toasts.chargingChanged = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -204,7 +194,6 @@ PageBase {
             checked: root.targetConfig.utilities.toasts.gameModeChanged
             onToggled: {
                 root.targetConfig.utilities.toasts.gameModeChanged = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -215,7 +204,6 @@ PageBase {
             checked: root.targetConfig.utilities.toasts.dndChanged
             onToggled: {
                 root.targetConfig.utilities.toasts.dndChanged = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -226,7 +214,6 @@ PageBase {
             checked: root.targetConfig.utilities.toasts.audioOutputChanged
             onToggled: {
                 root.targetConfig.utilities.toasts.audioOutputChanged = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -237,7 +224,6 @@ PageBase {
             checked: root.targetConfig.utilities.toasts.audioInputChanged
             onToggled: {
                 root.targetConfig.utilities.toasts.audioInputChanged = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -248,7 +234,6 @@ PageBase {
             checked: root.targetConfig.utilities.toasts.capsLockChanged
             onToggled: {
                 root.targetConfig.utilities.toasts.capsLockChanged = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -259,7 +244,6 @@ PageBase {
             checked: root.targetConfig.utilities.toasts.numLockChanged
             onToggled: {
                 root.targetConfig.utilities.toasts.numLockChanged = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -270,7 +254,6 @@ PageBase {
             checked: root.targetConfig.utilities.toasts.kbLayoutChanged
             onToggled: {
                 root.targetConfig.utilities.toasts.kbLayoutChanged = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -281,7 +264,6 @@ PageBase {
             checked: root.targetConfig.utilities.toasts.vpnChanged
             onToggled: {
                 root.targetConfig.utilities.toasts.vpnChanged = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -293,7 +275,6 @@ PageBase {
             checked: root.targetConfig.utilities.toasts.nowPlaying
             onToggled: {
                 root.targetConfig.utilities.toasts.nowPlaying = checked;
-                root.targetConfig.save();
             }
         }
     }

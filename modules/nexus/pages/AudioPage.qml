@@ -19,7 +19,6 @@ PageBase {
             if (!list.includes(appName)) {
                 list.push(appName);
                 GlobalConfig.audio.sounds.disabledNotifApps = list;
-                GlobalConfig.save();
             }
             silenceAppInput.text = "";
         }
@@ -272,7 +271,6 @@ PageBase {
                                     let list = Array.from(GlobalConfig.audio.sounds.disabledNotifApps);
                                     list.splice(chip.index, 1);
                                     GlobalConfig.audio.sounds.disabledNotifApps = list;
-                                    GlobalConfig.save();
                                 }
                             }
                         }

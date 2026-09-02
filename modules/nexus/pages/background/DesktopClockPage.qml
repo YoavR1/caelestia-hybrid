@@ -63,7 +63,6 @@ PageBase {
             checked: root.targetConfig.background.desktopClock.enabled
             onToggled: {
                 root.targetConfig.background.desktopClock.enabled = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -83,7 +82,6 @@ PageBase {
                 let idx = root.positionItems.indexOf(item);
                 if (idx !== -1) {
                     root.targetConfig.background.desktopClock.position = root.positionValues[idx];
-                    root.targetConfig.save();
                 }
             }
         }
@@ -98,7 +96,6 @@ PageBase {
             valueLabel: (0.5 + value * 2.5).toFixed(1) + "x"
             onMoved: v => {
                 root.targetConfig.background.desktopClock.scale = 0.5 + v * 2.5;
-                root.targetConfig.save();
             }
         }
 
@@ -113,7 +110,6 @@ PageBase {
             checked: root.targetConfig.background.desktopClock.invertColors
             onToggled: {
                 root.targetConfig.background.desktopClock.invertColors = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -130,7 +126,6 @@ PageBase {
             checked: root.targetConfig.background.desktopClock.background.enabled
             onToggled: {
                 root.targetConfig.background.desktopClock.background.enabled = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -144,7 +139,6 @@ PageBase {
             valueLabel: Math.round(value * 100) + "%"
             onMoved: v => {
                 root.targetConfig.background.desktopClock.background.opacity = v;
-                root.targetConfig.save();
             }
             enabled: root.targetConfig.background.desktopClock.background.enabled
         }
@@ -159,7 +153,6 @@ PageBase {
             checked: root.targetConfig.background.desktopClock.background.blur
             onToggled: {
                 root.targetConfig.background.desktopClock.background.blur = checked;
-                root.targetConfig.save();
             }
             enabled: root.targetConfig.background.desktopClock.background.enabled
         }
@@ -177,7 +170,6 @@ PageBase {
             checked: root.targetConfig.background.desktopClock.shadow.enabled
             onToggled: {
                 root.targetConfig.background.desktopClock.shadow.enabled = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -191,7 +183,6 @@ PageBase {
             valueLabel: Math.round(value * 100) + "%"
             onMoved: v => {
                 root.targetConfig.background.desktopClock.shadow.opacity = v;
-                root.targetConfig.save();
             }
             enabled: root.targetConfig.background.desktopClock.shadow.enabled
         }
@@ -207,7 +198,6 @@ PageBase {
             valueLabel: (value * 2.0).toFixed(1)
             onMoved: v => {
                 root.targetConfig.background.desktopClock.shadow.blur = v * 2.0;
-                root.targetConfig.save();
             }
             enabled: root.targetConfig.background.desktopClock.shadow.enabled
         }

@@ -291,7 +291,7 @@ Item {
                     CachingImage {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        anchors.margins: Tokens.padding.large
+                        Layout.margins: Tokens.padding.large
                         source: root.selectedWallpaper?.path || ""
                         asynchronous: true
                         fillMode: Image.PreserveAspectFit

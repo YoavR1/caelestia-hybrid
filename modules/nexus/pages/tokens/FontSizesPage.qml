@@ -31,7 +31,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.appearance.fontSize.small = v
             onReset: {
-                TokenConfig.appearance.fontSize.small = TokenConfig.defaults().appearance.fontSize.small;
                 TokenConfig.appearance.fontSize.resetOption("small");
             }
         }
@@ -47,7 +46,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.appearance.fontSize.smaller = v
             onReset: {
-                TokenConfig.appearance.fontSize.smaller = TokenConfig.defaults().appearance.fontSize.smaller;
                 TokenConfig.appearance.fontSize.resetOption("smaller");
             }
         }
@@ -63,7 +61,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.appearance.fontSize.normal = v
             onReset: {
-                TokenConfig.appearance.fontSize.normal = TokenConfig.defaults().appearance.fontSize.normal;
                 TokenConfig.appearance.fontSize.resetOption("normal");
             }
         }
@@ -79,7 +76,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.appearance.fontSize.larger = v
             onReset: {
-                TokenConfig.appearance.fontSize.larger = TokenConfig.defaults().appearance.fontSize.larger;
                 TokenConfig.appearance.fontSize.resetOption("larger");
             }
         }
@@ -95,7 +91,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.appearance.fontSize.large = v
             onReset: {
-                TokenConfig.appearance.fontSize.large = TokenConfig.defaults().appearance.fontSize.large;
                 TokenConfig.appearance.fontSize.resetOption("large");
             }
         }
@@ -112,7 +107,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.appearance.fontSize.extraLarge = v
             onReset: {
-                TokenConfig.appearance.fontSize.extraLarge = TokenConfig.defaults().appearance.fontSize.extraLarge;
                 TokenConfig.appearance.fontSize.resetOption("extraLarge");
             }
         }
@@ -132,7 +126,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.appearance.fontSize.monoSmall = v
             onReset: {
-                TokenConfig.appearance.fontSize.monoSmall = TokenConfig.defaults().appearance.fontSize.monoSmall;
                 TokenConfig.appearance.fontSize.resetOption("monoSmall");
             }
         }
@@ -148,7 +141,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.appearance.fontSize.monoMedium = v
             onReset: {
-                TokenConfig.appearance.fontSize.monoMedium = TokenConfig.defaults().appearance.fontSize.monoMedium;
                 TokenConfig.appearance.fontSize.resetOption("monoMedium");
             }
         }
@@ -165,7 +157,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.appearance.fontSize.monoLarge = v
             onReset: {
-                TokenConfig.appearance.fontSize.monoLarge = TokenConfig.defaults().appearance.fontSize.monoLarge;
                 TokenConfig.appearance.fontSize.resetOption("monoLarge");
             }
         }

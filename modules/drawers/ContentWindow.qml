@@ -365,13 +365,12 @@ StyledWindow {
                     anchors.bottom: parent.bottom
                 }
                 PropertyChanges {
-                    target: bar
-                    width: bar.implicitWidth
-                    height: undefined
-                    anchors.topMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
-                    anchors.bottomMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
-                    anchors.leftMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
-                    anchors.rightMargin: 0
+                    bar.width: bar.implicitWidth
+                    bar.height: undefined
+                    bar.anchors.topMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
+                    bar.anchors.bottomMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
+                    bar.anchors.leftMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
+                    bar.anchors.rightMargin: 0
                 }
             },
             State {
@@ -387,13 +386,12 @@ StyledWindow {
                     anchors.bottom: parent.bottom
                 }
                 PropertyChanges {
-                    target: bar
-                    width: bar.implicitWidth
-                    height: undefined
-                    anchors.topMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
-                    anchors.bottomMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
-                    anchors.leftMargin: 0
-                    anchors.rightMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
+                    bar.width: bar.implicitWidth
+                    bar.height: undefined
+                    bar.anchors.topMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
+                    bar.anchors.bottomMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
+                    bar.anchors.leftMargin: 0
+                    bar.anchors.rightMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
                 }
             },
             State {
@@ -409,13 +407,12 @@ StyledWindow {
                     anchors.bottom: undefined
                 }
                 PropertyChanges {
-                    target: bar
-                    width: undefined
-                    height: bar.implicitHeight
-                    anchors.leftMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
-                    anchors.rightMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
-                    anchors.topMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
-                    anchors.bottomMargin: 0
+                    bar.width: undefined
+                    bar.height: bar.implicitHeight
+                    bar.anchors.leftMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
+                    bar.anchors.rightMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
+                    bar.anchors.topMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
+                    bar.anchors.bottomMargin: 0
                 }
             },
             State {
@@ -431,13 +428,12 @@ StyledWindow {
                     anchors.bottom: parent.bottom
                 }
                 PropertyChanges {
-                    target: bar
-                    width: undefined
-                    height: bar.implicitHeight
-                    anchors.leftMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
-                    anchors.rightMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
-                    anchors.bottomMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
-                    anchors.topMargin: 0
+                    bar.width: undefined
+                    bar.height: bar.implicitHeight
+                    bar.anchors.leftMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
+                    bar.anchors.rightMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
+                    bar.anchors.bottomMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
+                    bar.anchors.topMargin: 0
                 }
             }
         ]

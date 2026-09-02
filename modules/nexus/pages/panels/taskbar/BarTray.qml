@@ -24,7 +24,6 @@ PageBase {
             checked: root.targetConfig.bar.tray.background
             onToggled: {
                 root.targetConfig.bar.tray.background = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -35,7 +34,6 @@ PageBase {
             checked: root.targetConfig.bar.tray.recolour
             onToggled: {
                 root.targetConfig.bar.tray.recolour = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -46,7 +44,6 @@ PageBase {
             checked: root.targetConfig.bar.tray.compact
             onToggled: {
                 root.targetConfig.bar.tray.compact = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -59,7 +56,6 @@ PageBase {
             checked: root.targetConfig.bar.popouts.tray
             onToggled: {
                 root.targetConfig.bar.popouts.tray = checked;
-                root.targetConfig.save();
             }
         }
     }

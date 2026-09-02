@@ -97,7 +97,14 @@ structure, with MiDnight's properties re-added on top — `pitchBlack`, `islands
 `developerMode`, `lockOnStartup`, the three mono font-size tokens, the two window-switcher
 size tokens, the `shimeji` attached-config accessor, the toast icon.
 
-## What is left
+## Status
+
+Done. The merge is on `phase2/upstream-catchup` in three commits — the WIP merge, the port
+that made it build and boot, and the lint burn-down. All five gates are green: build 217/217,
+qmlformat 0, clang-format 0, conventions 0, qmllint 0, smoke 6/6 across both compositor
+configs.
+
+## What was left (now done)
 
 **`plugin/src/Caelestia/Config/sessionconfig.{hpp,cpp}` — 633 lines, the only thing that
 does not compile.** MiDnight added user-defined session buttons: arbitrary keys under
@@ -120,8 +127,15 @@ preserve order either. **Decide before finishing:** accept that custom session b
 reorder alphabetically after a save, or store an explicit order array. Do not port the string
 surgery — it will not survive the next upstream sync.
 
-After that compiles, none of the QML has been checked against the new singletons yet, and
-none of the five gates has been run on this branch.
+That is what happened, and the port came out at 134 lines against 633.
+
+The QML side then needed its own migration, which the linter found once T18 was fixed:
+`GlobalConfig.save()` (171 calls) and `TokenConfig.defaults()` (77) no longer exist —
+settings auto-save, and every `defaults()` line already sat next to the `resetOption()`
+call that does the same job. Upstream's QML has neither call anywhere. Beyond that:
+`notifs.fullscreen` became an enum whose value *is* the menu index, 22 `PropertyChanges`
+blocks needed the modern `target.property:` form, two files had duplicate ids, and one
+`CachingImage` anchored inside a Layout.
 
 ## Redoing this merge
 

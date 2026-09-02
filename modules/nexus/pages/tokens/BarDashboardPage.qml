@@ -31,7 +31,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.sizes.bar.innerWidth = v
             onReset: {
-                TokenConfig.sizes.bar.innerWidth = TokenConfig.defaults().sizes.bar.innerWidth;
                 TokenConfig.sizes.bar.resetOption("innerWidth");
             }
         }
@@ -47,7 +46,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.sizes.bar.windowPreviewSize = v
             onReset: {
-                TokenConfig.sizes.bar.windowPreviewSize = TokenConfig.defaults().sizes.bar.windowPreviewSize;
                 TokenConfig.sizes.bar.resetOption("windowPreviewSize");
             }
         }
@@ -63,7 +61,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.sizes.bar.trayMenuWidth = v
             onReset: {
-                TokenConfig.sizes.bar.trayMenuWidth = TokenConfig.defaults().sizes.bar.trayMenuWidth;
                 TokenConfig.sizes.bar.resetOption("trayMenuWidth");
             }
         }
@@ -79,7 +76,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.sizes.bar.batteryWidth = v
             onReset: {
-                TokenConfig.sizes.bar.batteryWidth = TokenConfig.defaults().sizes.bar.batteryWidth;
                 TokenConfig.sizes.bar.resetOption("batteryWidth");
             }
         }
@@ -95,7 +91,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.sizes.bar.networkWidth = v
             onReset: {
-                TokenConfig.sizes.bar.networkWidth = TokenConfig.defaults().sizes.bar.networkWidth;
                 TokenConfig.sizes.bar.resetOption("networkWidth");
             }
         }
@@ -112,7 +107,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.sizes.bar.kbLayoutWidth = v
             onReset: {
-                TokenConfig.sizes.bar.kbLayoutWidth = TokenConfig.defaults().sizes.bar.kbLayoutWidth;
                 TokenConfig.sizes.bar.resetOption("kbLayoutWidth");
             }
         }
@@ -132,7 +126,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.sizes.dashboard.userWidth = v
             onReset: {
-                TokenConfig.sizes.dashboard.userWidth = TokenConfig.defaults().sizes.dashboard.userWidth;
                 TokenConfig.sizes.dashboard.resetOption("userWidth");
             }
         }
@@ -148,7 +141,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.sizes.dashboard.logoSize = v
             onReset: {
-                TokenConfig.sizes.dashboard.logoSize = TokenConfig.defaults().sizes.dashboard.logoSize;
                 TokenConfig.sizes.dashboard.resetOption("logoSize");
             }
         }
@@ -164,7 +156,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.sizes.dashboard.uptimeSize = v
             onReset: {
-                TokenConfig.sizes.dashboard.uptimeSize = TokenConfig.defaults().sizes.dashboard.uptimeSize;
                 TokenConfig.sizes.dashboard.resetOption("uptimeSize");
             }
         }
@@ -180,7 +171,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.sizes.dashboard.dateTimeWidth = v
             onReset: {
-                TokenConfig.sizes.dashboard.dateTimeWidth = TokenConfig.defaults().sizes.dashboard.dateTimeWidth;
                 TokenConfig.sizes.dashboard.resetOption("dateTimeWidth");
             }
         }
@@ -196,7 +186,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.sizes.dashboard.weatherWidth = v
             onReset: {
-                TokenConfig.sizes.dashboard.weatherWidth = TokenConfig.defaults().sizes.dashboard.weatherWidth;
                 TokenConfig.sizes.dashboard.resetOption("weatherWidth");
             }
         }
@@ -212,7 +201,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.sizes.dashboard.mediaWidth = v
             onReset: {
-                TokenConfig.sizes.dashboard.mediaWidth = TokenConfig.defaults().sizes.dashboard.mediaWidth;
                 TokenConfig.sizes.dashboard.resetOption("mediaWidth");
             }
         }
@@ -228,7 +216,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.sizes.dashboard.mediaSectionWidth = v
             onReset: {
-                TokenConfig.sizes.dashboard.mediaSectionWidth = TokenConfig.defaults().sizes.dashboard.mediaSectionWidth;
                 TokenConfig.sizes.dashboard.resetOption("mediaSectionWidth");
             }
         }
@@ -244,7 +231,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.sizes.dashboard.mediaCoverArtSize = v
             onReset: {
-                TokenConfig.sizes.dashboard.mediaCoverArtSize = TokenConfig.defaults().sizes.dashboard.mediaCoverArtSize;
                 TokenConfig.sizes.dashboard.resetOption("mediaCoverArtSize");
             }
         }
@@ -260,7 +246,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.sizes.dashboard.mediaTabWidth = v
             onReset: {
-                TokenConfig.sizes.dashboard.mediaTabWidth = TokenConfig.defaults().sizes.dashboard.mediaTabWidth;
                 TokenConfig.sizes.dashboard.resetOption("mediaTabWidth");
             }
         }
@@ -277,7 +262,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.sizes.dashboard.mediaTabHeight = v
             onReset: {
-                TokenConfig.sizes.dashboard.mediaTabHeight = TokenConfig.defaults().sizes.dashboard.mediaTabHeight;
                 TokenConfig.sizes.dashboard.resetOption("mediaTabHeight");
             }
         }

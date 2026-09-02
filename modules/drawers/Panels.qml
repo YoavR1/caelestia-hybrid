@@ -90,9 +90,8 @@ Item {
                 anchors.right: undefined
             }
             PropertyChanges {
-                target: toasts
-                anchors.leftMargin: Tokens.padding.medium + (sidebar.visible ? sidebar.width * (1 - sidebar.offsetScale) : 0)
-                anchors.rightMargin: 0
+                toasts.anchors.leftMargin: Tokens.padding.medium + (sidebar.visible ? sidebar.width * (1 - sidebar.offsetScale) : 0)
+                toasts.anchors.rightMargin: 0
             }
             AnchorChanges {
                 target: sidebar
@@ -131,8 +130,7 @@ Item {
                 anchors.bottom: notifications.top
             }
             PropertyChanges {
-                target: sidebar
-                anchors.topMargin: -4
+                sidebar.anchors.topMargin: -4
             }
         }
     ]

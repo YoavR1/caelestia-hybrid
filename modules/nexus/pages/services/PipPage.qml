@@ -83,7 +83,6 @@ PageBase {
             active: root.positionItems[root.getPositionIndex()]
             onSelected: item => {
                 root.targetConfig.services.pipPosition = item.text.toLowerCase();
-                root.targetConfig.save();
             }
         }
 
@@ -97,7 +96,6 @@ PageBase {
             checked: root.targetConfig.services.pipFollowFocus
             onToggled: {
                 root.targetConfig.services.pipFollowFocus = checked;
-                root.targetConfig.save();
             }
         }
     }

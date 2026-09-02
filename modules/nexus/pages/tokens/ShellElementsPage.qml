@@ -31,7 +31,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.sizes.launcher.itemWidth = v
             onReset: {
-                TokenConfig.sizes.launcher.itemWidth = TokenConfig.defaults().sizes.launcher.itemWidth;
                 TokenConfig.sizes.launcher.resetOption("itemWidth");
             }
         }
@@ -47,7 +46,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.sizes.launcher.itemHeight = v
             onReset: {
-                TokenConfig.sizes.launcher.itemHeight = TokenConfig.defaults().sizes.launcher.itemHeight;
                 TokenConfig.sizes.launcher.resetOption("itemHeight");
             }
         }
@@ -63,7 +61,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.sizes.launcher.wallpaperWidth = v
             onReset: {
-                TokenConfig.sizes.launcher.wallpaperWidth = TokenConfig.defaults().sizes.launcher.wallpaperWidth;
                 TokenConfig.sizes.launcher.resetOption("wallpaperWidth");
             }
         }
@@ -80,7 +77,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.sizes.launcher.wallpaperHeight = v
             onReset: {
-                TokenConfig.sizes.launcher.wallpaperHeight = TokenConfig.defaults().sizes.launcher.wallpaperHeight;
                 TokenConfig.sizes.launcher.resetOption("wallpaperHeight");
             }
         }
@@ -100,7 +96,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.sizes.notifs.width = v
             onReset: {
-                TokenConfig.sizes.notifs.width = TokenConfig.defaults().sizes.notifs.width;
                 TokenConfig.sizes.notifs.resetOption("width");
             }
         }
@@ -116,7 +111,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.sizes.notifs.image = v
             onReset: {
-                TokenConfig.sizes.notifs.image = TokenConfig.defaults().sizes.notifs.image;
                 TokenConfig.sizes.notifs.resetOption("image");
             }
         }
@@ -133,7 +127,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.sizes.notifs.badge = v
             onReset: {
-                TokenConfig.sizes.notifs.badge = TokenConfig.defaults().sizes.notifs.badge;
                 TokenConfig.sizes.notifs.resetOption("badge");
             }
         }
@@ -153,7 +146,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.sizes.osd.sliderWidth = v
             onReset: {
-                TokenConfig.sizes.osd.sliderWidth = TokenConfig.defaults().sizes.osd.sliderWidth;
                 TokenConfig.sizes.osd.resetOption("sliderWidth");
             }
         }
@@ -170,7 +162,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.sizes.osd.sliderHeight = v
             onReset: {
-                TokenConfig.sizes.osd.sliderHeight = TokenConfig.defaults().sizes.osd.sliderHeight;
                 TokenConfig.sizes.osd.resetOption("sliderHeight");
             }
         }
@@ -190,7 +181,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.sizes.session.button = v
             onReset: {
-                TokenConfig.sizes.session.button = TokenConfig.defaults().sizes.session.button;
                 TokenConfig.sizes.session.resetOption("button");
             }
         }
@@ -206,7 +196,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.sizes.sidebar.width = v
             onReset: {
-                TokenConfig.sizes.sidebar.width = TokenConfig.defaults().sizes.sidebar.width;
                 TokenConfig.sizes.sidebar.resetOption("width");
             }
         }
@@ -222,7 +211,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.sizes.utilities.width = v
             onReset: {
-                TokenConfig.sizes.utilities.width = TokenConfig.defaults().sizes.utilities.width;
                 TokenConfig.sizes.utilities.resetOption("width");
             }
         }
@@ -239,7 +227,6 @@ PageBase {
             showReset: true
             onMoved: v => TokenConfig.sizes.utilities.toastWidth = v
             onReset: {
-                TokenConfig.sizes.utilities.toastWidth = TokenConfig.defaults().sizes.utilities.toastWidth;
                 TokenConfig.sizes.utilities.resetOption("toastWidth");
             }
         }

@@ -90,7 +90,6 @@ PageBase {
                                 if (!list.includes(text)) {
                                     list.push(text);
                                     GlobalConfig.utilities.gameMode.autoEnableRegexes = list;
-                                    GlobalConfig.save();
                                 }
                                 text = "";
                             }
@@ -108,7 +107,6 @@ PageBase {
                             if (!list.includes(customInput.text)) {
                                 list.push(customInput.text);
                                 GlobalConfig.utilities.gameMode.autoEnableRegexes = list;
-                                GlobalConfig.save();
                             }
                             customInput.text = "";
                         }
@@ -128,7 +126,6 @@ PageBase {
                 if (!list.includes(windowClass)) {
                     list.push(windowClass);
                     GlobalConfig.utilities.gameMode.autoEnableRegexes = list;
-                    GlobalConfig.save();
                 }
             }
         }
@@ -224,7 +221,6 @@ PageBase {
                                     let list = Array.from(GlobalConfig.utilities.gameMode.autoEnableRegexes);
                                     list.splice(delegateRect.index, 1);
                                     GlobalConfig.utilities.gameMode.autoEnableRegexes = list;
-                                    GlobalConfig.save();
                                 }
                             }
 
@@ -298,7 +294,7 @@ PageBase {
                             anchors.fill: undefined
                             anchors.left: list.contentItem.left
                             anchors.right: list.contentItem.right
-                            implicitHeight: itemLayout.implicitHeight + itemLayout.anchors.margins * 2
+                            implicitHeight: dialogItemLayout.implicitHeight + dialogItemLayout.anchors.margins * 2
                             radius: Tokens.rounding.small
 
                             onClicked: {
@@ -307,7 +303,7 @@ PageBase {
                             }
 
                             RowLayout {
-                                id: itemLayout
+                                id: dialogItemLayout
 
                                 anchors.fill: parent
                                 anchors.margins: Tokens.padding.medium

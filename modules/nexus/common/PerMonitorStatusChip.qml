@@ -32,7 +32,6 @@ IconButton {
     onClicked: {
         if (root.configNode && root.propertyName !== "") {
             root.configNode.resetOption(root.propertyName);
-            GlobalConfig.forScreen(Config.screen).save();
         }
     }
 }

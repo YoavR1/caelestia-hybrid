@@ -462,9 +462,8 @@ Item {
                                 parent: listView
                             }
                             PropertyChanges {
-                                target: delegateItem
-                                opacity: 0.8
-                                z: 999
+                                delegateItem.opacity: 0.8
+                                delegateItem.z: 999
                             }
                         }
                     ]

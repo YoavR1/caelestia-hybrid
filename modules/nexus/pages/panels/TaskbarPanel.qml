@@ -55,7 +55,6 @@ PageBase {
             checked: root.targetConfig.bar.persistent
             onToggled: {
                 root.targetConfig.bar.persistent = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -75,7 +74,6 @@ PageBase {
             menuItems: root.positionItems
             onSelected: item => {
                 root.targetConfig.bar.position = item.value; // qmllint disable missing-property
-                root.targetConfig.save();
             }
         }
 
@@ -87,7 +85,6 @@ PageBase {
             checked: root.targetConfig.bar.showOnHover
             onToggled: {
                 root.targetConfig.bar.showOnHover = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -103,7 +100,6 @@ PageBase {
             stepSize: 5
             onMoved: v => {
                 root.targetConfig.bar.dragThreshold = v;
-                root.targetConfig.save();
             }
         }
 

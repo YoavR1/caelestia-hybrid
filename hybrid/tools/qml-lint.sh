@@ -98,19 +98,23 @@ fi
 # ------------------------------------------------------------------------ run
 
 out=$(mktemp)
-"$QMLLINT" --import disable "${PASSTHRU[@]}" "${ARGS[@]}" "${FILES[@]}" > "$out" 2>&1
+# --bare drops qmllint's *default* import directory. Without it that directory takes
+# priority over every -I we pass, so an installed caelestia/midnight-shell package
+# shadows ./build/qml and the tree is linted against whatever is in /usr/lib/qt6/qml
+# instead of what was just built. See trap T18.
+"$QMLLINT" --bare --import disable "${PASSTHRU[@]}" "${ARGS[@]}" "${FILES[@]}" > "$out" 2>&1
 rc=$?
 
 if [ "$SUMMARY" = 1 ]; then
     # Count diagnostics, not output lines: each one ends in a [category] tag, and is
     # followed by source context and Info: explanation lines that must not be counted.
-    total=$(grep -cP '\[[a-z0-9-]+\]$' "$out" || true)
+    total=$(grep -cP '\[[A-Za-z0-9.-]+\]$' "$out" || true)
     printf 'linted %d file(s) with %s\n\n' "${#FILES[@]}" "$("$QMLLINT" --version)"
     if [ "$total" -eq 0 ]; then
         printf '%s no warnings\n' "$(green clean)"
     else
         printf 'by category:\n'
-        grep -oP '\[\K[a-z0-9-]+(?=\]$)' "$out" | sort | uniq -c | sort -rn \
+        grep -oP '\[\K[A-Za-z0-9.-]+(?=\]$)' "$out" | sort | uniq -c | sort -rn \
             | while read -r n c; do printf '  %6s  %s\n' "$n" "$c"; done
         printf '\nby file (top 15):\n'
         grep -oP '^(Warning|Error|Info): \K\S+\.qml(?=:[0-9])' "$out" | sort | uniq -c | sort -rn | head -15 \

@@ -53,9 +53,8 @@ Item {
         when: root.shouldBeVisible
 
         PropertyChanges {
-            target: root
-            implicitWidth: root.isHorizontal ? 0 : root.contentWidth
-            implicitHeight: root.isHorizontal ? root.contentWidth : 0
+            root.implicitWidth: root.isHorizontal ? 0 : root.contentWidth
+            root.implicitHeight: root.isHorizontal ? root.contentWidth : 0
         }
     }
 

@@ -219,7 +219,6 @@ MouseArea {
             onHasContentChanged: {
                 if (hasContent && !root.loader.freeze) {
                     overlay.visible = border.visible = true;
-                    root.save();
                 }
             }
         }

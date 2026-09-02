@@ -30,7 +30,6 @@ PageBase {
             checked: root.targetConfig.services.quickShareAutoStart
             onToggled: {
                 root.targetConfig.services.quickShareAutoStart = checked;
-                root.targetConfig.save();
             }
         }
 

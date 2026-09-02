@@ -58,7 +58,6 @@ PageBase {
             checked: root.targetConfig.bar.github.background
             onToggled: {
                 root.targetConfig.bar.github.background = checked;
-                root.targetConfig.save();
             }
         }
 
