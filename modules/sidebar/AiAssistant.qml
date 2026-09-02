@@ -1212,6 +1212,7 @@ Item {
 
                                             transform: Translate {
                                                 id: textTrans
+
                                                 y: 0
                                             }
                                             opacity: 1.0

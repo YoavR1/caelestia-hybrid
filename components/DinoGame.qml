@@ -486,30 +486,42 @@ Item {
 
     Loader {
         id: obstacle1
+
         visible: false
         sourceComponent: obstacleComponent
+
         property int obsType: 0
+
         property int obsFrame: 0
     }
     Loader {
         id: obstacle2
+
         visible: false
         sourceComponent: obstacleComponent
+
         property int obsType: 0
+
         property int obsFrame: 0
     }
     Loader {
         id: obstacle3
+
         visible: false
         sourceComponent: obstacleComponent
+
         property int obsType: 0
+
         property int obsFrame: 0
     }
     Loader {
         id: obstacle4
+
         visible: false
         sourceComponent: obstacleComponent
+
         property int obsType: 0
+
         property int obsFrame: 0
     }
 

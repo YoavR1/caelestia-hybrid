@@ -182,6 +182,7 @@ Item {
 
     Timer {
         id: initTimer
+
         interval: 350
         running: false
         onTriggered: {
