@@ -23,16 +23,6 @@ PageBase {
         }
     ]
 
-    // Ordered to match config::HybridVariant (Midnight, Op).
-    readonly property list<MenuItem> variantItems: [
-        MenuItem {
-            text: "MiDnight"
-        },
-        MenuItem {
-            text: "OP"
-        }
-    ]
-
     title: qsTr("Hybrid")
 
     ColumnLayout {
@@ -189,60 +179,10 @@ PageBase {
             onToggled: root.targetConfig.hybrid.features.dino = checked
         }
 
-        // ---------------------------------------------------------- variants
-
-        SectionHeader {
-            text: qsTr("Variants")
-        }
-
-        SelectRow {
-            first: true
-            label: qsTr("Lock centre")
-            subtext: qsTr("Which fork's lock screen layout to use")
-            configNode: root.targetConfig.hybrid.variants
-            propertyName: "lockCentre"
-            menuItems: root.variantItems
-            active: root.variantItems[root.targetConfig.hybrid.variants.lockCentre]
-            onSelected: item => {
-                root.targetConfig.hybrid.variants.lockCentre = root.variantItems.indexOf(item);
-            }
-        }
-
-        SelectRow {
-            label: qsTr("Audio popout")
-            subtext: qsTr("Which fork's audio panel to use")
-            configNode: root.targetConfig.hybrid.variants
-            propertyName: "audioPopout"
-            menuItems: root.variantItems
-            active: root.variantItems[root.targetConfig.hybrid.variants.audioPopout]
-            onSelected: item => {
-                root.targetConfig.hybrid.variants.audioPopout = root.variantItems.indexOf(item);
-            }
-        }
-
-        SelectRow {
-            label: qsTr("Desktop clock")
-            subtext: qsTr("Which fork's desktop clock to use")
-            configNode: root.targetConfig.hybrid.variants
-            propertyName: "desktopClock"
-            menuItems: root.variantItems
-            active: root.variantItems[root.targetConfig.hybrid.variants.desktopClock]
-            onSelected: item => {
-                root.targetConfig.hybrid.variants.desktopClock = root.variantItems.indexOf(item);
-            }
-        }
-
-        SelectRow {
-            last: true
-            label: qsTr("Colour scheme engine")
-            subtext: qsTr("Which fork's scheme generation to use")
-            configNode: root.targetConfig.hybrid.variants
-            propertyName: "colours"
-            menuItems: root.variantItems
-            active: root.variantItems[root.targetConfig.hybrid.variants.colours]
-            onSelected: item => {
-                root.targetConfig.hybrid.variants.colours = root.variantItems.indexOf(item);
-            }
-        }
+        // The four genuine dual-implementation sites (lock centre, audio popout, desktop
+        // clock, colours) live in the config under `hybrid.variants` and are set by the
+        // presets, but there is no section for them here yet: each still has exactly one
+        // implementation, so a selector would visibly do nothing. Phase 7 is when they get
+        // a second one and this page grows a Variants section.
     }
 }

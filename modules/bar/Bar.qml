@@ -297,7 +297,7 @@ Item {
             id: repeater
 
             model: ScriptModel {
-                values: section.values.filter(e => e.enabled)
+                values: section.values.filter(e => e.enabled && (e.id !== "dock" || GlobalConfig.hybrid.features.dock))
             }
 
             delegate: EntryChooser {}

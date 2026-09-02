@@ -113,6 +113,8 @@ PageBase {
             }
 
             IconTextButton {
+                visible: GlobalConfig.hybrid.features.wallhaven
+
                 icon: "image_search"
                 text: qsTr("Wallhaven")
                 font: Tokens.font.body.large

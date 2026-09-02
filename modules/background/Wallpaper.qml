@@ -398,7 +398,7 @@ Item {
                 anchors.fill: parent
                 asynchronous: true
 
-                active: img.isVideo && img.verifiedPath !== "" && img.renderActive
+                active: GlobalConfig.hybrid.features.videoWallpaper && img.isVideo && img.verifiedPath !== "" && img.renderActive
                 source: "VideoWallpaper.qml"
 
                 onLoaded: {

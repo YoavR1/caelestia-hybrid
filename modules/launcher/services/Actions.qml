@@ -15,13 +15,37 @@ Searcher {
         return search.slice(GlobalConfig.launcher.actionPrefix.length);
     }
 
+    // An action that autocompletes into a gated feature is not offered when it is off.
+    // Keeps the launcher's list honest; AppList refuses the prefix as well.
+    function featureEnabled(action: var): bool {
+        const command = action.command ?? [];
+        if (command.length < 2 || command[0] !== "autocomplete")
+            return true;
+
+        const features = GlobalConfig.hybrid.features;
+        switch (command[1]) {
+        case "emoji":
+            return features.emojiPicker;
+        case "clipboard":
+            return features.clipboard;
+        case "windows":
+            return features.windowSwitcher;
+        case "keybinds":
+            return features.keybindViewer;
+        case "wallpaper":
+            return true;
+        default:
+            return true;
+        }
+    }
+
     list: variants.instances
     useFuzzy: GlobalConfig.launcher.useFuzzy.actions
 
     Variants {
         id: variants
 
-        model: GlobalConfig.launcher.actions.filter(a => (a.enabled ?? true) && (GlobalConfig.launcher.enableDangerousActions || !(a.dangerous ?? false)))
+        model: GlobalConfig.launcher.actions.filter(a => (a.enabled ?? true) && (GlobalConfig.launcher.enableDangerousActions || !(a.dangerous ?? false)) && root.featureEnabled(a))
 
         Action {}
     }

@@ -29,7 +29,16 @@ StyledListView {
     function stateForText(text: string): string {
         const prefix = GlobalConfig.launcher.actionPrefix;
         if (text.startsWith(prefix)) {
-            const actionPrefixes = ["calc", "scheme", "variant", "emoji", "clipboard", "windows"];
+            // A gated prefix is simply not recognised, so typing `>emoji ` by hand falls
+            // through to the generic action list rather than reaching a disabled feature.
+            const features = GlobalConfig.hybrid.features;
+            const actionPrefixes = ["calc", "scheme", "variant"];
+            if (features.emojiPicker)
+                actionPrefixes.push("emoji");
+            if (features.clipboard)
+                actionPrefixes.push("clipboard");
+            if (features.windowSwitcher)
+                actionPrefixes.push("windows");
             for (const action of actionPrefixes)
                 if (text.startsWith(`${prefix}${action} `))
                     return action;

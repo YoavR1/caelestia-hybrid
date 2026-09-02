@@ -200,7 +200,7 @@ Scope {
         name: "workspaceOverview"
         description: "Toggle workspace overview"
         onPressed: {
-            if (root.hasFullscreen)
+            if (root.hasFullscreen || !GlobalConfig.hybrid.features.overview)
                 return;
             const screenState = ShellState.forActive();
             screenState.workspaceDrawer = !screenState.workspaceDrawer;
@@ -211,6 +211,8 @@ Scope {
         function toggle(drawer: string): void {
             if (list().split("\n").includes(drawer)) {
                 if (root.hasFullscreen && ["launcher", "session", "dashboard"].includes(drawer))
+                    return;
+                if (drawer === "workspaceDrawer" && !GlobalConfig.hybrid.features.overview)
                     return;
                 const screenState = ShellState.forActive();
                 screenState[drawer] = !screenState[drawer];

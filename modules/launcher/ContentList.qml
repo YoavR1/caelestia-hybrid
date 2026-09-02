@@ -21,9 +21,9 @@ Item {
 
     readonly property bool showWallpapers: search.text.startsWith(`${GlobalConfig.launcher.actionPrefix}wallpaper `) || search.text === `${GlobalConfig.launcher.actionPrefix}wallpaper`
 
-    readonly property bool showWindowSwitcher: search.text.startsWith(`${GlobalConfig.launcher.actionPrefix}windows `) || search.text === `${GlobalConfig.launcher.actionPrefix}windows`
+    readonly property bool showWindowSwitcher: GlobalConfig.hybrid.features.windowSwitcher && (search.text.startsWith(`${GlobalConfig.launcher.actionPrefix}windows `) || search.text === `${GlobalConfig.launcher.actionPrefix}windows`)
 
-    readonly property bool showKeybinds: search.text.startsWith(`${GlobalConfig.launcher.actionPrefix}keybinds `) || search.text === `${GlobalConfig.launcher.actionPrefix}keybinds`
+    readonly property bool showKeybinds: GlobalConfig.hybrid.features.keybindViewer && (search.text.startsWith(`${GlobalConfig.launcher.actionPrefix}keybinds `) || search.text === `${GlobalConfig.launcher.actionPrefix}keybinds`)
 
     readonly property bool showAnimations: search.text.startsWith(`${GlobalConfig.launcher.actionPrefix}animations `) || search.text === `${GlobalConfig.launcher.actionPrefix}animations`
 
