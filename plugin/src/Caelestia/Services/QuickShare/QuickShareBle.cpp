@@ -10,17 +10,13 @@
 // QuickShareBleAdvertisementAdaptor
 // --------------------------------------------------------------------------------
 
-QuickShareBleAdvertisementAdaptor::QuickShareBleAdvertisementAdaptor(QObject *parent)
-    : QDBusAbstractAdaptor(parent)
-{
-}
+QuickShareBleAdvertisementAdaptor::QuickShareBleAdvertisementAdaptor(QObject* parent)
+    : QDBusAbstractAdaptor(parent) {}
 
 QVariantMap QuickShareBleAdvertisementAdaptor::serviceData() const {
     QVariantMap map;
-    const char rawData[] = {
-        (char)252, 18, (char)142, 1, 66, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
-        (char)191, 45, 91, (char)160, (char)225, (char)216, 117, 36, (char)202, 0
-    };
+    const char rawData[] = { (char)252, 18, (char)142, 1, 66, 0, 0, 0, 0, 0, 0, 0, 0, 0, (char)191, 45, 91, (char)160,
+        (char)225, (char)216, 117, 36, (char)202, 0 };
     QByteArray data(rawData, 24);
     map.insert("0000fe2c-0000-1000-8000-00805f9b34fb", QVariant::fromValue(data));
     return map;
@@ -35,8 +31,9 @@ void QuickShareBleAdvertisementAdaptor::Release() {
 // --------------------------------------------------------------------------------
 
 QuickShareBleAdvertiser::QuickShareBleAdvertiser(QObject* parent)
-    : QObject(parent), m_objectPath("/org/caelestia/QuickShareBleAdvertisement"), m_isAdvertising(false)
-{
+    : QObject(parent)
+    , m_objectPath("/org/caelestia/QuickShareBleAdvertisement")
+    , m_isAdvertising(false) {
     new QuickShareBleAdvertisementAdaptor(this);
     QDBusConnection::systemBus().registerObject(m_objectPath, this);
 }
@@ -47,16 +44,18 @@ QuickShareBleAdvertiser::~QuickShareBleAdvertiser() {
 }
 
 void QuickShareBleAdvertiser::startAdvertising() {
-    if (m_isAdvertising) return;
+    if (m_isAdvertising)
+        return;
 
-    QDBusMessage msg = QDBusMessage::createMethodCall(
-        "org.bluez", "/", "org.freedesktop.DBus.ObjectManager", "GetManagedObjects");
-    
+    QDBusMessage msg =
+        QDBusMessage::createMethodCall("org.bluez", "/", "org.freedesktop.DBus.ObjectManager", "GetManagedObjects");
+
     QDBusConnection::systemBus().callWithCallback(msg, this, SLOT(onGetManagedObjectsFinished(QDBusMessage)));
 }
 
 void QuickShareBleAdvertiser::stopAdvertising() {
-    if (!m_isAdvertising || m_adapterPath.isEmpty()) return;
+    if (!m_isAdvertising || m_adapterPath.isEmpty())
+        return;
 
     QDBusMessage msg = QDBusMessage::createMethodCall(
         "org.bluez", m_adapterPath, "org.bluez.LEAdvertisingManager1", "UnregisterAdvertisement");
@@ -109,10 +108,9 @@ void QuickShareBleAdvertiser::onRegisterAdvertisementFinished(const QDBusMessage
 // --------------------------------------------------------------------------------
 
 QuickShareBleScanner::QuickShareBleScanner(QObject* parent)
-    : QObject(parent), m_isScanning(false)
-{
-    QDBusConnection::systemBus().connect(
-        "org.bluez", "/", "org.freedesktop.DBus.ObjectManager", "InterfacesAdded",
+    : QObject(parent)
+    , m_isScanning(false) {
+    QDBusConnection::systemBus().connect("org.bluez", "/", "org.freedesktop.DBus.ObjectManager", "InterfacesAdded",
         this, SLOT(onInterfacesAdded(QDBusObjectPath, QMap<QString, QVariantMap>)));
 }
 
@@ -121,19 +119,21 @@ QuickShareBleScanner::~QuickShareBleScanner() {
 }
 
 void QuickShareBleScanner::startScanning() {
-    if (m_isScanning) return;
+    if (m_isScanning)
+        return;
 
-    QDBusMessage msg = QDBusMessage::createMethodCall(
-        "org.bluez", "/", "org.freedesktop.DBus.ObjectManager", "GetManagedObjects");
-    
+    QDBusMessage msg =
+        QDBusMessage::createMethodCall("org.bluez", "/", "org.freedesktop.DBus.ObjectManager", "GetManagedObjects");
+
     QDBusConnection::systemBus().callWithCallback(msg, this, SLOT(onGetManagedObjectsFinished(QDBusMessage)));
 }
 
 void QuickShareBleScanner::stopScanning() {
-    if (!m_isScanning || m_adapterPath.isEmpty()) return;
+    if (!m_isScanning || m_adapterPath.isEmpty())
+        return;
 
-    QDBusMessage msg = QDBusMessage::createMethodCall(
-        "org.bluez", m_adapterPath, "org.bluez.Adapter1", "StopDiscovery");
+    QDBusMessage msg =
+        QDBusMessage::createMethodCall("org.bluez", m_adapterPath, "org.bluez.Adapter1", "StopDiscovery");
     QDBusConnection::systemBus().call(msg);
     m_isScanning = false;
 }
@@ -160,10 +160,10 @@ void QuickShareBleScanner::onGetManagedObjectsFinished(const QDBusMessage& reply
         return;
     }
 
-    QDBusMessage filterMsg = QDBusMessage::createMethodCall(
-        "org.bluez", m_adapterPath, "org.bluez.Adapter1", "SetDiscoveryFilter");
+    QDBusMessage filterMsg =
+        QDBusMessage::createMethodCall("org.bluez", m_adapterPath, "org.bluez.Adapter1", "SetDiscoveryFilter");
     QVariantMap filter;
-    filter.insert("UUIDs", QStringList{"0000fe2c-0000-1000-8000-00805f9b34fb"});
+    filter.insert("UUIDs", QStringList{ "0000fe2c-0000-1000-8000-00805f9b34fb" });
     filterMsg << filter;
     QDBusConnection::systemBus().callWithCallback(filterMsg, this, SLOT(onSetDiscoveryFilterFinished(QDBusMessage)));
 }
@@ -173,8 +173,8 @@ void QuickShareBleScanner::onSetDiscoveryFilterFinished(const QDBusMessage& repl
         qWarning() << "Failed to set discovery filter:" << reply.errorMessage();
     }
 
-    QDBusMessage startMsg = QDBusMessage::createMethodCall(
-        "org.bluez", m_adapterPath, "org.bluez.Adapter1", "StartDiscovery");
+    QDBusMessage startMsg =
+        QDBusMessage::createMethodCall("org.bluez", m_adapterPath, "org.bluez.Adapter1", "StartDiscovery");
     QDBusConnection::systemBus().callWithCallback(startMsg, this, SLOT(onStartDiscoveryFinished(QDBusMessage)));
 }
 
@@ -187,18 +187,19 @@ void QuickShareBleScanner::onStartDiscoveryFinished(const QDBusMessage& reply) {
     }
 }
 
-void QuickShareBleScanner::onInterfacesAdded(const QDBusObjectPath& objectPath, const QMap<QString, QVariantMap>& interfacesAndProperties) {
+void QuickShareBleScanner::onInterfacesAdded(
+    const QDBusObjectPath& objectPath, const QMap<QString, QVariantMap>& interfacesAndProperties) {
     if (interfacesAndProperties.contains("org.bluez.Device1")) {
         QVariantMap props = interfacesAndProperties.value("org.bluez.Device1");
         checkDeviceProperties(props);
-        
-        QDBusConnection::systemBus().connect(
-            "org.bluez", objectPath.path(), "org.freedesktop.DBus.Properties", "PropertiesChanged",
-            this, SLOT(onPropertiesChanged(QString, QVariantMap, QStringList)));
+
+        QDBusConnection::systemBus().connect("org.bluez", objectPath.path(), "org.freedesktop.DBus.Properties",
+            "PropertiesChanged", this, SLOT(onPropertiesChanged(QString, QVariantMap, QStringList)));
     }
 }
 
-void QuickShareBleScanner::onPropertiesChanged(const QString& interface, const QVariantMap& changedProperties, const QStringList& invalidatedProperties) {
+void QuickShareBleScanner::onPropertiesChanged(
+    const QString& interface, const QVariantMap& changedProperties, const QStringList& invalidatedProperties) {
     Q_UNUSED(invalidatedProperties);
     if (interface == "org.bluez.Device1") {
         checkDeviceProperties(changedProperties);
@@ -210,7 +211,7 @@ void QuickShareBleScanner::checkDeviceProperties(const QVariantMap& props) {
         const QDBusArgument arg = props.value("ServiceData").value<QDBusArgument>();
         QMap<QString, QVariant> serviceData;
         arg >> serviceData;
-        
+
         // Sometimes QDBusArgument converts to QMap<QString, QByteArray> or QVariant
         if (serviceData.contains("0000fe2c-0000-1000-8000-00805f9b34fb")) {
             QByteArray data;
@@ -221,7 +222,7 @@ void QuickShareBleScanner::checkDeviceProperties(const QVariantMap& props) {
                 const QDBusArgument barg = val.value<QDBusArgument>();
                 barg >> data;
             }
-            
+
             if (!data.isEmpty()) {
                 QDateTime now = QDateTime::currentDateTime();
                 if (!m_lastEmit.isValid() || m_lastEmit.msecsTo(now) > 10000) {

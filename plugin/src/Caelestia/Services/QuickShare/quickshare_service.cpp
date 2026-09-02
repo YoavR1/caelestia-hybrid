@@ -1,31 +1,32 @@
-#include <QTimer>
 #include "quickshare_service.hpp"
 #include <QDebug>
-#include <QJsonDocument>
-#include <QJsonArray>
-#include <QJsonObject>
-#include <QFile>
 #include <QDir>
+#include <QFile>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QStandardPaths>
 #include <QSysInfo>
+#include <QTimer>
 
 namespace caelestia::services {
 
 QuickShareService::QuickShareService(QObject* parent)
-    : QObject(parent), m_discovery(new QuickShareDiscovery(this)), 
-      m_bleAdvertiser(new QuickShareBleAdvertiser(this)),
-      m_bleScanner(new QuickShareBleScanner(this)),
-      m_server(new QTcpServer(this)) {
-    
+    : QObject(parent)
+    , m_discovery(new QuickShareDiscovery(this))
+    , m_bleAdvertiser(new QuickShareBleAdvertiser(this))
+    , m_bleScanner(new QuickShareBleScanner(this))
+    , m_server(new QTcpServer(this)) {
+
     connect(m_discovery, &QuickShareDiscovery::deviceFound, this, &QuickShareService::onDeviceFound);
     connect(m_discovery, &QuickShareDiscovery::deviceLost, this, &QuickShareService::onDeviceLost);
-    
+
     connect(m_bleScanner, &QuickShareBleScanner::deviceFound, this, [this](const QString&, const QByteArray&) {
         m_discovery->triggerTemporaryAdvertising(QSysInfo::machineHostName(), m_server->serverPort());
     });
-    
+
     connect(m_server, &QTcpServer::newConnection, this, &QuickShareService::onNewConnection);
-    
+
     loadHistory();
 }
 
@@ -38,8 +39,9 @@ bool QuickShareService::isEnabled() const {
 }
 
 void QuickShareService::setEnabled(bool enabled) {
-    if (m_isEnabled == enabled) return;
-    
+    if (m_isEnabled == enabled)
+        return;
+
     if (enabled) {
         if (!m_discovery->startDiscovery()) {
             emit errorOccurred("Avahi daemon is not running. Please start avahi-daemon to use Quick Share.");
@@ -51,7 +53,7 @@ void QuickShareService::setEnabled(bool enabled) {
         if (!m_server->isListening()) {
             m_server->listen(QHostAddress::Any, 0); // Bind to any available port
         }
-        
+
         m_bleScanner->startScanning();
     } else {
         m_isEnabled = false;
@@ -68,8 +70,9 @@ bool QuickShareService::isVisible() const {
 }
 
 void QuickShareService::setVisible(bool visible) {
-    if (m_isVisible == visible) return;
-    
+    if (m_isVisible == visible)
+        return;
+
     if (visible && m_isEnabled) {
         if (!m_discovery->advertise(QSysInfo::machineHostName(), m_server->serverPort())) {
             emit errorOccurred("Failed to advertise Quick Share. Avahi daemon might not be running.");
@@ -101,19 +104,22 @@ QVariantList QuickShareService::transferHistory() const {
 }
 
 void QuickShareService::sendFile(const QString& deviceId, const QString& filePath) {
-    auto it = std::find_if(m_devices.begin(), m_devices.end(), [&](const QuickShareDevice& d){ return d.id == deviceId; });
-    if (it == m_devices.end()) return;
-    
+    auto it = std::find_if(m_devices.begin(), m_devices.end(), [&](const QuickShareDevice& d) {
+        return d.id == deviceId;
+    });
+    if (it == m_devices.end())
+        return;
+
     QuickShareConnection* conn = new QuickShareConnection(it->address, it->port, this);
     m_activeConnections.insert(deviceId, conn);
-    
+
     connect(conn, &QuickShareConnection::transferProgress, this, [this, deviceId](qint64 sent, qint64 total) {
         emit transferProgress(deviceId, sent, total);
     });
-    
+
     connect(conn, &QuickShareConnection::transferFinished, this, [this, deviceId, filePath](bool success) {
         emit transferFinished(deviceId, success);
-        
+
         if (success) {
             QVariantMap entry;
             entry["fileName"] = QFileInfo(filePath).fileName();
@@ -125,13 +131,13 @@ void QuickShareService::sendFile(const QString& deviceId, const QString& filePat
             emit transferHistoryChanged();
             saveHistory();
         }
-        
+
         if (m_activeConnections.contains(deviceId)) {
             QuickShareConnection* c = m_activeConnections.take(deviceId);
             QTimer::singleShot(2000, c, &QObject::deleteLater);
         }
     });
-    
+
     // We send file once handshake completes
     connect(conn, &QuickShareConnection::stateChanged, this, [conn, filePath](QuickShareConnection::State state) {
         if (state == QuickShareConnection::ConnectionAccepted) {
@@ -162,9 +168,12 @@ void QuickShareService::clearHistory() {
 }
 
 void QuickShareService::onDeviceFound(const QuickShareDevice& device) {
-    if (device.name == QSysInfo::machineHostName()) return;
-    
-    auto it = std::find_if(m_devices.begin(), m_devices.end(), [&](const QuickShareDevice& d){ return d.id == device.id; });
+    if (device.name == QSysInfo::machineHostName())
+        return;
+
+    auto it = std::find_if(m_devices.begin(), m_devices.end(), [&](const QuickShareDevice& d) {
+        return d.id == device.id;
+    });
     if (it == m_devices.end()) {
         m_devices.append(device);
         emit nearbyDevicesChanged();
@@ -172,7 +181,9 @@ void QuickShareService::onDeviceFound(const QuickShareDevice& device) {
 }
 
 void QuickShareService::onDeviceLost(const QString& deviceId) {
-    auto it = std::find_if(m_devices.begin(), m_devices.end(), [&](const QuickShareDevice& d){ return d.id == deviceId; });
+    auto it = std::find_if(m_devices.begin(), m_devices.end(), [&](const QuickShareDevice& d) {
+        return d.id == deviceId;
+    });
     if (it != m_devices.end()) {
         m_devices.erase(it);
         emit nearbyDevicesChanged();
@@ -181,19 +192,22 @@ void QuickShareService::onDeviceLost(const QString& deviceId) {
 
 void QuickShareService::onNewConnection() {
     QTcpSocket* socket = m_server->nextPendingConnection();
-    if (!socket) return;
-    
+    if (!socket)
+        return;
+
     QuickShareConnection* conn = new QuickShareConnection(socket, this);
     m_pendingIncomingConnection = conn;
-    
-    connect(conn, &QuickShareConnection::transferRequested, this, [this, conn](const QString& fileName, qint64 fileSize) {
-        emit incomingTransferRequested(conn->deviceName().isEmpty() ? "Nearby Device" : conn->deviceName(), fileName, fileSize);
-    });
+
+    connect(
+        conn, &QuickShareConnection::transferRequested, this, [this, conn](const QString& fileName, qint64 fileSize) {
+            emit incomingTransferRequested(
+                conn->deviceName().isEmpty() ? "Nearby Device" : conn->deviceName(), fileName, fileSize);
+        });
 
     connect(conn, &QuickShareConnection::pinCodeReady, this, [this](const QString& pinCode) {
         emit incomingTransferPinReady(pinCode);
     });
-    
+
     connect(conn, &QuickShareConnection::transferFinished, this, [this](bool success) {
         if (success && m_pendingIncomingConnection) {
             QVariantMap entry;
@@ -202,12 +216,14 @@ void QuickShareService::onNewConnection() {
             entry["filePath"] = QDir::homePath() + "/Downloads/" + fileName;
             entry["timestamp"] = QDateTime::currentDateTime().toSecsSinceEpoch();
             entry["direction"] = "received";
-            entry["deviceName"] = m_pendingIncomingConnection->deviceName().isEmpty() ? "Nearby Device" : m_pendingIncomingConnection->deviceName();
+            entry["deviceName"] = m_pendingIncomingConnection->deviceName().isEmpty()
+                                      ? "Nearby Device"
+                                      : m_pendingIncomingConnection->deviceName();
             m_transferHistory.prepend(entry);
             emit transferHistoryChanged();
             saveHistory();
         }
-        
+
         emit transferFinished("incoming", success);
 
         if (m_pendingIncomingConnection) {
@@ -236,7 +252,6 @@ void QuickShareService::stopBleWakeupBroadcast() {
         m_bleAdvertiser->stopAdvertising();
     }
 }
-
 
 void QuickShareService::loadHistory() {
     QString path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + "/quickshare_history.json";

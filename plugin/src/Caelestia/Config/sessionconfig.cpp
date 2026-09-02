@@ -1,12 +1,12 @@
 #include "sessionconfig.hpp"
 #include "rootconfig.hpp"
 
+#include <algorithm>
 #include <qfile.h>
 #include <qjsonarray.h>
 #include <qjsonobject.h>
 #include <qmetaobject.h>
 #include <qregularexpression.h>
-#include <algorithm>
 
 namespace caelestia::config {
 
@@ -510,12 +510,8 @@ QVariantList SessionConfig::buttons() const {
     if (!m_icons || !m_commands)
         return result;
 
-    static const QStringList defaultKeys = {
-        QStringLiteral("logout"),
-        QStringLiteral("shutdown"),
-        QStringLiteral("hibernate"),
-        QStringLiteral("reboot")
-    };
+    static const QStringList defaultKeys = { QStringLiteral("logout"), QStringLiteral("shutdown"),
+        QStringLiteral("hibernate"), QStringLiteral("reboot") };
 
     QStringList orderedKeys;
     QSet<QString> seen;
@@ -579,12 +575,8 @@ QVariantList SessionConfig::customButtons() const {
     if (!m_icons && !m_commands)
         return result;
 
-    static const QSet<QString> defaultKeys = {
-        QStringLiteral("logout"),
-        QStringLiteral("shutdown"),
-        QStringLiteral("hibernate"),
-        QStringLiteral("reboot")
-    };
+    static const QSet<QString> defaultKeys = { QStringLiteral("logout"), QStringLiteral("shutdown"),
+        QStringLiteral("hibernate"), QStringLiteral("reboot") };
 
     QStringList orderedKeys;
     QSet<QString> seen;

@@ -1,7 +1,7 @@
 #include "config.hpp"
-#include "audioconfig.hpp"
 #include "aiconfig.hpp"
 #include "appearanceconfig.hpp"
+#include "audioconfig.hpp"
 #include "backgroundconfig.hpp"
 #include "barconfig.hpp"
 #include "borderconfig.hpp"

@@ -1,13 +1,13 @@
 #pragma once
 
-#include <QObject>
-#include <QString>
-#include <QStringList>
-#include <QVariantMap>
 #include <QDBusAbstractAdaptor>
 #include <QDBusMessage>
 #include <QDBusObjectPath>
 #include <QDateTime>
+#include <QObject>
+#include <QString>
+#include <QStringList>
+#include <QVariantMap>
 
 class QuickShareBleAdvertisementAdaptor : public QDBusAbstractAdaptor {
     Q_OBJECT
@@ -17,9 +17,12 @@ class QuickShareBleAdvertisementAdaptor : public QDBusAbstractAdaptor {
     Q_PROPERTY(QVariantMap ServiceData READ serviceData)
 
 public:
-    explicit QuickShareBleAdvertisementAdaptor(QObject *parent);
+    explicit QuickShareBleAdvertisementAdaptor(QObject* parent);
+
     QString type() const { return "broadcast"; }
-    QStringList serviceUUIDs() const { return {"0000fe2c-0000-1000-8000-00805f9b34fb"}; }
+
+    QStringList serviceUUIDs() const { return { "0000fe2c-0000-1000-8000-00805f9b34fb" }; }
+
     QVariantMap serviceData() const;
 
 public slots:
@@ -28,6 +31,7 @@ public slots:
 
 class QuickShareBleAdvertiser : public QObject {
     Q_OBJECT
+
 public:
     explicit QuickShareBleAdvertiser(QObject* parent = nullptr);
     ~QuickShareBleAdvertiser() override;
@@ -47,6 +51,7 @@ private:
 
 class QuickShareBleScanner : public QObject {
     Q_OBJECT
+
 public:
     explicit QuickShareBleScanner(QObject* parent = nullptr);
     ~QuickShareBleScanner() override;
@@ -61,8 +66,10 @@ private slots:
     void onGetManagedObjectsFinished(const QDBusMessage& reply);
     void onSetDiscoveryFilterFinished(const QDBusMessage& reply);
     void onStartDiscoveryFinished(const QDBusMessage& reply);
-    void onInterfacesAdded(const QDBusObjectPath& objectPath, const QMap<QString, QVariantMap>& interfacesAndProperties);
-    void onPropertiesChanged(const QString& interface, const QVariantMap& changedProperties, const QStringList& invalidatedProperties);
+    void onInterfacesAdded(
+        const QDBusObjectPath& objectPath, const QMap<QString, QVariantMap>& interfacesAndProperties);
+    void onPropertiesChanged(
+        const QString& interface, const QVariantMap& changedProperties, const QStringList& invalidatedProperties);
     void checkDeviceProperties(const QVariantMap& deviceProperties);
 
 private:

@@ -1,10 +1,10 @@
 #include "discordipc.hpp"
-#include <QStandardPaths>
-#include <QDir>
-#include <QDebug>
-#include <QDataStream>
 #include <QCoreApplication>
+#include <QDataStream>
 #include <QDateTime>
+#include <QDebug>
+#include <QDir>
+#include <QStandardPaths>
 
 namespace caelestia {
 
@@ -17,8 +17,10 @@ enum class Opcode : int32_t {
 };
 
 DiscordIpc::DiscordIpc(QObject* parent)
-    : QObject(parent), m_socket(new QLocalSocket(this)), m_reconnectTimer(new QTimer(this)), m_connected(false)
-{
+    : QObject(parent)
+    , m_socket(new QLocalSocket(this))
+    , m_reconnectTimer(new QTimer(this))
+    , m_connected(false) {
     connect(m_socket, &QLocalSocket::connected, this, &DiscordIpc::onSocketConnected);
     connect(m_socket, &QLocalSocket::disconnected, this, &DiscordIpc::onSocketDisconnected);
     connect(m_socket, &QLocalSocket::readyRead, this, &DiscordIpc::onReadyRead);
@@ -60,8 +62,10 @@ void DiscordIpc::disconnectIpc() {
 }
 
 void DiscordIpc::checkReconnect() {
-    if (m_clientId.isEmpty()) return;
-    if (m_socket->state() == QLocalSocket::ConnectedState || m_socket->state() == QLocalSocket::ConnectingState) return;
+    if (m_clientId.isEmpty())
+        return;
+    if (m_socket->state() == QLocalSocket::ConnectedState || m_socket->state() == QLocalSocket::ConnectingState)
+        return;
 
     QString runtimeDir = QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation);
     QString pipePath = runtimeDir + "/discord-ipc-0";
@@ -129,7 +133,8 @@ void DiscordIpc::processPayload(int opcode, const QJsonObject& payload) {
 }
 
 void DiscordIpc::sendFrame(int opcode, const QJsonObject& payload) {
-    if (m_socket->state() != QLocalSocket::ConnectedState) return;
+    if (m_socket->state() != QLocalSocket::ConnectedState)
+        return;
 
     QJsonDocument doc(payload);
     QByteArray data = doc.toJson(QJsonDocument::Compact);
@@ -145,7 +150,8 @@ void DiscordIpc::sendFrame(int opcode, const QJsonObject& payload) {
 }
 
 void DiscordIpc::sendActivity(const QJsonObject& activity) {
-    if (!m_connected) return;
+    if (!m_connected)
+        return;
 
     QJsonObject args;
     args["pid"] = static_cast<int>(QCoreApplication::applicationPid());
@@ -160,7 +166,8 @@ void DiscordIpc::sendActivity(const QJsonObject& activity) {
 }
 
 void DiscordIpc::clearActivity() {
-    if (!m_connected) return;
+    if (!m_connected)
+        return;
 
     QJsonObject args;
     args["pid"] = static_cast<int>(QCoreApplication::applicationPid());

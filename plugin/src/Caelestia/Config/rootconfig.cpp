@@ -18,7 +18,8 @@ QString watchRoot() {
     return QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation);
 }
 
-QString reorderJsonBlockKeys(const QString& text, const QString& parentKey, const QString& sectionKey, const QStringList& orderedKeys) {
+QString reorderJsonBlockKeys(
+    const QString& text, const QString& parentKey, const QString& sectionKey, const QStringList& orderedKeys) {
     if (orderedKeys.isEmpty())
         return text;
 
@@ -62,6 +63,7 @@ QString reorderJsonBlockKeys(const QString& text, const QString& parentKey, cons
         QString key;
         QString text;
     };
+
     QList<KeyEntry> entries;
 
     int cur = 0;
@@ -79,7 +81,9 @@ QString reorderJsonBlockKeys(const QString& text, const QString& parentKey, cons
             break;
 
         int valStart = colonPos + 1;
-        while (valStart < block.length() && (block[valStart] == QLatin1Char(' ') || block[valStart] == QLatin1Char('\n') || block[valStart] == QLatin1Char('\r') || block[valStart] == QLatin1Char('\t')))
+        while (valStart < block.length() &&
+               (block[valStart] == QLatin1Char(' ') || block[valStart] == QLatin1Char('\n') ||
+                   block[valStart] == QLatin1Char('\r') || block[valStart] == QLatin1Char('\t')))
             valStart++;
 
         int entryEnd = valStart;
@@ -124,7 +128,8 @@ QString reorderJsonBlockKeys(const QString& text, const QString& parentKey, cons
             }
         }
 
-        while (entryEnd < block.length() && (block[entryEnd] == QLatin1Char(',') || block[entryEnd] == QLatin1Char('\r'))) {
+        while (entryEnd < block.length() &&
+               (block[entryEnd] == QLatin1Char(',') || block[entryEnd] == QLatin1Char('\r'))) {
             if (block[entryEnd] == QLatin1Char(',')) {
                 entryEnd++;
                 break;
@@ -225,10 +230,12 @@ void RootConfig::setupFileBackend(const QString& path, const QString& screen) {
             if (QString::fromUtf8(prop.name()) == QStringLiteral("session")) {
                 if (auto* session = qobject_cast<SessionConfig*>(prop.read(this).value<QObject*>())) {
                     if (session->icons()) {
-                        jsonText = reorderJsonBlockKeys(jsonText, QStringLiteral("session"), QStringLiteral("icons"), session->icons()->customIconKeys());
+                        jsonText = reorderJsonBlockKeys(jsonText, QStringLiteral("session"), QStringLiteral("icons"),
+                            session->icons()->customIconKeys());
                     }
                     if (session->commands()) {
-                        jsonText = reorderJsonBlockKeys(jsonText, QStringLiteral("session"), QStringLiteral("commands"), session->commands()->customCommandKeys());
+                        jsonText = reorderJsonBlockKeys(jsonText, QStringLiteral("session"), QStringLiteral("commands"),
+                            session->commands()->customCommandKeys());
                     }
                 }
             }

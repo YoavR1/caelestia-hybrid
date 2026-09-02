@@ -17,7 +17,9 @@ public:
     explicit RootConfig(QObject* parent = nullptr);
 
     void setupFileBackend(const QString& path, const QString& screen = {});
+
     [[nodiscard]] QString filePath() const { return m_filePath; }
+
     void saveToFile();
     // Returns nullopt if retrying, empty string on success, error message on failure.
     [[nodiscard]] std::optional<QString> reloadFromFile();

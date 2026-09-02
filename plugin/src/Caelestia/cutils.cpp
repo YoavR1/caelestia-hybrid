@@ -1,16 +1,16 @@
 #include "cutils.hpp"
 
+#include <QStandardPaths>
 #include <QtConcurrent/qtconcurrentrun.h>
-#include <qcryptographichash.h>
 #include <QtQuick/qquickitemgrabresult.h>
 #include <QtQuick/qquickwindow.h>
+#include <qcryptographichash.h>
 #include <qdir.h>
 #include <qfile.h>
 #include <qfileinfo.h>
 #include <qfuturewatcher.h>
 #include <qloggingcategory.h>
 #include <qqmlengine.h>
-#include <QStandardPaths>
 #include <qregularexpression.h>
 
 Q_LOGGING_CATEGORY(lcCUtils, "caelestia.cutils", QtInfoMsg)

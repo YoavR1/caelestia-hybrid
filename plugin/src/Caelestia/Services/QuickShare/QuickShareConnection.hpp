@@ -1,9 +1,9 @@
 #pragma once
 
-#include <QObject>
-#include <QTcpSocket>
 #include "QuickShareCrypto.hpp"
 #include "wire_format.pb.h"
+#include <QObject>
+#include <QTcpSocket>
 
 namespace caelestia::services {
 
@@ -29,7 +29,9 @@ public:
     void sendFile(const QString& filePath);
     void acceptTransfer();
     void rejectTransfer();
+
     QString incomingFileName() const { return m_incomingFileName; }
+
     QString deviceName() const { return m_deviceName; }
 
 signals:
@@ -66,7 +68,7 @@ private:
     int m_recvSeq = 1;
     QuickShareCrypto m_crypto;
     QByteArray m_buffer;
-    
+
     QString m_incomingFileName;
     qint64 m_incomingFileSize = 0;
     QString m_deviceName;

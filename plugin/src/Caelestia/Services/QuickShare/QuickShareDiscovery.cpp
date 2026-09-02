@@ -1,8 +1,8 @@
 #include "QuickShareDiscovery.hpp"
 
 #include <QDBusConnection>
-#include <QDBusMetaType>
 #include <QDBusMessage>
+#include <QDBusMetaType>
 #include <QDBusReply>
 #include <QDebug>
 #include <QHostInfo>
@@ -11,7 +11,10 @@
 namespace caelestia::services {
 
 QuickShareDiscovery::QuickShareDiscovery(QObject* parent)
-    : QObject(parent), m_serverBrowser(nullptr), m_entryGroup(nullptr), m_tempAdvertiseTimer(new QTimer(this)) {
+    : QObject(parent)
+    , m_serverBrowser(nullptr)
+    , m_entryGroup(nullptr)
+    , m_tempAdvertiseTimer(new QTimer(this)) {
     qDBusRegisterMetaType<QList<QByteArray>>();
     m_tempAdvertiseTimer->setSingleShot(true);
     connect(m_tempAdvertiseTimer, &QTimer::timeout, this, &QuickShareDiscovery::onTempAdvertiseTimeout);
@@ -23,13 +26,11 @@ QuickShareDiscovery::~QuickShareDiscovery() {
 }
 
 bool QuickShareDiscovery::startDiscovery() {
-    if (m_isDiscovering) return true;
+    if (m_isDiscovering)
+        return true;
 
     QDBusInterface avahiServer(
-        "org.freedesktop.Avahi",
-        "/",
-        "org.freedesktop.Avahi.Server",
-        QDBusConnection::systemBus());
+        "org.freedesktop.Avahi", "/", "org.freedesktop.Avahi.Server", QDBusConnection::systemBus());
 
     if (!avahiServer.isValid()) {
         qWarning() << "QuickShareDiscovery: Failed to connect to Avahi server";
@@ -39,8 +40,7 @@ bool QuickShareDiscovery::startDiscovery() {
     QDBusReply<QDBusObjectPath> browserPath = avahiServer.call("ServiceBrowserNew",
         -1, // AVAHI_IF_UNSPEC
         -1, // AVAHI_PROTO_UNSPEC
-        "_FC9F5ED42C8A._tcp",
-        "local",
+        "_FC9F5ED42C8A._tcp", "local",
         (uint)0); // flags
 
     if (!browserPath.isValid()) {
@@ -48,27 +48,15 @@ bool QuickShareDiscovery::startDiscovery() {
         return false;
     }
 
-    m_serverBrowser = new QDBusInterface(
-        "org.freedesktop.Avahi",
-        browserPath.value().path(),
-        "org.freedesktop.Avahi.ServiceBrowser",
-        QDBusConnection::systemBus(),
-        this);
+    m_serverBrowser = new QDBusInterface("org.freedesktop.Avahi", browserPath.value().path(),
+        "org.freedesktop.Avahi.ServiceBrowser", QDBusConnection::systemBus(), this);
 
-    QDBusConnection::systemBus().connect(
-        "org.freedesktop.Avahi",
-        browserPath.value().path(),
-        "org.freedesktop.Avahi.ServiceBrowser",
-        "ItemNew",
-        this,
+    QDBusConnection::systemBus().connect("org.freedesktop.Avahi", browserPath.value().path(),
+        "org.freedesktop.Avahi.ServiceBrowser", "ItemNew", this,
         SLOT(onItemNew(int, int, const QString&, const QString&, const QString&, uint)));
 
-    QDBusConnection::systemBus().connect(
-        "org.freedesktop.Avahi",
-        browserPath.value().path(),
-        "org.freedesktop.Avahi.ServiceBrowser",
-        "ItemRemove",
-        this,
+    QDBusConnection::systemBus().connect("org.freedesktop.Avahi", browserPath.value().path(),
+        "org.freedesktop.Avahi.ServiceBrowser", "ItemRemove", this,
         SLOT(onItemRemove(int, int, const QString&, const QString&, const QString&, uint)));
 
     m_isDiscovering = true;
@@ -76,39 +64,36 @@ bool QuickShareDiscovery::startDiscovery() {
 }
 
 void QuickShareDiscovery::stopDiscovery() {
-    if (!m_isDiscovering) return;
-    
+    if (!m_isDiscovering)
+        return;
+
     if (m_serverBrowser) {
         m_serverBrowser->call("Free");
         m_serverBrowser->deleteLater();
         m_serverBrowser = nullptr;
     }
-    
+
     m_isDiscovering = false;
 }
 
 bool QuickShareDiscovery::advertise(const QString& deviceName, int port) {
     m_tempAdvertiseTimer->stop();
     m_isTempAdvertising = false;
-    if (m_isAdvertising) return true;
+    if (m_isAdvertising)
+        return true;
 
     QDBusInterface avahiServer(
-        "org.freedesktop.Avahi",
-        "/",
-        "org.freedesktop.Avahi.Server",
-        QDBusConnection::systemBus());
+        "org.freedesktop.Avahi", "/", "org.freedesktop.Avahi.Server", QDBusConnection::systemBus());
 
-    if (!avahiServer.isValid()) return false;
+    if (!avahiServer.isValid())
+        return false;
 
     QDBusReply<QDBusObjectPath> groupPath = avahiServer.call("EntryGroupNew");
-    if (!groupPath.isValid()) return false;
+    if (!groupPath.isValid())
+        return false;
 
-    m_entryGroup = new QDBusInterface(
-        "org.freedesktop.Avahi",
-        groupPath.value().path(),
-        "org.freedesktop.Avahi.EntryGroup",
-        QDBusConnection::systemBus(),
-        this);
+    m_entryGroup = new QDBusInterface("org.freedesktop.Avahi", groupPath.value().path(),
+        "org.freedesktop.Avahi.EntryGroup", QDBusConnection::systemBus(), this);
 
     QByteArray endpointId;
     for (int i = 0; i < 4; i++) {
@@ -123,7 +108,8 @@ bool QuickShareDiscovery::advertise(const QString& deviceName, int port) {
     nameB.append(static_cast<char>(0x5E));
     nameB.append(static_cast<char>(0x00)); // unknown bytes
     nameB.append(static_cast<char>(0x00));
-    QString serviceName = QString::fromLatin1(nameB.toBase64(QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals));
+    QString serviceName =
+        QString::fromLatin1(nameB.toBase64(QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals));
 
     QByteArray recordBytes;
     char deviceType = 3; // laptop
@@ -140,22 +126,20 @@ bool QuickShareDiscovery::advertise(const QString& deviceName, int port) {
     recordBytes.append(static_cast<char>(dNameBytes.length()));
     recordBytes.append(dNameBytes);
 
-    QString endpointInfo = QString::fromLatin1(recordBytes.toBase64(QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals));
+    QString endpointInfo =
+        QString::fromLatin1(recordBytes.toBase64(QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals));
 
     QList<QByteArray> txtRecord;
     txtRecord.append("n=" + endpointInfo.toUtf8());
 
     QDBusMessage reply = m_entryGroup->call("AddService",
-        -1, // AVAHI_IF_UNSPEC
-        -1, // AVAHI_PROTO_UNSPEC
-        (uint)0,  // flags
-        serviceName,
-        "_FC9F5ED42C8A._tcp",
-        "local",
+        -1,      // AVAHI_IF_UNSPEC
+        -1,      // AVAHI_PROTO_UNSPEC
+        (uint)0, // flags
+        serviceName, "_FC9F5ED42C8A._tcp", "local",
         "", // host
-        QVariant::fromValue<quint16>(port),
-        QVariant::fromValue(txtRecord));
-        
+        QVariant::fromValue<quint16>(port), QVariant::fromValue(txtRecord));
+
     if (reply.type() == QDBusMessage::ErrorMessage) {
         qWarning() << "QuickShareDiscovery: AddService failed:" << reply.errorMessage();
         return false;
@@ -173,15 +157,16 @@ bool QuickShareDiscovery::advertise(const QString& deviceName, int port) {
 void QuickShareDiscovery::stopAdvertising() {
     m_tempAdvertiseTimer->stop();
     m_isTempAdvertising = false;
-    if (!m_isAdvertising) return;
-    
+    if (!m_isAdvertising)
+        return;
+
     if (m_entryGroup) {
         m_entryGroup->call("Reset");
         m_entryGroup->call("Free");
         m_entryGroup->deleteLater();
         m_entryGroup = nullptr;
     }
-    
+
     m_isAdvertising = false;
 }
 
@@ -189,13 +174,13 @@ void QuickShareDiscovery::triggerTemporaryAdvertising(const QString& deviceName,
     if (m_isAdvertising && !m_isTempAdvertising) {
         return; // Already permanently advertising
     }
-    
+
     if (!m_isAdvertising) {
         if (advertise(deviceName, port)) {
             m_isTempAdvertising = true;
         }
     }
-    
+
     if (m_isAdvertising && m_isTempAdvertising) {
         m_tempAdvertiseTimer->start(30000); // 30 seconds
     }
@@ -207,27 +192,20 @@ void QuickShareDiscovery::onTempAdvertiseTimeout() {
     }
 }
 
-void QuickShareDiscovery::onItemNew(int interface, int protocol, const QString& name, const QString& type, const QString& domain, uint flags) {
+void QuickShareDiscovery::onItemNew(
+    int interface, int protocol, const QString& name, const QString& type, const QString& domain, uint flags) {
     Q_UNUSED(flags);
-    
-    QDBusInterface avahiServer(
-        "org.freedesktop.Avahi",
-        "/",
-        "org.freedesktop.Avahi.Server",
-        QDBusConnection::systemBus());
 
-    QDBusReply<QDBusObjectPath> reply = avahiServer.call("ServiceResolverNew",
-        interface, protocol, name, type, domain, -1, (uint)0);
-        
+    QDBusInterface avahiServer(
+        "org.freedesktop.Avahi", "/", "org.freedesktop.Avahi.Server", QDBusConnection::systemBus());
+
+    QDBusReply<QDBusObjectPath> reply =
+        avahiServer.call("ServiceResolverNew", interface, protocol, name, type, domain, -1, (uint)0);
+
     if (reply.isValid()) {
         QString path = reply.value().path();
-        QDBusConnection::systemBus().connect(
-            "org.freedesktop.Avahi",
-            path,
-            "org.freedesktop.Avahi.ServiceResolver",
-            "Found",
-            this,
-            SLOT(onServiceResolved(QDBusMessage)));
+        QDBusConnection::systemBus().connect("org.freedesktop.Avahi", path, "org.freedesktop.Avahi.ServiceResolver",
+            "Found", this, SLOT(onServiceResolved(QDBusMessage)));
     }
 }
 
@@ -237,19 +215,22 @@ void QuickShareDiscovery::onServiceResolved(const QDBusMessage& msg) {
         QuickShareDevice device;
         device.id = args[2].toString();
         device.name = device.id; // fallback
-        
+
         QList<QByteArray> txtRecords;
         if (args[9].userType() == qMetaTypeId<QDBusArgument>()) {
             txtRecords = qdbus_cast<QList<QByteArray>>(args[9].value<QDBusArgument>());
         }
-        
+
         for (const QByteArray& txt : txtRecords) {
             if (txt.startsWith("n=")) {
                 QByteArray b64 = txt.mid(2);
-                QByteArray decoded = QByteArray::fromBase64(b64, QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals);
-                if (decoded.isEmpty()) decoded = QByteArray::fromBase64(b64, QByteArray::Base64UrlEncoding);
-                if (decoded.isEmpty()) decoded = QByteArray::fromBase64(b64);
-                
+                QByteArray decoded =
+                    QByteArray::fromBase64(b64, QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals);
+                if (decoded.isEmpty())
+                    decoded = QByteArray::fromBase64(b64, QByteArray::Base64UrlEncoding);
+                if (decoded.isEmpty())
+                    decoded = QByteArray::fromBase64(b64);
+
                 if (decoded.length() >= 18) {
                     int nameLen = static_cast<unsigned char>(decoded[17]);
                     if (decoded.length() >= 18 + nameLen) {
@@ -258,28 +239,28 @@ void QuickShareDiscovery::onServiceResolved(const QDBusMessage& msg) {
                 }
             }
         }
-        
-        
+
         device.address = args[7].toString();
-        
+
         // args[8] is quint16 port
         if (args[8].userType() == QMetaType::UShort) {
             device.port = args[8].value<quint16>();
         } else {
             device.port = args[8].toUInt();
         }
-        
+
         emit deviceFound(device);
     }
 }
 
-void QuickShareDiscovery::onItemRemove(int interface, int protocol, const QString& name, const QString& type, const QString& domain, uint flags) {
+void QuickShareDiscovery::onItemRemove(
+    int interface, int protocol, const QString& name, const QString& type, const QString& domain, uint flags) {
     Q_UNUSED(interface);
     Q_UNUSED(protocol);
     Q_UNUSED(type);
     Q_UNUSED(domain);
     Q_UNUSED(flags);
-    
+
     emit deviceLost(name);
 }
 

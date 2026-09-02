@@ -292,7 +292,8 @@ void FileSystemModel::updateEntriesForDir(const QString& dir) {
     }
 
     auto future = QtConcurrent::run([=](QPromise<QPair<QSet<QString>, QSet<QString>>>& promise) {
-        const auto flags = recursive ? (QDirIterator::Subdirectories | QDirIterator::FollowSymlinks) : QDirIterator::FollowSymlinks;
+        const auto flags =
+            recursive ? (QDirIterator::Subdirectories | QDirIterator::FollowSymlinks) : QDirIterator::FollowSymlinks;
 
         std::optional<QDirIterator> iter;
 

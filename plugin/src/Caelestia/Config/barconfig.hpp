@@ -161,18 +161,18 @@ public:
     explicit BarSections(QObject* parent = nullptr)
         : ConfigObject(parent)
         , m_start(new EntryList(this, defaults({
-              LIST_ENTRY(logo, true),
-              LIST_ENTRY(workspaces, true),
-          })))
+                                          LIST_ENTRY(logo, true),
+                                          LIST_ENTRY(workspaces, true),
+                                      })))
         , m_center(new EntryList(this, defaults({
-              LIST_ENTRY(activeWindow, true),
-          })))
+                                           LIST_ENTRY(activeWindow, true),
+                                       })))
         , m_end(new EntryList(this, defaults({
-              LIST_ENTRY(tray, true),
-              LIST_ENTRY(clock, true),
-              LIST_ENTRY(statusIcons, true),
-              LIST_ENTRY(power, true),
-          }))) {}
+                                        LIST_ENTRY(tray, true),
+                                        LIST_ENTRY(clock, true),
+                                        LIST_ENTRY(statusIcons, true),
+                                        LIST_ENTRY(power, true),
+                                    }))) {}
 
     void loadFromJson(const QJsonValue& json) override;
 
@@ -191,8 +191,7 @@ inline void BarSections::loadFromJson(const QJsonValue& json) {
     QMap<QString, bool> enabledById;
     for (const auto& value : json.toArray()) {
         const auto obj = value.toObject();
-        enabledById.insert(obj.value(QStringLiteral("id")).toString(),
-            obj.value(QStringLiteral("enabled")).toBool());
+        enabledById.insert(obj.value(QStringLiteral("id")).toString(), obj.value(QStringLiteral("enabled")).toBool());
     }
 
     const auto migrated = [&enabledById](const QVariantList& entries) {

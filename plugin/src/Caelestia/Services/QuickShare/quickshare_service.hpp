@@ -1,13 +1,13 @@
 #pragma once
 
+#include "QuickShareBle.hpp"
+#include "QuickShareConnection.hpp"
+#include "QuickShareDiscovery.hpp"
 #include <QObject>
+#include <QTcpServer>
 #include <QVariantList>
 #include <QVariantMap>
-#include <QTcpServer>
 #include <qqmlintegration.h>
-#include "QuickShareDiscovery.hpp"
-#include "QuickShareConnection.hpp"
-#include "QuickShareBle.hpp"
 
 namespace caelestia::services {
 
@@ -15,7 +15,7 @@ class QuickShareService : public QObject {
     Q_OBJECT
     QML_ELEMENT
     QML_SINGLETON
-    
+
     Q_PROPERTY(bool isEnabled READ isEnabled WRITE setEnabled NOTIFY isEnabledChanged)
     Q_PROPERTY(bool isVisible READ isVisible WRITE setVisible NOTIFY isVisibleChanged)
     Q_PROPERTY(QVariantList nearbyDevices READ nearbyDevices NOTIFY nearbyDevicesChanged)
@@ -48,7 +48,7 @@ signals:
     void isVisibleChanged();
     void nearbyDevicesChanged();
     void transferHistoryChanged();
-    
+
     void errorOccurred(const QString& message);
 
     // UI notifications
@@ -72,10 +72,10 @@ private:
     QuickShareBleAdvertiser* m_bleAdvertiser;
     QuickShareBleScanner* m_bleScanner;
     QTcpServer* m_server;
-    
+
     QList<QuickShareDevice> m_devices;
     QVariantList m_transferHistory;
-    
+
     // Active connections
     QMap<QString, QuickShareConnection*> m_activeConnections;
     QuickShareConnection* m_pendingIncomingConnection = nullptr;

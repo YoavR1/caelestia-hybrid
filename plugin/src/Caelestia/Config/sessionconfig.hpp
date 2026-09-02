@@ -30,6 +30,7 @@ public:
     void resyncFromGlobal() override;
 
     [[nodiscard]] const QMap<QString, QString>& customIcons() const { return m_customIcons; }
+
     [[nodiscard]] const QStringList& customIconKeys() const { return m_customIconKeys; }
 
 protected:
@@ -60,6 +61,7 @@ public:
     void resyncFromGlobal() override;
 
     [[nodiscard]] const QMap<QString, QStringList>& customCommands() const { return m_customCommands; }
+
     [[nodiscard]] const QStringList& customCommandKeys() const { return m_customCommandKeys; }
 
 protected:
