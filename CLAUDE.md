@@ -8,10 +8,15 @@ on top of upstream **Caelestia**. One shell, one config, one CLI — features to
 
 ## Status
 
-**Phase 0 and Phase 1 are done. Phase 2 (upstream catch-up) is next.**
+**Phases 0, 1 and 2 are done. Phase 3 (the feature system) is in progress.**
 
-Forked from `midnight/main`; branch `phase0/scaffold-and-ci`. Every gate upstream enforces is
-green on a tree that arrived with all four of them failing:
+| branch | what |
+|---|---|
+| `phase0/scaffold-and-ci` | scaffold, docs, tooling, all four static gates brought to zero |
+| `phase2/upstream-catchup` | 51 upstream commits merged, incl. the config-module rewrite |
+| `phase3/feature-flags` | `hybrid.features` / `hybrid.variants` schema + Nexus page |
+
+Every gate upstream enforces is green on a tree that arrived with all four of them failing:
 
 | gate | was | now |
 |---|---|---|
@@ -19,11 +24,16 @@ green on a tree that arrived with all four of them failing:
 | `clang-format` | 23 of 143 files drift | 0 |
 | `scripts/qml-lint-conventions.py` | 1034 | 0 |
 | `qmllint` | ~810 | 0 |
-| smoke matrix | did not run at all | 6/6 (3 presets x lua/conf) |
+| smoke matrix | did not run at all | 6 presets, x2 compositor configs |
 
 CI runs all four plus the smoke matrix (`.github/workflows/smoke.yml`, headless sway).
 `hybrid/tools/qml-section-order.py` is ours — the `section-order` fixer upstream's checker
-lacks. Read `hybrid/docs/traps.md` T12–T17 before touching the harness.
+lacks. Read `hybrid/docs/traps.md` T12–T18 before touching the harness; **T18 in particular**,
+because qmllint silently lints against an installed `midnight-shell-git` unless `--bare` is
+passed, and the `--summary` counter used to under-report whole categories.
+
+`hybrid/docs/phase2-upstream-catchup.md` records every merge decision and the API mapping from
+the old `ConfigObject` to `settings::ObjectNode`.
 
 Still missing: `git remote add origin <your fork>`. Nothing has been pushed anywhere.
 
