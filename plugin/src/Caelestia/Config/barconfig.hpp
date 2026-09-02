@@ -98,12 +98,14 @@ class BarDock : public settings::ObjectNode {
     CONFIG_NODE(BarDock, settings::ObjectNode)
 
     CONFIG_PROPERTY(bool, monitorCenter, true)
-    CONFIG_PROPERTY(bool, recolourIcons, false)};
+    CONFIG_PROPERTY(bool, recolourIcons, false)
+};
 
 class BarGithub : public settings::ObjectNode {
     CONFIG_NODE(BarGithub, settings::ObjectNode)
 
-    CONFIG_PROPERTY(bool, background, false)};
+    CONFIG_PROPERTY(bool, background, false)
+};
 
 class BarSpotify : public settings::ObjectNode {
     CONFIG_NODE(BarSpotify, settings::ObjectNode)
@@ -113,7 +115,8 @@ class BarSpotify : public settings::ObjectNode {
     CONFIG_PROPERTY(int, maxTitleLength, 25)
     CONFIG_PROPERTY(bool, inverted, false)
     CONFIG_PROPERTY(bool, horizontalVolume, false)
-    CONFIG_PROPERTY(bool, autoHide, false)};
+    CONFIG_PROPERTY(bool, autoHide, false)
+};
 
 // Bar entries split into three anchored sections. `start` hugs the top/left edge,
 // `center` sits at the monitor centre and `end` hugs the bottom/right edge.
@@ -170,22 +173,19 @@ inline bool BarSections::syncJson(const QJsonValue& json, QList<settings::Diagno
     };
 
     QJsonObject sections;
-    sections.insert(u"start"_s,
-        QJsonArray::fromVariantList(migrated({
-            LIST_ENTRY(logo, true),
-            LIST_ENTRY(workspaces, true),
-        })));
-    sections.insert(u"center"_s,
-        QJsonArray::fromVariantList(migrated({
-            LIST_ENTRY(activeWindow, true),
-        })));
-    sections.insert(u"end"_s,
-        QJsonArray::fromVariantList(migrated({
-            LIST_ENTRY(tray, true),
-            LIST_ENTRY(clock, true),
-            LIST_ENTRY(statusIcons, true),
-            LIST_ENTRY(power, true),
-        })));
+    sections.insert(u"start"_s, QJsonArray::fromVariantList(migrated({
+                                    LIST_ENTRY(logo, true),
+                                    LIST_ENTRY(workspaces, true),
+                                })));
+    sections.insert(u"center"_s, QJsonArray::fromVariantList(migrated({
+                                     LIST_ENTRY(activeWindow, true),
+                                 })));
+    sections.insert(u"end"_s, QJsonArray::fromVariantList(migrated({
+                                  LIST_ENTRY(tray, true),
+                                  LIST_ENTRY(clock, true),
+                                  LIST_ENTRY(statusIcons, true),
+                                  LIST_ENTRY(power, true),
+                              })));
 
     return settings::ObjectNode::syncJson(sections, diagnostics);
 }

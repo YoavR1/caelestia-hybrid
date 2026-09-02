@@ -10,8 +10,8 @@
 #include <qquickitemgrabresult.h>
 #include <qquickwindow.h>
 #include <qregularexpression.h>
-#include <qtextstream.h>
 #include <qtconcurrentrun.h>
+#include <qtextstream.h>
 
 #include "util/metaenum.hpp"
 

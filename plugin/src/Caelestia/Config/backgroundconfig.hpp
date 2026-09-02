@@ -51,14 +51,16 @@ class DesktopLyricsBackground : public settings::ObjectNode {
 
     CONFIG_PROPERTY(bool, enabled, false)
     CONFIG_PROPERTY(qreal, opacity, 0.7)
-    CONFIG_PROPERTY(bool, blur, true)};
+    CONFIG_PROPERTY(bool, blur, true)
+};
 
 class DesktopLyricsShadow : public settings::ObjectNode {
     CONFIG_NODE(DesktopLyricsShadow, settings::ObjectNode)
 
     CONFIG_PROPERTY(bool, enabled, true)
     CONFIG_PROPERTY(qreal, opacity, 0.7)
-    CONFIG_PROPERTY(qreal, blur, 0.4)};
+    CONFIG_PROPERTY(qreal, blur, 0.4)
+};
 
 class DesktopLyrics : public settings::ObjectNode {
     CONFIG_NODE(DesktopLyrics, settings::ObjectNode)
@@ -72,7 +74,8 @@ class DesktopLyrics : public settings::ObjectNode {
     CONFIG_PROPERTY(int, alignment, 1)
     CONFIG_PROPERTY(bool, invertColors, false)
     CONFIG_SUBOBJECT(DesktopLyricsBackground, background)
-    CONFIG_SUBOBJECT(DesktopLyricsShadow, shadow)};
+    CONFIG_SUBOBJECT(DesktopLyricsShadow, shadow)
+};
 
 class BackgroundConfig : public settings::ObjectNode {
     CONFIG_NODE(BackgroundConfig, settings::ObjectNode)
@@ -89,6 +92,7 @@ class BackgroundConfig : public settings::ObjectNode {
     CONFIG_PROPERTY(bool, videoWallpaperMuteOnMedia, false)
     CONFIG_SUBOBJECT(DesktopClock, desktopClock)
     CONFIG_SUBOBJECT(DesktopLyrics, desktopLyrics)
-    CONFIG_SUBOBJECT(BackgroundVisualiser, visualiser)};
+    CONFIG_SUBOBJECT(BackgroundVisualiser, visualiser)
+};
 
 } // namespace caelestia::config

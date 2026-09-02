@@ -1,7 +1,5 @@
 #include "QuickShareCrypto.hpp"
-#include "securemessage.pb.h"
-#include "ukey.pb.h"
-#include <QDebug>
+
 #include <openssl/ec.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
@@ -9,9 +7,16 @@
 #include <openssl/obj_mac.h>
 #include <openssl/rand.h>
 #include <openssl/sha.h>
+
+#include <QDebug>
 #include <string>
 
+#include "securemessage.pb.h"
+#include "ukey.pb.h"
+
 namespace caelestia::services {
+
+using Qt::StringLiterals::operator""_s;
 
 static QByteArray hkdfInternal(
     const EVP_MD* md, const QByteArray& salt, const QByteArray& ikm, const QByteArray& info, size_t outLen) {
@@ -159,7 +164,7 @@ QString QuickShareCrypto::pinCode() const {
         multiplier = (multiplier * kHashBaseMultiplier) % kHashModulo;
     }
 
-    return QString("%1").arg(abs(hash), 4, 10, QChar('0'));
+    return QString(u"%1"_s).arg(abs(hash), 4, 10, u'0');
 }
 
 QByteArray QuickShareCrypto::extractSharedSecret(EVP_PKEY* peerKey) {
@@ -335,7 +340,7 @@ QByteArray QuickShareCrypto::generateClientInit() {
     {
         QString hex;
         for (int i = 0; i < SHA512_DIGEST_LENGTH; ++i)
-            hex += QString("%1").arg(hash[i], 2, 16, QChar('0'));
+            hex += QString(u"%1"_s).arg(hash[i], 2, 16, u'0');
     }
 
     securegcm::Ukey2ClientInit clientInit;

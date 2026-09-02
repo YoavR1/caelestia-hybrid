@@ -19,11 +19,13 @@ class AudioSounds : public settings::ObjectNode {
     CONFIG_GLOBAL_PROPERTY(QString, notificationSound, QStringLiteral("Iapetus.wav"))
     CONFIG_GLOBAL_PROPERTY(QStringList, disabledNotifApps, {})
     CONFIG_GLOBAL_PROPERTY(qreal, sfxVolume, 1.0)
-    CONFIG_GLOBAL_PROPERTY(qreal, notificationVolume, 1.0)};
+    CONFIG_GLOBAL_PROPERTY(qreal, notificationVolume, 1.0)
+};
 
 class AudioConfig : public settings::ObjectNode {
     CONFIG_NODE(AudioConfig, settings::ObjectNode)
 
-    CONFIG_SUBOBJECT(AudioSounds, sounds)};
+    CONFIG_SUBOBJECT(AudioSounds, sounds)
+};
 
 } // namespace caelestia::config

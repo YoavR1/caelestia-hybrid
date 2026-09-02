@@ -42,13 +42,10 @@ qml_module(caelestia-services
         QuickShare/quickshare_service.hpp
         QuickShare/QuickShareBle.cpp
         QuickShare/QuickShareBle.hpp
-        ${PROTO_SRCS}
-    LIBRARIES
-        Qt6::DBus
-        Qt6::Network
         networkusage.cpp
         hyprdevices.cpp
         hyprextras.cpp
+        ${PROTO_SRCS}
     LIBRARIES
         Qt::DBus
         Qt::Network

@@ -1,8 +1,9 @@
 #pragma once
 
+#include <qstring.h>
+
 #include "settings/objectnode.hpp"
 #include "common.hpp"
-#include <qstring.h>
 
 namespace caelestia::config {
 
@@ -26,6 +27,7 @@ class AiConfig : public settings::ObjectNode {
     CONFIG_PROPERTY(QString, orionModel, u"qwen3.5:9b"_s)
 
     CONFIG_PROPERTY(QString, activeProvider, u"ollama"_s)
-    CONFIG_PROPERTY(QString, activeOllamaModel, u"llama3"_s)};
+    CONFIG_PROPERTY(QString, activeOllamaModel, u"llama3"_s)
+};
 
 } // namespace caelestia::config

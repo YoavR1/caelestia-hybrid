@@ -1,13 +1,15 @@
 #pragma once
 
-#include "QuickShareBle.hpp"
-#include "QuickShareConnection.hpp"
-#include "QuickShareDiscovery.hpp"
+#include <qqmlintegration.h>
+
 #include <QObject>
 #include <QTcpServer>
 #include <QVariantList>
 #include <QVariantMap>
-#include <qqmlintegration.h>
+
+#include "QuickShareBle.hpp"
+#include "QuickShareConnection.hpp"
+#include "QuickShareDiscovery.hpp"
 
 namespace caelestia::services {
 

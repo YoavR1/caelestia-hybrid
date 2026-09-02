@@ -1,10 +1,8 @@
 #include "QuickShareConnection.hpp"
-#include "device_to_device_messages.pb.h"
-#include "offline_wire_formats.pb.h"
-#include "securegcm.pb.h"
-#include "securemessage.pb.h"
-#include "ukey.pb.h"
-#include "wire_format.pb.h"
+
+#include <openssl/hmac.h>
+#include <openssl/rand.h>
+
 #include <QDebug>
 #include <QDir>
 #include <QFile>
@@ -14,10 +12,17 @@
 #include <QRandomGenerator>
 #include <QSysInfo>
 #include <QtEndian>
-#include <openssl/hmac.h>
-#include <openssl/rand.h>
+
+#include "device_to_device_messages.pb.h"
+#include "offline_wire_formats.pb.h"
+#include "securegcm.pb.h"
+#include "securemessage.pb.h"
+#include "ukey.pb.h"
+#include "wire_format.pb.h"
 
 namespace caelestia::services {
+
+using Qt::StringLiterals::operator""_s;
 
 static void writeLengthPrefixed(QTcpSocket* socket, const QByteArray& data) {
     uint32_t length = qToBigEndian(static_cast<uint32_t>(data.size()));
@@ -68,7 +73,7 @@ QuickShareConnection::QuickShareConnection(const QString& host, int port, QObjec
         req->set_endpoint_id("ABCD");
         QString hostname = QSysInfo::machineHostName();
         if (hostname.isEmpty())
-            hostname = "CaelestiaClient";
+            hostname = u"CaelestiaClient"_s;
         req->set_endpoint_name(hostname.toStdString());
 
         QByteArray endpointInfo;
@@ -78,7 +83,7 @@ QuickShareConnection::QuickShareConnection(const QString& host, int port, QObjec
         }
         QString deviceName = QSysInfo::machineHostName();
         if (deviceName.isEmpty())
-            deviceName = "CaelestiaClient";
+            deviceName = u"CaelestiaClient"_s;
         QByteArray nameBytes = deviceName.toUtf8();
         if (nameBytes.length() > 255)
             nameBytes.truncate(255);
@@ -132,15 +137,15 @@ void QuickShareConnection::sendFile(const QString& filePath) {
     QMimeType mimeType = db.mimeTypeForFile(fileInfo);
     QString mimeString = mimeType.name();
     if (mimeString.isEmpty())
-        mimeString = "application/octet-stream";
+        mimeString = u"application/octet-stream"_s;
 
     fileMeta->set_mime_type(mimeString.toStdString());
 
-    if (mimeString.startsWith("image/")) {
+    if (mimeString.startsWith(u"image/"_s)) {
         fileMeta->set_type(sharing::nearby::FileMetadata::IMAGE);
-    } else if (mimeString.startsWith("video/")) {
+    } else if (mimeString.startsWith(u"video/"_s)) {
         fileMeta->set_type(sharing::nearby::FileMetadata::VIDEO);
-    } else if (mimeString.startsWith("audio/")) {
+    } else if (mimeString.startsWith(u"audio/"_s)) {
         fileMeta->set_type(sharing::nearby::FileMetadata::AUDIO);
     } else {
         fileMeta->set_type(sharing::nearby::FileMetadata::UNKNOWN);
@@ -628,7 +633,7 @@ void QuickShareConnection::handlePayloadTransfer(const QByteArray& plaintext) {
         emit transferProgress(m_fileBuffer.size(), m_incomingFileSize);
 
         if ((payloadChunk.flags() & 1) == 1) {
-            QString savePath = QDir::homePath() + "/Downloads/" + m_incomingFileName;
+            QString savePath = QDir::homePath() + u"/Downloads/"_s + m_incomingFileName;
             QFile file(savePath);
             if (file.open(QIODevice::WriteOnly)) {
                 file.write(m_fileBuffer);
@@ -663,7 +668,7 @@ void QuickShareConnection::handlePayloadTransfer(const QByteArray& plaintext) {
             QByteArray buf = m_payloadBuffers[payloadId];
             QString hex;
             for (int i = 0; i < qMin(buf.size(), 64); ++i)
-                hex += QString("%1 ").arg(static_cast<uchar>(buf[i]), 2, 16, QChar('0'));
+                hex += QString(u"%1 "_s).arg(static_cast<uchar>(buf[i]), 2, 16, u'0');
 
             sharing::nearby::Frame frame;
             if (frame.ParseFromArray(m_payloadBuffers[payloadId].constData(), m_payloadBuffers[payloadId].size())) {

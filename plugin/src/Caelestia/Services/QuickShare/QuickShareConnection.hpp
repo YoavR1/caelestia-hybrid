@@ -1,9 +1,10 @@
 #pragma once
 
-#include "QuickShareCrypto.hpp"
-#include "wire_format.pb.h"
 #include <QObject>
 #include <QTcpSocket>
+
+#include "QuickShareCrypto.hpp"
+#include "wire_format.pb.h"
 
 namespace caelestia::services {
 

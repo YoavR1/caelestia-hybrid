@@ -1,9 +1,9 @@
 #pragma once
 
+#include <qstring.h>
+
 #include "settings/objectnode.hpp"
 #include "common.hpp"
-
-#include <qstring.h>
 
 namespace caelestia::config {
 
@@ -15,6 +15,7 @@ class ShimejiConfig : public settings::ObjectNode {
     CONFIG_PROPERTY(QString, path, QStringLiteral("root:/assets/shimeji/pusheen/"))
     CONFIG_PROPERTY(QStringList, excludedScreens, {})
     CONFIG_PROPERTY(int, count, 1)
-    CONFIG_PROPERTY(QVariantMap, screenCounts)};
+    CONFIG_PROPERTY(QVariantMap, screenCounts, {})
+};
 
 } // namespace caelestia::config

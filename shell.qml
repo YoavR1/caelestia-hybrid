@@ -71,8 +71,6 @@ ShellRoot {
             shimejiCount: GlobalConfig.shimeji?.count ?? 1
         }
     }
-
-    ConfigToasts {}
     Shortcuts {}
     BatteryMonitor {}
 

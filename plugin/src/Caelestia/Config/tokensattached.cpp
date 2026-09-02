@@ -81,7 +81,7 @@ void Tokens::bindAnim() {
 void Tokens::bindFont() {
     auto* appearance = m_config ? m_config->appearance() : ConfigSingleton::instance()->appearance();
     m_font->bindFont(appearance->font());
-    m_font->bindTokens(tokens);
+    m_font->bindTokens(m_tokens ? m_tokens->appearance() : TokensSingleton::instance()->appearance());
 }
 
 #define TOKENS_ATTACHED_GETTER(Type, name)                                                                             \

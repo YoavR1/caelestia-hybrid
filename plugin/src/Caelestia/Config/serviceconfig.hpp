@@ -5,6 +5,10 @@
 #include <qstringlist.h>
 #include <qvariant.h>
 
+#include "settings/objectnode.hpp"
+#include "common.hpp"
+#include "enums.hpp"
+
 namespace caelestia::config {
 
 using Qt::StringLiterals::operator""_s;
@@ -32,7 +36,7 @@ class ServiceConfig : public settings::ObjectNode {
     CONFIG_GLOBAL_PROPERTY(QString, defaultPlayer, u"Spotify"_s)
     CONFIG_GLOBAL_PROPERTY(QVariantList, playerAliases,
         { vmap({ { u"from"_s, u"com.github.th_ch.youtube_music"_s }, { u"to"_s, u"YT Music"_s } }) })
-    CONFIG_GLOBAL_PROPERTY(QString, lyricsBackend, u"Auto"_s)
+    CONFIG_GLOBAL_ENUM_PROPERTY(LyricsBackend, lyricsBackend, LyricsBackend::Auto)
     CONFIG_GLOBAL_PROPERTY(QStringList, bluetoothAutoReconnectDevices, {})
 
     // Discord ARPC Settings
@@ -55,6 +59,7 @@ class ServiceConfig : public settings::ObjectNode {
     CONFIG_GLOBAL_PROPERTY(bool, pipPaused, false)
 
     // QuickShare Settings
-    CONFIG_GLOBAL_PROPERTY(bool, quickShareAutoStart, false)};
+    CONFIG_GLOBAL_PROPERTY(bool, quickShareAutoStart, false)
+};
 
 } // namespace caelestia::config

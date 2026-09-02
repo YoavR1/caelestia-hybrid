@@ -10,6 +10,8 @@
 
 namespace caelestia::services {
 
+using Qt::StringLiterals::operator""_s;
+
 QuickShareDiscovery::QuickShareDiscovery(QObject* parent)
     : QObject(parent)
     , m_serverBrowser(nullptr)
@@ -30,17 +32,17 @@ bool QuickShareDiscovery::startDiscovery() {
         return true;
 
     QDBusInterface avahiServer(
-        "org.freedesktop.Avahi", "/", "org.freedesktop.Avahi.Server", QDBusConnection::systemBus());
+        u"org.freedesktop.Avahi"_s, u"/"_s, u"org.freedesktop.Avahi.Server"_s, QDBusConnection::systemBus());
 
     if (!avahiServer.isValid()) {
         qWarning() << "QuickShareDiscovery: Failed to connect to Avahi server";
         return false;
     }
 
-    QDBusReply<QDBusObjectPath> browserPath = avahiServer.call("ServiceBrowserNew",
+    QDBusReply<QDBusObjectPath> browserPath = avahiServer.call(u"ServiceBrowserNew"_s,
         -1, // AVAHI_IF_UNSPEC
         -1, // AVAHI_PROTO_UNSPEC
-        "_FC9F5ED42C8A._tcp", "local",
+        u"_FC9F5ED42C8A._tcp"_s, u"local"_s,
         (uint)0); // flags
 
     if (!browserPath.isValid()) {
@@ -48,15 +50,15 @@ bool QuickShareDiscovery::startDiscovery() {
         return false;
     }
 
-    m_serverBrowser = new QDBusInterface("org.freedesktop.Avahi", browserPath.value().path(),
-        "org.freedesktop.Avahi.ServiceBrowser", QDBusConnection::systemBus(), this);
+    m_serverBrowser = new QDBusInterface(u"org.freedesktop.Avahi"_s, browserPath.value().path(),
+        u"org.freedesktop.Avahi.ServiceBrowser"_s, QDBusConnection::systemBus(), this);
 
-    QDBusConnection::systemBus().connect("org.freedesktop.Avahi", browserPath.value().path(),
-        "org.freedesktop.Avahi.ServiceBrowser", "ItemNew", this,
+    QDBusConnection::systemBus().connect(u"org.freedesktop.Avahi"_s, browserPath.value().path(),
+        u"org.freedesktop.Avahi.ServiceBrowser"_s, u"ItemNew"_s, this,
         SLOT(onItemNew(int, int, const QString&, const QString&, const QString&, uint)));
 
-    QDBusConnection::systemBus().connect("org.freedesktop.Avahi", browserPath.value().path(),
-        "org.freedesktop.Avahi.ServiceBrowser", "ItemRemove", this,
+    QDBusConnection::systemBus().connect(u"org.freedesktop.Avahi"_s, browserPath.value().path(),
+        u"org.freedesktop.Avahi.ServiceBrowser"_s, u"ItemRemove"_s, this,
         SLOT(onItemRemove(int, int, const QString&, const QString&, const QString&, uint)));
 
     m_isDiscovering = true;
@@ -68,7 +70,7 @@ void QuickShareDiscovery::stopDiscovery() {
         return;
 
     if (m_serverBrowser) {
-        m_serverBrowser->call("Free");
+        m_serverBrowser->call(u"Free"_s);
         m_serverBrowser->deleteLater();
         m_serverBrowser = nullptr;
     }
@@ -83,17 +85,17 @@ bool QuickShareDiscovery::advertise(const QString& deviceName, int port) {
         return true;
 
     QDBusInterface avahiServer(
-        "org.freedesktop.Avahi", "/", "org.freedesktop.Avahi.Server", QDBusConnection::systemBus());
+        u"org.freedesktop.Avahi"_s, u"/"_s, u"org.freedesktop.Avahi.Server"_s, QDBusConnection::systemBus());
 
     if (!avahiServer.isValid())
         return false;
 
-    QDBusReply<QDBusObjectPath> groupPath = avahiServer.call("EntryGroupNew");
+    QDBusReply<QDBusObjectPath> groupPath = avahiServer.call(u"EntryGroupNew"_s);
     if (!groupPath.isValid())
         return false;
 
-    m_entryGroup = new QDBusInterface("org.freedesktop.Avahi", groupPath.value().path(),
-        "org.freedesktop.Avahi.EntryGroup", QDBusConnection::systemBus(), this);
+    m_entryGroup = new QDBusInterface(u"org.freedesktop.Avahi"_s, groupPath.value().path(),
+        u"org.freedesktop.Avahi.EntryGroup"_s, QDBusConnection::systemBus(), this);
 
     QByteArray endpointId;
     for (int i = 0; i < 4; i++) {
@@ -132,12 +134,12 @@ bool QuickShareDiscovery::advertise(const QString& deviceName, int port) {
     QList<QByteArray> txtRecord;
     txtRecord.append("n=" + endpointInfo.toUtf8());
 
-    QDBusMessage reply = m_entryGroup->call("AddService",
+    QDBusMessage reply = m_entryGroup->call(u"AddService"_s,
         -1,      // AVAHI_IF_UNSPEC
         -1,      // AVAHI_PROTO_UNSPEC
         (uint)0, // flags
-        serviceName, "_FC9F5ED42C8A._tcp", "local",
-        "", // host
+        serviceName, u"_FC9F5ED42C8A._tcp"_s, u"local"_s,
+        QString(), // host
         QVariant::fromValue<quint16>(port), QVariant::fromValue(txtRecord));
 
     if (reply.type() == QDBusMessage::ErrorMessage) {
@@ -145,7 +147,7 @@ bool QuickShareDiscovery::advertise(const QString& deviceName, int port) {
         return false;
     }
 
-    QDBusMessage commitReply = m_entryGroup->call("Commit");
+    QDBusMessage commitReply = m_entryGroup->call(u"Commit"_s);
     if (commitReply.type() == QDBusMessage::ErrorMessage) {
         qWarning() << "QuickShareDiscovery: Commit failed:" << commitReply.errorMessage();
         return false;
@@ -161,8 +163,8 @@ void QuickShareDiscovery::stopAdvertising() {
         return;
 
     if (m_entryGroup) {
-        m_entryGroup->call("Reset");
-        m_entryGroup->call("Free");
+        m_entryGroup->call(u"Reset"_s);
+        m_entryGroup->call(u"Free"_s);
         m_entryGroup->deleteLater();
         m_entryGroup = nullptr;
     }
@@ -197,15 +199,15 @@ void QuickShareDiscovery::onItemNew(
     Q_UNUSED(flags);
 
     QDBusInterface avahiServer(
-        "org.freedesktop.Avahi", "/", "org.freedesktop.Avahi.Server", QDBusConnection::systemBus());
+        u"org.freedesktop.Avahi"_s, u"/"_s, u"org.freedesktop.Avahi.Server"_s, QDBusConnection::systemBus());
 
     QDBusReply<QDBusObjectPath> reply =
-        avahiServer.call("ServiceResolverNew", interface, protocol, name, type, domain, -1, (uint)0);
+        avahiServer.call(u"ServiceResolverNew"_s, interface, protocol, name, type, domain, -1, (uint)0);
 
     if (reply.isValid()) {
         QString path = reply.value().path();
-        QDBusConnection::systemBus().connect("org.freedesktop.Avahi", path, "org.freedesktop.Avahi.ServiceResolver",
-            "Found", this, SLOT(onServiceResolved(QDBusMessage)));
+        QDBusConnection::systemBus().connect(u"org.freedesktop.Avahi"_s, path,
+            u"org.freedesktop.Avahi.ServiceResolver"_s, u"Found"_s, this, SLOT(onServiceResolved(QDBusMessage)));
     }
 }
 

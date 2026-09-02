@@ -1,8 +1,9 @@
 #pragma once
 
+#include <openssl/evp.h>
+
 #include <QByteArray>
 #include <QString>
-#include <openssl/evp.h>
 
 namespace caelestia::services {
 

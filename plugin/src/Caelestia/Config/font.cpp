@@ -1,8 +1,7 @@
 #include "font.hpp"
 
-#include "tokens.hpp"
-
 #include "appearanceconfig.hpp"
+#include "tokens.hpp"
 
 namespace caelestia::config {
 
