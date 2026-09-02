@@ -78,7 +78,7 @@ Item {
                     if (ipc.size && (ipc.size[0] <= 0 || ipc.size[1] <= 0))
                         return null;
                 }
-                return client.wayland;
+                return client.wayland; // qmllint disable unresolved-type
             }
             live: visible
 

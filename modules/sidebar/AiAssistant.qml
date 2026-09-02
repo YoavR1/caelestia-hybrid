@@ -1492,12 +1492,12 @@ Item {
 
                                         property string fullThought: bubbleLayout.delegateThought
 
-                                        property bool cursorVisible: true
+                                        property bool caretVisible: true
 
                                         width: Math.min(implicitWidth, bubbleRect.maxBubbleWidth - Tokens.padding.medium * 2)
                                         textFormat: Text.MarkdownText
 
-                                        text: delegateItem.isFinished ? fullThought : fullThought + (cursorVisible ? "▌" : "")
+                                        text: delegateItem.isFinished ? fullThought : fullThought + (caretVisible ? "▌" : "")
 
                                         color: Colours.palette.m3onSurfaceVariant
 
@@ -1519,7 +1519,7 @@ Item {
                                             running: !delegateItem.isFinished
                                             repeat: true
                                             interval: 400
-                                            onTriggered: thoughtContent.cursorVisible = !thoughtContent.cursorVisible
+                                            onTriggered: thoughtContent.caretVisible = !thoughtContent.caretVisible
                                         }
 
                                         Behavior on opacity {
@@ -1541,12 +1541,12 @@ Item {
 
                                     property string fullText: delegateItem.text !== undefined ? delegateItem.text : ""
 
-                                    property bool cursorVisible: true
+                                    property bool caretVisible: true
 
                                     textFormat: Text.MarkdownText
                                     width: Math.min(implicitWidth, bubbleRect.maxBubbleWidth - Tokens.padding.medium * 2)
 
-                                    text: delegateItem.isFinished ? fullText : fullText + (cursorVisible ? "▌" : "")
+                                    text: delegateItem.isFinished ? fullText : fullText + (caretVisible ? "▌" : "")
 
                                     color: delegateItem.isUser ? Colours.palette.m3onPrimary : Colours.palette.m3onSurface
 
@@ -1566,7 +1566,7 @@ Item {
                                         running: !delegateItem.isFinished
                                         repeat: true
                                         interval: 400
-                                        onTriggered: messageText.cursorVisible = !messageText.cursorVisible
+                                        onTriggered: messageText.caretVisible = !messageText.caretVisible
                                     }
 
                                     MouseArea {

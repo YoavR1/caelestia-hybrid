@@ -6,7 +6,7 @@ Item {
 
     property var captureSource: null
     property bool live: false
-    property bool smooth: false
+    property bool smoothScaling: false
     property size constraintSize: Qt.size(-1, -1)
     property bool _isStable: false
 
@@ -76,7 +76,7 @@ Item {
         anchors.fill: parent
         captureSource: root._effectiveSource
         live: root.live && root._effectiveSource !== null
-        smooth: root.smooth
+        smooth: root.smoothScaling
         constraintSize: root.constraintSize
     }
 }

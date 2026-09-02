@@ -65,7 +65,7 @@ Item {
         Timer {
             running: root.visible && Config.dashboard.useMediaShapes && (Players.active?.isPlaying ?? false)
             repeat: true
-            interval: (60000 / Math.max(1, Audio.beatTracker.bpm > 0 ? Audio.beatTracker.bpm : 120)) * materialShape.speedMultiplier
+            interval: (60000 / Math.max(1, Audio.beatTracker.bpm > 0 ? Audio.beatTracker.bpm : 120)) * materialShape.speedMultiplier // qmllint disable unresolved-type
             onTriggered: materialShape.morph()
         }
 

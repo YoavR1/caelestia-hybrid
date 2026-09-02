@@ -16,14 +16,13 @@ StyledWindow {
     id: root
 
     required property PolkitAgent agent
-    required property var screen
 
     property int activeScreenScale: 1
     readonly property real centerScale: Math.max(0.8, Math.min(1, root.height / 1440))
     readonly property int centerWidth: root.screen ? Tokens.sizes.lock.centerWidth * centerScale : 0
     readonly property int passwordMaxWidth: centerWidth * 0.8
 
-    readonly property string rawMessage: agent.flow ? agent.flow.message : ""
+    readonly property string rawMessage: agent.flow ? agent.flow.message : "" // qmllint disable unresolved-type
 
     readonly property var splitMessage: {
         let msg = rawMessage.trim();
@@ -71,7 +70,7 @@ StyledWindow {
         return shapes;
     }
 
-    property bool isActive: agent.isActive && agent.flow != null
+    property bool isActive: agent.isActive && agent.flow != null // qmllint disable unresolved-type
 
     name: "polkit"
     WlrLayershell.layer: WlrLayer.Overlay
@@ -355,9 +354,9 @@ StyledWindow {
 
                 StyledText {
                     width: parent.width
-                    text: root.agent.flow && root.agent.flow.supplementaryMessage ? root.agent.flow.supplementaryMessage : ""
+                    text: root.agent.flow && root.agent.flow.supplementaryMessage ? root.agent.flow.supplementaryMessage : "" // qmllint disable unresolved-type
                     font: Tokens.font.body.small
-                    color: root.agent.flow && root.agent.flow.supplementaryIsError ? Colours.palette.m3error : Colours.palette.m3onSurfaceVariant
+                    color: root.agent.flow && root.agent.flow.supplementaryIsError ? Colours.palette.m3error : Colours.palette.m3onSurfaceVariant // qmllint disable unresolved-type
                     visible: text.length > 0
                     wrapMode: Text.WordWrap
                     horizontalAlignment: Text.AlignHCenter
@@ -382,8 +381,8 @@ StyledWindow {
 
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_Enter || event.key === Qt.Key_Return) {
-                        if (root.agent.flow && root.buffer) {
-                            root.agent.flow.submit(root.buffer);
+                        if (root.agent.flow && root.buffer) { // qmllint disable unresolved-type
+                            root.agent.flow.submit(root.buffer); // qmllint disable unresolved-type
                             root.buffer = "";
                         }
                         event.accepted = true;
@@ -397,8 +396,8 @@ StyledWindow {
                         }
                         event.accepted = true;
                     } else if (event.key === Qt.Key_Escape) {
-                        if (root.agent.flow) {
-                            root.agent.flow.cancelAuthenticationRequest();
+                        if (root.agent.flow) { // qmllint disable unresolved-type
+                            root.agent.flow.cancelAuthenticationRequest(); // qmllint disable unresolved-type
                         }
                         root.buffer = "";
                         event.accepted = true;
@@ -546,8 +545,8 @@ StyledWindow {
                                 hoverEnabled: true
                                 cursorShape: root.buffer ? Qt.PointingHandCursor : Qt.ArrowCursor
                                 onClicked: {
-                                    if (root.agent.flow && root.buffer) {
-                                        root.agent.flow.submit(root.buffer);
+                                    if (root.agent.flow && root.buffer) { // qmllint disable unresolved-type
+                                        root.agent.flow.submit(root.buffer); // qmllint disable unresolved-type
                                         root.buffer = "";
                                     }
                                 }
