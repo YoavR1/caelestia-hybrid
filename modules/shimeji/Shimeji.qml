@@ -38,7 +38,7 @@ StyledWindow {
     function getImgPath(): string {
         if (!modelData)
             return "";
-        let path = Paths.absolutePath(String(contentItem.Config.shimeji.path));
+        let path = Paths.absolutePath(String(contentItem.Config.shimeji.directory));
         if (!path)
             return "";
 

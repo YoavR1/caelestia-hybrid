@@ -1,5 +1,13 @@
 #include "QuickShareCrypto.hpp"
 
+#include <qloggingcategory.h>
+
+namespace {
+
+Q_LOGGING_CATEGORY(lcQuickShareCrypto, "caelestia.quickshare.crypto", QtInfoMsg)
+
+} // namespace
+
 #include <qdebug.h>
 
 #include <openssl/ec.h>
@@ -160,6 +168,8 @@ QString QuickShareCrypto::pinCode() const {
     int hash = 0;
     int multiplier = 1;
     for (unsigned char const byte : m_authString) {
+        // NOLINTNEXTLINE(bugprone-signed-char-misuse): Nearby Share specifies this hash over
+        // signed bytes, so the reinterpretation is the protocol rather than a mistake.
         int const signedByte = static_cast<int>(static_cast<signed char>(byte));
         hash = (hash + signedByte * multiplier) % kHashModulo;
         multiplier = (multiplier * kHashBaseMultiplier) % kHashModulo;
@@ -319,7 +329,8 @@ QByteArray QuickShareCrypto::generateClientInit() {
 
             QByteArray serializedGenPubKey;
             serializedGenPubKey.resize(genericPubKey.ByteSizeLong());
-            genericPubKey.SerializeToArray(serializedGenPubKey.data(), serializedGenPubKey.size());
+            if (!genericPubKey.SerializeToArray(serializedGenPubKey.data(), serializedGenPubKey.size()))
+                qCWarning(lcQuickShareCrypto, "Failed to serialise the generic public key");
             clientFinished.set_public_key(serializedGenPubKey.constData(), serializedGenPubKey.size());
             EC_KEY_free(ecKey);
         }
@@ -362,7 +373,8 @@ QByteArray QuickShareCrypto::generateClientInit() {
 
     QByteArray out;
     out.resize(msg.ByteSizeLong());
-    msg.SerializeToArray(out.data(), out.size());
+    if (!msg.SerializeToArray(out.data(), out.size()))
+        qCWarning(lcQuickShareCrypto, "Failed to serialise a Ukey2 message");
     m_clientInitMsgData = out;
     return out;
 }
@@ -413,7 +425,8 @@ QByteArray QuickShareCrypto::generateServerInit() {
 
             QByteArray serializedGenPubKey;
             serializedGenPubKey.resize(genericPubKey.ByteSizeLong());
-            genericPubKey.SerializeToArray(serializedGenPubKey.data(), serializedGenPubKey.size());
+            if (!genericPubKey.SerializeToArray(serializedGenPubKey.data(), serializedGenPubKey.size()))
+                qCWarning(lcQuickShareCrypto, "Failed to serialise the generic public key");
 
             serverInit.set_public_key(serializedGenPubKey.constData(), serializedGenPubKey.size());
             EC_KEY_free(ecKey);
@@ -426,7 +439,8 @@ QByteArray QuickShareCrypto::generateServerInit() {
 
     QByteArray out;
     out.resize(msg.ByteSizeLong());
-    msg.SerializeToArray(out.data(), out.size());
+    if (!msg.SerializeToArray(out.data(), out.size()))
+        qCWarning(lcQuickShareCrypto, "Failed to serialise a Ukey2 message");
     m_serverInitMsgData = out;
     return out;
 }

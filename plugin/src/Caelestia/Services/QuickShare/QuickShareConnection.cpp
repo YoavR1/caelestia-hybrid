@@ -1,5 +1,13 @@
 #include "QuickShareConnection.hpp"
 
+#include <qloggingcategory.h>
+
+namespace {
+
+Q_LOGGING_CATEGORY(lcQuickShareConn, "caelestia.quickshare.connection", QtInfoMsg)
+
+} // namespace
+
 #include <qdebug.h>
 #include <qdir.h>
 #include <qendian.h>
@@ -272,7 +280,9 @@ QByteArray QuickShareConnection::buildOfflineFrame(const QByteArray& payloadTran
     offlineFrame.set_version(location::nearby::connections::OfflineFrame::V1);
     auto* v1 = offlineFrame.mutable_v1();
     v1->set_type(location::nearby::connections::V1Frame::PAYLOAD_TRANSFER);
-    v1->mutable_payload_transfer()->ParseFromArray(payloadTransferData.constData(), payloadTransferData.size());
+    if (!v1->mutable_payload_transfer()->ParseFromArray(
+            payloadTransferData.constData(), static_cast<int>(payloadTransferData.size())))
+        qCWarning(lcQuickShareConn, "Failed to parse the payload transfer frame");
 
     QByteArray out;
     out.resize(offlineFrame.ByteSizeLong());
@@ -707,7 +717,7 @@ void QuickShareConnection::handlePayloadTransfer(const QByteArray& plaintext) {
                             QFile file(m_outgoingFilePath);
                             if (file.open(QIODevice::ReadOnly)) {
                                 qint64 offset = 0;
-                                const qint64 CHUNK_SIZE = 1024 * 1024; // 1MB chunks
+                                const qint64 CHUNK_SIZE = 1024LL * 1024; // 1MB chunks
 
                                 while (!file.atEnd()) {
                                     QByteArray const fileData = file.read(CHUNK_SIZE);
