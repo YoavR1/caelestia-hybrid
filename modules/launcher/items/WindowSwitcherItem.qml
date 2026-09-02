@@ -60,14 +60,19 @@ Item {
             anchors.fill: parent
             captureSource: {
                 const win = root.modelData;
-                if (!win || !win.wayland) return null;
+                if (!win || !win.wayland)
+                    return null;
                 const ipc = win.lastIpcObject;
                 if (ipc) {
-                    if (ipc.mapped === false || ipc.hidden) return null;
-                    if (ipc.size && (ipc.size[0] <= 0 || ipc.size[1] <= 0)) return null;
+                    if (ipc.mapped === false || ipc.hidden)
+                        return null;
+                    if (ipc.size && (ipc.size[0] <= 0 || ipc.size[1] <= 0))
+                        return null;
                 } else {
-                    if (win.mapped === false || win.hidden) return null;
-                    if (win.size && (win.size[0] <= 0 || win.size[1] <= 0)) return null;
+                    if (win.mapped === false || win.hidden)
+                        return null;
+                    if (win.size && (win.size[0] <= 0 || win.size[1] <= 0))
+                        return null;
                 }
                 return win.wayland;
             }

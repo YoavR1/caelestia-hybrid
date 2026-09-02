@@ -99,7 +99,6 @@ ColumnLayout {
                     wrapMode: Text.Wrap
                 }
             }
-
         }
     }
 

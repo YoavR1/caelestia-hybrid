@@ -148,8 +148,8 @@ PageBase {
                     Layout.preferredHeight: 32
                     icon: "close"
                     onClicked: {
-                        tokenInput.text = ""
-                        root.saveToken("")
+                        tokenInput.text = "";
+                        root.saveToken("");
                     }
                 }
             }
@@ -192,8 +192,20 @@ PageBase {
                 model: GlobalConfig.services.arpcTargetWindows
                 clip: true
 
-                move: Transition { NumberAnimation { properties: "y"; duration: 200; easing.type: Easing.OutCubic } }
-                moveDisplaced: Transition { NumberAnimation { properties: "y"; duration: 200; easing.type: Easing.OutCubic } }
+                move: Transition {
+                    NumberAnimation {
+                        properties: "y"
+                        duration: 200
+                        easing.type: Easing.OutCubic
+                    }
+                }
+                moveDisplaced: Transition {
+                    NumberAnimation {
+                        properties: "y"
+                        duration: 200
+                        easing.type: Easing.OutCubic
+                    }
+                }
 
                 delegate: StyledRect {
                     id: delegateRect
@@ -293,8 +305,20 @@ PageBase {
                 model: GlobalConfig.services.arpcSteamBlacklist
                 clip: true
 
-                move: Transition { NumberAnimation { properties: "y"; duration: 200; easing.type: Easing.OutCubic } }
-                moveDisplaced: Transition { NumberAnimation { properties: "y"; duration: 200; easing.type: Easing.OutCubic } }
+                move: Transition {
+                    NumberAnimation {
+                        properties: "y"
+                        duration: 200
+                        easing.type: Easing.OutCubic
+                    }
+                }
+                moveDisplaced: Transition {
+                    NumberAnimation {
+                        properties: "y"
+                        duration: 200
+                        easing.type: Easing.OutCubic
+                    }
+                }
 
                 delegate: StyledRect {
                     id: blacklistDelegateRect
@@ -426,7 +450,7 @@ PageBase {
                 Item {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 40
-                    
+
                     IconTextButton {
                         anchors.right: parent.right
                         anchors.verticalCenter: parent.verticalCenter

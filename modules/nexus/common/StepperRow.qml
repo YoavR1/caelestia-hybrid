@@ -13,10 +13,10 @@ ConnectedRect {
 
     property bool showDelete: false
 
-    signal deleted()
+    signal deleted
 
     property bool showReset: false
-    signal reset()
+    signal reset
 
     property var configNode
 

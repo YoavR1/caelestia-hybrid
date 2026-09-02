@@ -30,7 +30,10 @@ PageBase {
             stepSize: 1
             showReset: true
             onMoved: v => TokenConfig.appearance.rounding.extraSmall = v
-            onReset: { TokenConfig.appearance.rounding.extraSmall = TokenConfig.defaults().appearance.rounding.extraSmall; TokenConfig.appearance.rounding.resetOption("extraSmall"); }
+            onReset: {
+                TokenConfig.appearance.rounding.extraSmall = TokenConfig.defaults().appearance.rounding.extraSmall;
+                TokenConfig.appearance.rounding.resetOption("extraSmall");
+            }
         }
 
         StepperRow {
@@ -43,7 +46,10 @@ PageBase {
             stepSize: 1
             showReset: true
             onMoved: v => TokenConfig.appearance.rounding.small = v
-            onReset: { TokenConfig.appearance.rounding.small = TokenConfig.defaults().appearance.rounding.small; TokenConfig.appearance.rounding.resetOption("small"); }
+            onReset: {
+                TokenConfig.appearance.rounding.small = TokenConfig.defaults().appearance.rounding.small;
+                TokenConfig.appearance.rounding.resetOption("small");
+            }
         }
 
         StepperRow {
@@ -56,7 +62,10 @@ PageBase {
             stepSize: 1
             showReset: true
             onMoved: v => TokenConfig.appearance.rounding.medium = v
-            onReset: { TokenConfig.appearance.rounding.medium = TokenConfig.defaults().appearance.rounding.medium; TokenConfig.appearance.rounding.resetOption("medium"); }
+            onReset: {
+                TokenConfig.appearance.rounding.medium = TokenConfig.defaults().appearance.rounding.medium;
+                TokenConfig.appearance.rounding.resetOption("medium");
+            }
         }
 
         StepperRow {
@@ -69,7 +78,10 @@ PageBase {
             stepSize: 1
             showReset: true
             onMoved: v => TokenConfig.appearance.rounding.large = v
-            onReset: { TokenConfig.appearance.rounding.large = TokenConfig.defaults().appearance.rounding.large; TokenConfig.appearance.rounding.resetOption("large"); }
+            onReset: {
+                TokenConfig.appearance.rounding.large = TokenConfig.defaults().appearance.rounding.large;
+                TokenConfig.appearance.rounding.resetOption("large");
+            }
         }
 
         StepperRow {
@@ -82,7 +94,10 @@ PageBase {
             stepSize: 1
             showReset: true
             onMoved: v => TokenConfig.appearance.rounding.largeIncreased = v
-            onReset: { TokenConfig.appearance.rounding.largeIncreased = TokenConfig.defaults().appearance.rounding.largeIncreased; TokenConfig.appearance.rounding.resetOption("largeIncreased"); }
+            onReset: {
+                TokenConfig.appearance.rounding.largeIncreased = TokenConfig.defaults().appearance.rounding.largeIncreased;
+                TokenConfig.appearance.rounding.resetOption("largeIncreased");
+            }
         }
 
         StepperRow {
@@ -95,7 +110,10 @@ PageBase {
             stepSize: 1
             showReset: true
             onMoved: v => TokenConfig.appearance.rounding.extraLarge = v
-            onReset: { TokenConfig.appearance.rounding.extraLarge = TokenConfig.defaults().appearance.rounding.extraLarge; TokenConfig.appearance.rounding.resetOption("extraLarge"); }
+            onReset: {
+                TokenConfig.appearance.rounding.extraLarge = TokenConfig.defaults().appearance.rounding.extraLarge;
+                TokenConfig.appearance.rounding.resetOption("extraLarge");
+            }
         }
 
         StepperRow {
@@ -108,7 +126,10 @@ PageBase {
             stepSize: 1
             showReset: true
             onMoved: v => TokenConfig.appearance.rounding.extraLargeIncreased = v
-            onReset: { TokenConfig.appearance.rounding.extraLargeIncreased = TokenConfig.defaults().appearance.rounding.extraLargeIncreased; TokenConfig.appearance.rounding.resetOption("extraLargeIncreased"); }
+            onReset: {
+                TokenConfig.appearance.rounding.extraLargeIncreased = TokenConfig.defaults().appearance.rounding.extraLargeIncreased;
+                TokenConfig.appearance.rounding.resetOption("extraLargeIncreased");
+            }
         }
 
         StepperRow {
@@ -122,7 +143,10 @@ PageBase {
             stepSize: 2
             showReset: true
             onMoved: v => TokenConfig.appearance.rounding.extraExtraLarge = v
-            onReset: { TokenConfig.appearance.rounding.extraExtraLarge = TokenConfig.defaults().appearance.rounding.extraExtraLarge; TokenConfig.appearance.rounding.resetOption("extraExtraLarge"); }
+            onReset: {
+                TokenConfig.appearance.rounding.extraExtraLarge = TokenConfig.defaults().appearance.rounding.extraExtraLarge;
+                TokenConfig.appearance.rounding.resetOption("extraExtraLarge");
+            }
         }
 
         SectionHeader {
@@ -139,7 +163,10 @@ PageBase {
             stepSize: 1
             showReset: true
             onMoved: v => TokenConfig.appearance.spacing.extraSmall = v
-            onReset: { TokenConfig.appearance.spacing.extraSmall = TokenConfig.defaults().appearance.spacing.extraSmall; TokenConfig.appearance.spacing.resetOption("extraSmall"); }
+            onReset: {
+                TokenConfig.appearance.spacing.extraSmall = TokenConfig.defaults().appearance.spacing.extraSmall;
+                TokenConfig.appearance.spacing.resetOption("extraSmall");
+            }
         }
 
         StepperRow {
@@ -152,7 +179,10 @@ PageBase {
             stepSize: 1
             showReset: true
             onMoved: v => TokenConfig.appearance.spacing.small = v
-            onReset: { TokenConfig.appearance.spacing.small = TokenConfig.defaults().appearance.spacing.small; TokenConfig.appearance.spacing.resetOption("small"); }
+            onReset: {
+                TokenConfig.appearance.spacing.small = TokenConfig.defaults().appearance.spacing.small;
+                TokenConfig.appearance.spacing.resetOption("small");
+            }
         }
 
         StepperRow {
@@ -165,7 +195,10 @@ PageBase {
             stepSize: 1
             showReset: true
             onMoved: v => TokenConfig.appearance.spacing.medium = v
-            onReset: { TokenConfig.appearance.spacing.medium = TokenConfig.defaults().appearance.spacing.medium; TokenConfig.appearance.spacing.resetOption("medium"); }
+            onReset: {
+                TokenConfig.appearance.spacing.medium = TokenConfig.defaults().appearance.spacing.medium;
+                TokenConfig.appearance.spacing.resetOption("medium");
+            }
         }
 
         StepperRow {
@@ -178,7 +211,10 @@ PageBase {
             stepSize: 1
             showReset: true
             onMoved: v => TokenConfig.appearance.spacing.large = v
-            onReset: { TokenConfig.appearance.spacing.large = TokenConfig.defaults().appearance.spacing.large; TokenConfig.appearance.spacing.resetOption("large"); }
+            onReset: {
+                TokenConfig.appearance.spacing.large = TokenConfig.defaults().appearance.spacing.large;
+                TokenConfig.appearance.spacing.resetOption("large");
+            }
         }
 
         StepperRow {
@@ -191,7 +227,10 @@ PageBase {
             stepSize: 1
             showReset: true
             onMoved: v => TokenConfig.appearance.spacing.largeIncreased = v
-            onReset: { TokenConfig.appearance.spacing.largeIncreased = TokenConfig.defaults().appearance.spacing.largeIncreased; TokenConfig.appearance.spacing.resetOption("largeIncreased"); }
+            onReset: {
+                TokenConfig.appearance.spacing.largeIncreased = TokenConfig.defaults().appearance.spacing.largeIncreased;
+                TokenConfig.appearance.spacing.resetOption("largeIncreased");
+            }
         }
 
         StepperRow {
@@ -204,7 +243,10 @@ PageBase {
             stepSize: 1
             showReset: true
             onMoved: v => TokenConfig.appearance.spacing.extraLarge = v
-            onReset: { TokenConfig.appearance.spacing.extraLarge = TokenConfig.defaults().appearance.spacing.extraLarge; TokenConfig.appearance.spacing.resetOption("extraLarge"); }
+            onReset: {
+                TokenConfig.appearance.spacing.extraLarge = TokenConfig.defaults().appearance.spacing.extraLarge;
+                TokenConfig.appearance.spacing.resetOption("extraLarge");
+            }
         }
 
         StepperRow {
@@ -217,7 +259,10 @@ PageBase {
             stepSize: 1
             showReset: true
             onMoved: v => TokenConfig.appearance.spacing.extraLargeIncreased = v
-            onReset: { TokenConfig.appearance.spacing.extraLargeIncreased = TokenConfig.defaults().appearance.spacing.extraLargeIncreased; TokenConfig.appearance.spacing.resetOption("extraLargeIncreased"); }
+            onReset: {
+                TokenConfig.appearance.spacing.extraLargeIncreased = TokenConfig.defaults().appearance.spacing.extraLargeIncreased;
+                TokenConfig.appearance.spacing.resetOption("extraLargeIncreased");
+            }
         }
 
         StepperRow {
@@ -231,7 +276,10 @@ PageBase {
             stepSize: 2
             showReset: true
             onMoved: v => TokenConfig.appearance.spacing.extraExtraLarge = v
-            onReset: { TokenConfig.appearance.spacing.extraExtraLarge = TokenConfig.defaults().appearance.spacing.extraExtraLarge; TokenConfig.appearance.spacing.resetOption("extraExtraLarge"); }
+            onReset: {
+                TokenConfig.appearance.spacing.extraExtraLarge = TokenConfig.defaults().appearance.spacing.extraExtraLarge;
+                TokenConfig.appearance.spacing.resetOption("extraExtraLarge");
+            }
         }
 
         SectionHeader {
@@ -248,7 +296,10 @@ PageBase {
             stepSize: 1
             showReset: true
             onMoved: v => TokenConfig.appearance.padding.extraSmall = v
-            onReset: { TokenConfig.appearance.padding.extraSmall = TokenConfig.defaults().appearance.padding.extraSmall; TokenConfig.appearance.padding.resetOption("extraSmall"); }
+            onReset: {
+                TokenConfig.appearance.padding.extraSmall = TokenConfig.defaults().appearance.padding.extraSmall;
+                TokenConfig.appearance.padding.resetOption("extraSmall");
+            }
         }
 
         StepperRow {
@@ -261,7 +312,10 @@ PageBase {
             stepSize: 1
             showReset: true
             onMoved: v => TokenConfig.appearance.padding.small = v
-            onReset: { TokenConfig.appearance.padding.small = TokenConfig.defaults().appearance.padding.small; TokenConfig.appearance.padding.resetOption("small"); }
+            onReset: {
+                TokenConfig.appearance.padding.small = TokenConfig.defaults().appearance.padding.small;
+                TokenConfig.appearance.padding.resetOption("small");
+            }
         }
 
         StepperRow {
@@ -274,7 +328,10 @@ PageBase {
             stepSize: 1
             showReset: true
             onMoved: v => TokenConfig.appearance.padding.medium = v
-            onReset: { TokenConfig.appearance.padding.medium = TokenConfig.defaults().appearance.padding.medium; TokenConfig.appearance.padding.resetOption("medium"); }
+            onReset: {
+                TokenConfig.appearance.padding.medium = TokenConfig.defaults().appearance.padding.medium;
+                TokenConfig.appearance.padding.resetOption("medium");
+            }
         }
 
         StepperRow {
@@ -287,7 +344,10 @@ PageBase {
             stepSize: 1
             showReset: true
             onMoved: v => TokenConfig.appearance.padding.large = v
-            onReset: { TokenConfig.appearance.padding.large = TokenConfig.defaults().appearance.padding.large; TokenConfig.appearance.padding.resetOption("large"); }
+            onReset: {
+                TokenConfig.appearance.padding.large = TokenConfig.defaults().appearance.padding.large;
+                TokenConfig.appearance.padding.resetOption("large");
+            }
         }
 
         StepperRow {
@@ -300,7 +360,10 @@ PageBase {
             stepSize: 1
             showReset: true
             onMoved: v => TokenConfig.appearance.padding.largeIncreased = v
-            onReset: { TokenConfig.appearance.padding.largeIncreased = TokenConfig.defaults().appearance.padding.largeIncreased; TokenConfig.appearance.padding.resetOption("largeIncreased"); }
+            onReset: {
+                TokenConfig.appearance.padding.largeIncreased = TokenConfig.defaults().appearance.padding.largeIncreased;
+                TokenConfig.appearance.padding.resetOption("largeIncreased");
+            }
         }
 
         StepperRow {
@@ -313,7 +376,10 @@ PageBase {
             stepSize: 1
             showReset: true
             onMoved: v => TokenConfig.appearance.padding.extraLarge = v
-            onReset: { TokenConfig.appearance.padding.extraLarge = TokenConfig.defaults().appearance.padding.extraLarge; TokenConfig.appearance.padding.resetOption("extraLarge"); }
+            onReset: {
+                TokenConfig.appearance.padding.extraLarge = TokenConfig.defaults().appearance.padding.extraLarge;
+                TokenConfig.appearance.padding.resetOption("extraLarge");
+            }
         }
 
         StepperRow {
@@ -326,7 +392,10 @@ PageBase {
             stepSize: 1
             showReset: true
             onMoved: v => TokenConfig.appearance.padding.extraLargeIncreased = v
-            onReset: { TokenConfig.appearance.padding.extraLargeIncreased = TokenConfig.defaults().appearance.padding.extraLargeIncreased; TokenConfig.appearance.padding.resetOption("extraLargeIncreased"); }
+            onReset: {
+                TokenConfig.appearance.padding.extraLargeIncreased = TokenConfig.defaults().appearance.padding.extraLargeIncreased;
+                TokenConfig.appearance.padding.resetOption("extraLargeIncreased");
+            }
         }
 
         StepperRow {
@@ -340,7 +409,10 @@ PageBase {
             stepSize: 2
             showReset: true
             onMoved: v => TokenConfig.appearance.padding.extraExtraLarge = v
-            onReset: { TokenConfig.appearance.padding.extraExtraLarge = TokenConfig.defaults().appearance.padding.extraExtraLarge; TokenConfig.appearance.padding.resetOption("extraExtraLarge"); }
+            onReset: {
+                TokenConfig.appearance.padding.extraExtraLarge = TokenConfig.defaults().appearance.padding.extraExtraLarge;
+                TokenConfig.appearance.padding.resetOption("extraExtraLarge");
+            }
         }
     }
 }

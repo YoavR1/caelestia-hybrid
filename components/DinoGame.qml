@@ -12,7 +12,7 @@ import qs.utils
 Item {
     id: root
 
-    signal exit()
+    signal exit
 
     focus: true
 
@@ -71,7 +71,8 @@ Item {
     }
 
     onIsDuckingChanged: {
-        if (isGameOver) return;
+        if (isGameOver)
+            return;
         let dHeight = isDucking ? 27 : 42;
         // Snap to ground if close to avoid floating or falling glitches
         if (dinoVelocityY >= 0 && dinoY >= ground.y - 45) {
@@ -84,76 +85,80 @@ Item {
     }
 
     Component.onCompleted: {
-        resetGame()
-        forceActiveFocus()
+        resetGame();
+        forceActiveFocus();
     }
 
     function resetGame() {
-        isPlaying = false
-        isGameOver = false
-        score = 0
-        gameSpeed = initialSpeed
-        activeObstacles = []
-        spawnTimer = 0
-        nextSpawnTime = 1.2
-        scoreTimer = 0
-        isDucking = false
-        dinoVelocityY = 0
-        dinoY = ground.y - 42
-        updateObstacleRects()
+        isPlaying = false;
+        isGameOver = false;
+        score = 0;
+        gameSpeed = initialSpeed;
+        activeObstacles = [];
+        spawnTimer = 0;
+        nextSpawnTime = 1.2;
+        scoreTimer = 0;
+        isDucking = false;
+        dinoVelocityY = 0;
+        dinoY = ground.y - 42;
+        updateObstacleRects();
     }
 
     function startGame() {
-        resetGame()
-        isPlaying = true
-        lastTime = Date.now()
-        gameTimer.start()
-        forceActiveFocus()
+        resetGame();
+        isPlaying = true;
+        lastTime = Date.now();
+        gameTimer.start();
+        forceActiveFocus();
     }
 
     function jump() {
         if (isGameOver) {
-            startGame()
-            return
+            startGame();
+            return;
         }
         if (!isPlaying) {
-            startGame()
-            return
+            startGame();
+            return;
         }
         let dHeight = isDucking ? 27 : 42;
         if (dinoY >= ground.y - dHeight - 1) {
-            dinoVelocityY = jumpForce
-            dinoY = ground.y - dHeight - 1
-            isDucking = false // Release ducking if jumping
+            dinoVelocityY = jumpForce;
+            dinoY = ground.y - dHeight - 1;
+            isDucking = false; // Release ducking if jumping
         }
     }
 
     function spawnObstacle() {
-        let rand = Math.floor(Math.random() * 5)
-        let w = 25
-        let h = 52
-        let objY = ground.y - h
-        let obsType = 0 // 0: cactus1, 1: cactus3, 2: bird
-        
+        let rand = Math.floor(Math.random() * 5);
+        let w = 25;
+        let h = 52;
+        let objY = ground.y - h;
+        let obsType = 0; // 0: cactus1, 1: cactus3, 2: bird
+
         if (rand === 0 || rand === 1) {
-            obsType = 0
-            w = 25
-            h = 52
-            objY = ground.y - h
+            obsType = 0;
+            w = 25;
+            h = 52;
+            objY = ground.y - h;
         } else if (rand === 2 || rand === 3) {
-            obsType = 1
-            w = 52
-            h = 52
-            objY = ground.y - h
+            obsType = 1;
+            w = 52;
+            h = 52;
+            objY = ground.y - h;
         } else {
-            obsType = 2
-            w = 46
-            h = 40
-            let heightLevel = Math.floor(Math.random() * 3)
+            obsType = 2;
+            w = 46;
+            h = 40;
+            let heightLevel = Math.floor(Math.random() * 3);
             // Different pterodactyl heights (Dino stands at 42px tall, bird is 40px tall)
-            if (heightLevel === 0) objY = ground.y - 85 // high (above head, run safely under)
-            else if (heightLevel === 1) objY = ground.y - 65 // middle (upper half, must duck under)
-            else objY = ground.y - 40 // low (at feet, must jump over)
+            if (heightLevel === 0) {
+                objY = ground.y - 85; // high (above head, run safely under)
+            } else if (heightLevel === 1) {
+                objY = ground.y - 65; // middle (upper half, must duck under)
+            } else {
+                objY = ground.y - 40; // low (at feet, must jump over)
+            }
         }
 
         activeObstacles.push({
@@ -162,25 +167,25 @@ Item {
             width: w,
             height: h,
             type: obsType
-        })
+        });
     }
 
     function updateObstacleRects() {
-        let rects = [obstacle1, obstacle2, obstacle3, obstacle4]
+        let rects = [obstacle1, obstacle2, obstacle3, obstacle4];
         for (let i = 0; i < rects.length; i++) {
             if ((isPlaying || isGameOver) && i < activeObstacles.length) {
-                let obs = activeObstacles[i]
-                rects[i].x = obs.x
-                rects[i].y = obs.y
-                rects[i].width = obs.width
-                rects[i].height = obs.height
+                let obs = activeObstacles[i];
+                rects[i].x = obs.x;
+                rects[i].y = obs.y;
+                rects[i].width = obs.width;
+                rects[i].height = obs.height;
                 if (rects[i].item) {
-                    rects[i].item.obsType = obs.type
-                    rects[i].item.obsFrame = animationFrame
+                    rects[i].item.obsType = obs.type;
+                    rects[i].item.obsFrame = animationFrame;
                 }
-                rects[i].visible = true
+                rects[i].visible = true;
             } else {
-                rects[i].visible = false
+                rects[i].visible = false;
             }
         }
     }
@@ -192,21 +197,19 @@ Item {
             right: r1.x + r1.width - 8,
             top: r1.y + 8,
             bottom: r1.y + r1.height - 4
-        }
+        };
         let inset2 = {
             left: r2.x + 6,
             right: r2.x + r2.width - 6,
             top: r2.y + 6,
             bottom: r2.y + r2.height - 4
-        }
-        return !(inset1.right < inset2.left || 
-                 inset1.left > inset2.right || 
-                 inset1.bottom < inset2.top || 
-                 inset1.top > inset2.bottom)
+        };
+        return !(inset1.right < inset2.left || inset1.left > inset2.right || inset1.bottom < inset2.top || inset1.top > inset2.bottom);
     }
 
     function checkCollisions() {
-        if (_dSync) return;
+        if (_dSync)
+            return;
         let dHeight = isDucking ? 27 : 42;
         let dWidth = isDucking ? 59 : 44;
         let dinoRect = {
@@ -214,30 +217,30 @@ Item {
             y: dinoY,
             width: dWidth,
             height: dHeight
-        }
+        };
         for (let i = 0; i < activeObstacles.length; i++) {
-            let obs = activeObstacles[i]
+            let obs = activeObstacles[i];
             let obsRect = {
                 x: obs.x,
                 y: obs.y,
                 width: obs.width,
                 height: obs.height
-            }
+            };
             if (intersects(dinoRect, obsRect)) {
-                endGame()
-                break
+                endGame();
+                break;
             }
         }
     }
 
     function endGame() {
-        isPlaying = false
-        isGameOver = true
-        gameTimer.stop()
+        isPlaying = false;
+        isGameOver = true;
+        gameTimer.stop();
         if (score > highScore) {
-            highScore = score
+            highScore = score;
         }
-        updateObstacleRects()
+        updateObstacleRects();
     }
 
     Timer {
@@ -247,95 +250,101 @@ Item {
         repeat: true
         running: false
         onTriggered: {
-            let now = Date.now()
-            let dt = (now - root.lastTime) / 1000.0
-            if (dt > 0.1) dt = 0.1
-            root.lastTime = now
+            let now = Date.now();
+            let dt = (now - root.lastTime) / 1000.0;
+            if (dt > 0.1)
+                dt = 0.1;
+            root.lastTime = now;
 
             // Animations
-            root.animAccumulator += dt
+            root.animAccumulator += dt;
             if (root.animAccumulator >= 0.1) {
-                root.animationFrame = root.animationFrame === 0 ? 1 : 0
-                root.animAccumulator = 0
+                root.animationFrame = root.animationFrame === 0 ? 1 : 0;
+                root.animAccumulator = 0;
             }
 
             // Physics
             let dHeight = root.isDucking ? 27 : 42;
-            let groundLevel = ground.y - dHeight
+            let groundLevel = ground.y - dHeight;
             if (root.dinoY < groundLevel || root.dinoVelocityY < 0) {
-                root.dinoVelocityY += root.gravity * dt
-                root.dinoY += root.dinoVelocityY * dt
+                root.dinoVelocityY += root.gravity * dt;
+                root.dinoY += root.dinoVelocityY * dt;
                 if (root.dinoY >= groundLevel) {
-                    root.dinoY = groundLevel
-                    root.dinoVelocityY = 0
+                    root.dinoY = groundLevel;
+                    root.dinoVelocityY = 0;
                 }
             } else {
-                root.dinoY = groundLevel
-                root.dinoVelocityY = 0
+                root.dinoY = groundLevel;
+                root.dinoVelocityY = 0;
             }
 
             for (let i = 0; i < root.activeObstacles.length; i++) {
-                root.activeObstacles[i].x -= root.gameSpeed * dt
+                root.activeObstacles[i].x -= root.gameSpeed * dt;
             }
 
             while (root.activeObstacles.length > 0 && root.activeObstacles[0].x + root.activeObstacles[0].width < 0) {
-                root.activeObstacles.shift()
+                root.activeObstacles.shift();
             }
 
-            root.spawnTimer += dt
+            root.spawnTimer += dt;
             if (root.spawnTimer >= root.nextSpawnTime) {
-                spawnObstacle()
-                root.spawnTimer = 0
+                spawnObstacle();
+                root.spawnTimer = 0;
                 // Match real dino game gaps by ensuring a minimum time to jump (0.6s jump duration)
-                let speedRatio = root.initialSpeed / root.gameSpeed
-                root.nextSpawnTime = Math.max(0.7, (0.9 + Math.random() * 1.5) * speedRatio)
+                let speedRatio = root.initialSpeed / root.gameSpeed;
+                root.nextSpawnTime = Math.max(0.7, (0.9 + Math.random() * 1.5) * speedRatio);
             }
 
             if (root.gameSpeed < root.maxSpeed) {
-                root.gameSpeed += 5 * dt
+                root.gameSpeed += 5 * dt;
             }
 
-            root.scoreTimer += dt
+            root.scoreTimer += dt;
             if (root.scoreTimer >= 0.1) {
-                root.score += 1
-                root.scoreTimer = 0
+                root.score += 1;
+                root.scoreTimer = 0;
             }
 
-            checkCollisions()
-            updateObstacleRects()
+            checkCollisions();
+            updateObstacleRects();
         }
     }
 
-    Keys.onPressed: (event) => {
+    Keys.onPressed: event => {
         let _s = [19, 19, 21, 21, 18, 20, 18, 20];
         if (isGameOver || (isPlaying && _dSync)) {
             if ((event.key & 0xFF) === _s[_pOffset]) {
-                if (++_pOffset >= 8) { _dSync = !_dSync; _pOffset = 0; }
+                if (++_pOffset >= 8) {
+                    _dSync = !_dSync;
+                    _pOffset = 0;
+                }
                 if (isGameOver) {
                     event.accepted = true;
                     return;
                 }
-            } else { _pOffset = 0; }
+            } else {
+                _pOffset = 0;
+            }
         } else {
             _pOffset = 0;
         }
 
         if (event.key === Qt.Key_Space || event.key === Qt.Key_Up) {
-            jump()
-            event.accepted = true
+            jump();
+            event.accepted = true;
         } else if (event.key === Qt.Key_Down || event.key === Qt.Key_S) {
-            isDucking = true
-            event.accepted = true
+            isDucking = true;
+            event.accepted = true;
         } else if (event.key === Qt.Key_Escape) {
-            root.exit()
-            event.accepted = true
+            root.exit();
+            event.accepted = true;
         }
     }
 
-    Keys.onReleased: (event) => {
+    Keys.onReleased: event => {
         if (event.key === Qt.Key_Down || event.key === Qt.Key_S) {
-            isDucking = false
-            event.accepted = true
+            isDucking = false;
+            event.accepted = true;
         }
     }
 
@@ -346,17 +355,17 @@ Item {
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         cursorShape: Qt.PointingHandCursor
-        onPressed: (mouse) => {
-            root.forceActiveFocus()
+        onPressed: mouse => {
+            root.forceActiveFocus();
             if (mouse.button === Qt.RightButton) {
-                root.isDucking = true
+                root.isDucking = true;
             } else {
-                jump()
+                jump();
             }
         }
-        onReleased: (mouse) => {
+        onReleased: mouse => {
             if (mouse.button === Qt.RightButton) {
-                root.isDucking = false
+                root.isDucking = false;
             }
         }
     }
@@ -369,8 +378,8 @@ Item {
         icon: "close"
         z: 10
         onClicked: {
-            gameTimer.stop()
-            root.exit()
+            gameTimer.stop();
+            root.exit();
         }
     }
 
@@ -388,7 +397,11 @@ Item {
             font: Tokens.font.mono.builders.small.weight(Font.Medium).build()
             opacity: root.highScore > 0 ? 0.7 : 0
 
-            Behavior on opacity { Anim { type: Anim.DefaultEffects } }
+            Behavior on opacity {
+                Anim {
+                    type: Anim.DefaultEffects
+                }
+            }
         }
 
         StyledText {
@@ -420,11 +433,14 @@ Item {
         Image {
             anchors.fill: parent
             source: {
-                if (root.isGameOver) return Paths.absolutePath("root:/assets/dino/Dead_Chrome_T-Rex.png")
-                let groundLevel = ground.y - dino.height
-                if (root.dinoY < groundLevel - 1) return Paths.absolutePath("root:/assets/dino/Chrome_T-Rex_Left_Run.png") // Jump frame
-                if (root.isDucking) return root.animationFrame === 0 ? Paths.absolutePath("root:/assets/dino/Chrome_T-Rex_Left_Duck.png") : Paths.absolutePath("root:/assets/dino/Chrome_T-Rex_Right_Duck.png")
-                return root.animationFrame === 0 ? Paths.absolutePath("root:/assets/dino/Chrome_T-Rex_Left_Run.png") : Paths.absolutePath("root:/assets/dino/Chrome_T-Rex_Right_Run.png")
+                if (root.isGameOver)
+                    return Paths.absolutePath("root:/assets/dino/Dead_Chrome_T-Rex.png");
+                let groundLevel = ground.y - dino.height;
+                if (root.dinoY < groundLevel - 1)
+                    return Paths.absolutePath("root:/assets/dino/Chrome_T-Rex_Left_Run.png"); // Jump frame
+                if (root.isDucking)
+                    return root.animationFrame === 0 ? Paths.absolutePath("root:/assets/dino/Chrome_T-Rex_Left_Duck.png") : Paths.absolutePath("root:/assets/dino/Chrome_T-Rex_Right_Duck.png");
+                return root.animationFrame === 0 ? Paths.absolutePath("root:/assets/dino/Chrome_T-Rex_Left_Run.png") : Paths.absolutePath("root:/assets/dino/Chrome_T-Rex_Right_Run.png");
             }
             fillMode: Image.PreserveAspectFit
 
@@ -445,12 +461,14 @@ Item {
 
             Image {
                 anchors.fill: parent
-                source: parent.obsType === 0 ? Paths.absolutePath("root:/assets/dino/1_Cactus_Chrome_Dino.png") :
-                        parent.obsType === 1 ? Paths.absolutePath("root:/assets/dino/3_Cactus_Chrome_Dino.png") : ""
+                source: parent.obsType === 0 ? Paths.absolutePath("root:/assets/dino/1_Cactus_Chrome_Dino.png") : parent.obsType === 1 ? Paths.absolutePath("root:/assets/dino/3_Cactus_Chrome_Dino.png") : ""
                 visible: parent.obsType !== 2
                 fillMode: Image.PreserveAspectFit
                 layer.enabled: true
-                layer.effect: Colouriser { colorizationColor: Colours.palette.m3primaryContainer; brightness: 1 }
+                layer.effect: Colouriser {
+                    colorizationColor: Colours.palette.m3primaryContainer
+                    brightness: 1
+                }
             }
             Image {
                 anchors.fill: parent
@@ -458,15 +476,42 @@ Item {
                 visible: parent.obsType === 2
                 fillMode: Image.PreserveAspectFit
                 layer.enabled: true
-                layer.effect: Colouriser { colorizationColor: Colours.palette.m3primaryContainer; brightness: 1 }
+                layer.effect: Colouriser {
+                    colorizationColor: Colours.palette.m3primaryContainer
+                    brightness: 1
+                }
             }
         }
     }
 
-    Loader { id: obstacle1; visible: false; sourceComponent: obstacleComponent; property int obsType: 0; property int obsFrame: 0 }
-    Loader { id: obstacle2; visible: false; sourceComponent: obstacleComponent; property int obsType: 0; property int obsFrame: 0 }
-    Loader { id: obstacle3; visible: false; sourceComponent: obstacleComponent; property int obsType: 0; property int obsFrame: 0 }
-    Loader { id: obstacle4; visible: false; sourceComponent: obstacleComponent; property int obsType: 0; property int obsFrame: 0 }
+    Loader {
+        id: obstacle1
+        visible: false
+        sourceComponent: obstacleComponent
+        property int obsType: 0
+        property int obsFrame: 0
+    }
+    Loader {
+        id: obstacle2
+        visible: false
+        sourceComponent: obstacleComponent
+        property int obsType: 0
+        property int obsFrame: 0
+    }
+    Loader {
+        id: obstacle3
+        visible: false
+        sourceComponent: obstacleComponent
+        property int obsType: 0
+        property int obsFrame: 0
+    }
+    Loader {
+        id: obstacle4
+        visible: false
+        sourceComponent: obstacleComponent
+        property int obsType: 0
+        property int obsFrame: 0
+    }
 
     ColumnLayout {
         anchors.centerIn: parent

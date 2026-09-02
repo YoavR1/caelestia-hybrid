@@ -14,15 +14,42 @@ PageBase {
     isSubPage: true
 
     readonly property list<var> variantData: [
-        { name: "vibrant", label: qsTr("Vibrant") },
-        { name: "tonalspot", label: qsTr("Tonal Spot") },
-        { name: "expressive", label: qsTr("Expressive") },
-        { name: "fidelity", label: qsTr("Fidelity") },
-        { name: "content", label: qsTr("Content") },
-        { name: "fruitsalad", label: qsTr("Fruit Salad") },
-        { name: "rainbow", label: qsTr("Rainbow") },
-        { name: "neutral", label: qsTr("Neutral") },
-        { name: "monochrome", label: qsTr("Monochrome") }
+        {
+            name: "vibrant",
+            label: qsTr("Vibrant")
+        },
+        {
+            name: "tonalspot",
+            label: qsTr("Tonal Spot")
+        },
+        {
+            name: "expressive",
+            label: qsTr("Expressive")
+        },
+        {
+            name: "fidelity",
+            label: qsTr("Fidelity")
+        },
+        {
+            name: "content",
+            label: qsTr("Content")
+        },
+        {
+            name: "fruitsalad",
+            label: qsTr("Fruit Salad")
+        },
+        {
+            name: "rainbow",
+            label: qsTr("Rainbow")
+        },
+        {
+            name: "neutral",
+            label: qsTr("Neutral")
+        },
+        {
+            name: "monochrome",
+            label: qsTr("Monochrome")
+        }
     ]
 
     ColumnLayout {
@@ -111,7 +138,8 @@ PageBase {
                         break;
                     }
                 }
-                if (!match) return null;
+                if (!match)
+                    return null;
                 const list = menuItems;
                 for (let i = 0; i < list.length; i++) {
                     if (list[i].text === match.label)

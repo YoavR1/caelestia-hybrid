@@ -16,9 +16,7 @@ StyledListView {
     required property SearchBar search
     required property ScreenState screenState
 
-    readonly property string searchQuery: search?.text?.startsWith(GlobalConfig.launcher.actionPrefix + "animations ")
-        ? search.text.slice((GlobalConfig.launcher.actionPrefix + "animations ").length).toLowerCase().trim()
-        : ""
+    readonly property string searchQuery: search?.text?.startsWith(GlobalConfig.launcher.actionPrefix + "animations ") ? search.text.slice((GlobalConfig.launcher.actionPrefix + "animations ").length).toLowerCase().trim() : ""
 
     function refreshModel() {
         if (!search)

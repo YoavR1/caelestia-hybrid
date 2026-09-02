@@ -271,7 +271,6 @@ QtObject {
             }
         },
 
-
         // About
         Component {
             StackPage {

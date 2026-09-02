@@ -106,8 +106,7 @@ Item {
 
         Popout {
             name: "peripheralBattery"
-            sourceComponent: PeripheralBattery {
-            }
+            sourceComponent: PeripheralBattery {}
         }
 
         Popout {

@@ -23,22 +23,25 @@ Item {
 
     property var launchingApps: ({})
 
-    ListModel { id: dockModel }
+    ListModel {
+        id: dockModel
+    }
 
     function saveNewOrder(): void {
         const newArr = [];
         const newFavs = [];
-        
+
         for (let i = 0; i < root.currentOrder.length; ++i) {
             const mData = root.currentOrder[i];
-            if (!mData) continue;
-            
+            if (!mData)
+                continue;
+
             if (mData.isPinned) {
                 newFavs.push(mData.id);
             }
             newArr.push(mData);
         }
-        
+
         // Only update if arrays are different length or different order
         const currentFavs = GlobalConfig.launcher.favouriteApps || [];
         let changed = currentFavs.length !== newFavs.length;
@@ -50,7 +53,7 @@ Item {
                 }
             }
         }
-        
+
         if (changed) {
             GlobalConfig.launcher.favouriteApps = newFavs;
         }
@@ -89,18 +92,22 @@ Item {
         Behavior on implicitWidth {
             enabled: bar.isHorizontal
 
-            Anim { type: Anim.DefaultSpatial }
+            Anim {
+                type: Anim.DefaultSpatial
+            }
         }
 
         Behavior on implicitHeight {
             enabled: !bar.isHorizontal
 
-            Anim { type: Anim.DefaultSpatial }
+            Anim {
+                type: Anim.DefaultSpatial
+            }
         }
 
         Item {
             id: layout
-            
+
             anchors.centerIn: parent
             implicitWidth: listView.width
             implicitHeight: listView.height
@@ -116,19 +123,39 @@ Item {
                 interactive: false
 
                 add: Transition {
-                    NumberAnimation { property: "scale"; from: 0; to: 1; duration: 250; easing.type: Easing.OutBack }
+                    NumberAnimation {
+                        property: "scale"
+                        from: 0
+                        to: 1
+                        duration: 250
+                        easing.type: Easing.OutBack
+                    }
                 }
                 remove: Transition {
-                    NumberAnimation { property: "scale"; from: 1; to: 0; duration: 250; easing.type: Easing.InBack }
+                    NumberAnimation {
+                        property: "scale"
+                        from: 1
+                        to: 0
+                        duration: 250
+                        easing.type: Easing.InBack
+                    }
                 }
 
                 move: Transition {
-                    NumberAnimation { properties: "x,y"; duration: 250; easing.type: Easing.OutCubic }
+                    NumberAnimation {
+                        properties: "x,y"
+                        duration: 250
+                        easing.type: Easing.OutCubic
+                    }
                 }
                 moveDisplaced: Transition {
-                    NumberAnimation { properties: "x,y"; duration: 250; easing.type: Easing.OutCubic }
+                    NumberAnimation {
+                        properties: "x,y"
+                        duration: 250
+                        easing.type: Easing.OutCubic
+                    }
                 }
-                
+
                 model: DelegateModel {
                     id: visualModel
 
@@ -195,7 +222,8 @@ Item {
                         acceptedButtons: Qt.NoButton
 
                         onEntered: {
-                            if (bar.popouts.hasCurrent && bar.popouts.currentName === "dockcontext") return;
+                            if (bar.popouts.hasCurrent && bar.popouts.currentName === "dockcontext")
+                                return;
                             bar.popouts.currentName = "dockhover";
                             bar.popouts.currentCenter = bar.isHorizontal ? delegateItem.mapToItem(null, delegateItem.width / 2, 0).x : (delegateItem.mapToItem(null, 0, delegateItem.height / 2).y ?? 0);
                             bar.popouts.dockModel = modelData;
@@ -213,18 +241,18 @@ Item {
                         drag.axis: bar.isHorizontal ? Drag.XAxis : Drag.YAxis
                         acceptedButtons: Qt.LeftButton | Qt.RightButton
                         cursorShape: Qt.PointingHandCursor
-                        
+
                         onPressed: mouse => {
                             held = true;
                             stateLayer.press(mouse.x, mouse.y);
                         }
-                        
+
                         onClicked: mouse => {
                             if (mouse.button === Qt.LeftButton) {
                                 if (modelData?.isPinned) {
                                     bounceAnim.start();
                                 }
-                                
+
                                 if (modelData?.toplevels.length > 0) {
                                     Hypr.dispatch(Hypr.usingLua ? `hl.dsp.focus({ window = "address:0x${modelData?.toplevels[0].address}" })` : `focuswindow address:0x${modelData?.toplevels[0].address}`);
                                 } else if (modelData?.entry) {
@@ -232,10 +260,8 @@ Item {
                                     let newLaunching = Object.assign({}, root.launchingApps);
                                     newLaunching[modelData?.appClass || modelData?.id] = true;
                                     root.launchingApps = newLaunching;
-                                    
-                                    const subCmd = modelData?.entry.runInTerminal
-                                        ? [...GlobalConfig.general.apps.terminal, `${Quickshell.shellDir}/assets/wrap_term_launch.sh`, ...modelData?.entry.command]
-                                        : modelData?.entry.command;
+
+                                    const subCmd = modelData?.entry.runInTerminal ? [...GlobalConfig.general.apps.terminal, `${Quickshell.shellDir}/assets/wrap_term_launch.sh`, ...modelData?.entry.command] : modelData?.entry.command;
                                     Quickshell.execDetached({
                                         command: subCmd,
                                         workingDirectory: modelData?.entry.workingDirectory
@@ -248,7 +274,7 @@ Item {
                                 bar.popouts.hasCurrent = true;
                             }
                         }
-                        
+
                         onReleased: {
                             held = false;
                             delegateItem.x = 0;
@@ -275,8 +301,9 @@ Item {
 
                     property bool isActive: {
                         const activeTop = Hyprland.activeToplevel;
-                        if (!activeTop) return false;
-                        
+                        if (!activeTop)
+                            return false;
+
                         if (activeTop.lastIpcObject && modelData?.appClass) {
                             const activeClass = (activeTop.lastIpcObject.class || activeTop.lastIpcObject.initialClass || "").toLowerCase();
                             const appId = modelData?.appClass.toLowerCase();
@@ -284,9 +311,10 @@ Item {
                                 return true;
                             }
                         }
-                        
+
                         for (const top of modelData?.toplevels || []) {
-                            if (top.address && top.address === activeTop.address) return true;
+                            if (top.address && top.address === activeTop.address)
+                                return true;
                         }
                         return false;
                     }
@@ -295,8 +323,6 @@ Item {
                         const dummy = root.modelUpdateTrigger;
                         return modelData?.toplevels.length > 0;
                     }
-
-
 
                     IconImage {
                         id: icon
@@ -311,12 +337,24 @@ Item {
                         }
                         asynchronous: true
                         visible: !(Config.bar.dock.recolourIcons ?? false)
-                        
+
                         SequentialAnimation {
                             id: bounceAnim
 
-                            NumberAnimation { target: delegateItem; property: "scale"; to: 0.7; duration: 100; easing.type: Easing.OutQuad }
-                            NumberAnimation { target: delegateItem; property: "scale"; to: 1.0; duration: 400; easing.type: Easing.OutElastic }
+                            NumberAnimation {
+                                target: delegateItem
+                                property: "scale"
+                                to: 0.7
+                                duration: 100
+                                easing.type: Easing.OutQuad
+                            }
+                            NumberAnimation {
+                                target: delegateItem
+                                property: "scale"
+                                to: 1.0
+                                duration: 400
+                                easing.type: Easing.OutElastic
+                            }
                         }
                     }
 
@@ -345,51 +383,95 @@ Item {
                         spacing: 2
                         orientation: ListView.Horizontal
                         interactive: false
-                        
+
                         height: 2
                         width: contentWidth
-                        
+
                         remove: Transition {
-                            NumberAnimation { property: "scale"; from: 1; to: 0; duration: 250; easing.type: Easing.InBack }
-                            NumberAnimation { property: "y"; from: 0; to: -15; duration: 250; easing.type: Easing.InBack }
+                            NumberAnimation {
+                                property: "scale"
+                                from: 1
+                                to: 0
+                                duration: 250
+                                easing.type: Easing.InBack
+                            }
+                            NumberAnimation {
+                                property: "y"
+                                from: 0
+                                to: -15
+                                duration: 250
+                                easing.type: Easing.InBack
+                            }
                         }
                         addDisplaced: Transition {
-                            NumberAnimation { properties: "x,y"; duration: 250; easing.type: Easing.OutCubic }
+                            NumberAnimation {
+                                properties: "x,y"
+                                duration: 250
+                                easing.type: Easing.OutCubic
+                            }
                         }
                         removeDisplaced: Transition {
-                            NumberAnimation { properties: "x,y"; duration: 250; easing.type: Easing.OutCubic }
+                            NumberAnimation {
+                                properties: "x,y"
+                                duration: 250
+                                easing.type: Easing.OutCubic
+                            }
                         }
-                        
+
                         model: {
                             const dummy = root.modelUpdateTrigger;
                             return Math.min(2, modelData?.toplevels.length);
                         }
-                        
+
                         delegate: Rectangle {
                             required property int index
 
                             width: (index === 0 && delegateItem.isActive) ? 16 : 2
-    
-                                height: 2
-    
-                                radius: 1
-    
-                                color: delegateItem.isActive ? Colours.palette.m3primary : Colours.palette.m3onSurface
-    
-                                scale: 0
-                                y: -15
-                                Component.onCompleted: {
-                                    scale = 1;
-                                    y = 0;
-                                }
 
-                                Behavior on width { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
-                                Behavior on height { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
-                                Behavior on color { ColorAnimation { duration: 250 } }
-                                Behavior on scale { NumberAnimation { duration: 250; easing.type: Easing.OutBack } }
-                                Behavior on y { NumberAnimation { duration: 250; easing.type: Easing.OutBack } }
+                            height: 2
+
+                            radius: 1
+
+                            color: delegateItem.isActive ? Colours.palette.m3primary : Colours.palette.m3onSurface
+
+                            scale: 0
+                            y: -15
+                            Component.onCompleted: {
+                                scale = 1;
+                                y = 0;
+                            }
+
+                            Behavior on width {
+                                NumberAnimation {
+                                    duration: 250
+                                    easing.type: Easing.OutCubic
+                                }
+                            }
+                            Behavior on height {
+                                NumberAnimation {
+                                    duration: 250
+                                    easing.type: Easing.OutCubic
+                                }
+                            }
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: 250
+                                }
+                            }
+                            Behavior on scale {
+                                NumberAnimation {
+                                    duration: 250
+                                    easing.type: Easing.OutBack
+                                }
+                            }
+                            Behavior on y {
+                                NumberAnimation {
+                                    duration: 250
+                                    easing.type: Easing.OutBack
+                                }
                             }
                         }
+                    }
                 }
             }
         }
@@ -397,27 +479,26 @@ Item {
 
     function handleHover(relPos: real, isHorizontal: bool): void {
         // Don't close dock context menu
-        if (bar.popouts.hasCurrent && bar.popouts.currentName === "dockcontext") return;
+        if (bar.popouts.hasCurrent && bar.popouts.currentName === "dockcontext")
+            return;
 
         const itemSize = Tokens.sizes.bar.innerWidth * 0.8;
         const itemWidthWithSpacing = itemSize + spacing;
         const adjustedPos = isHorizontal ? relPos - container.x - padding : relPos - container.y - padding;
-        
+
         // Only close if cursor is completely outside dock bounds
         if (adjustedPos < 0 || adjustedPos >= modelDataArray.length * itemWidthWithSpacing) {
             bar.popouts.hasCurrent = false;
             return;
         }
-        
+
         const index = Math.floor(adjustedPos / itemWidthWithSpacing);
-        
+
         if (index >= 0 && index < modelDataArray.length) {
             bar.popouts.currentName = "dockhover";
             const centerOffset = index * itemWidthWithSpacing + itemSize / 2;
-            const absoluteCenter = isHorizontal 
-                ? container.mapToItem(null, padding + centerOffset, 0).x 
-                : container.mapToItem(null, 0, padding + centerOffset).y;
-            
+            const absoluteCenter = isHorizontal ? container.mapToItem(null, padding + centerOffset, 0).x : container.mapToItem(null, 0, padding + centerOffset).y;
+
             bar.popouts.currentCenter = absoluteCenter;
             bar.popouts.dockModel = modelDataArray[index];
             bar.popouts.hasCurrent = true;
@@ -434,7 +515,7 @@ Item {
         const apps = [];
 
         const pinnedIds = GlobalConfig.launcher.favouriteApps || [];
-        
+
         for (const pid of pinnedIds) {
             for (const entry of DesktopEntries.applications.values) {
                 if (Strings.testRegexList([pid], entry.id)) {
@@ -451,17 +532,19 @@ Item {
                 }
             }
         }
-        
+
         for (const toplevel of Hyprland.toplevels.values) {
             const ipc = toplevel.lastIpcObject;
-            if (!ipc) continue;
+            if (!ipc)
+                continue;
             const appClass = ipc.class || ipc.initialClass;
-            if (!appClass) continue;
-            
+            if (!appClass)
+                continue;
+
             let found = false;
             for (const app of apps) {
                 const isToplevelSteamGame = appClass.toLowerCase().startsWith("steam_app_");
-                
+
                 if (isToplevelSteamGame) {
                     if (app.appClass.toLowerCase() === appClass.toLowerCase()) {
                         app.toplevels.push(toplevel);
@@ -470,24 +553,23 @@ Item {
                     }
                 } else {
                     const isAppSteamGame = app.id.toLowerCase().startsWith("steam_app_") || app.appClass.toLowerCase().startsWith("steam_app_");
-                    if (isAppSteamGame) continue;
+                    if (isAppSteamGame)
+                        continue;
 
                     const baseId = app.id.toLowerCase().replace(".desktop", "");
-                    if (app.appClass.toLowerCase() === appClass.toLowerCase() || 
-                        app.id.toLowerCase().includes(appClass.toLowerCase()) || 
-                        appClass.toLowerCase().includes(baseId)) {
+                    if (app.appClass.toLowerCase() === appClass.toLowerCase() || app.id.toLowerCase().includes(appClass.toLowerCase()) || appClass.toLowerCase().includes(baseId)) {
                         app.toplevels.push(toplevel);
                         found = true;
                         break;
                     }
                 }
             }
-            
+
             if (!found) {
                 const isToplevelSteamGame = appClass.toLowerCase().startsWith("steam_app_");
                 let entry = null;
                 let iconName = appClass;
-                
+
                 if (isToplevelSteamGame) {
                     const appId = appClass.substring(10);
                     iconName = `steam_icon_${appId}`;
@@ -513,7 +595,7 @@ Item {
                 });
             }
         }
-        
+
         let newLaunching = Object.assign({}, root.launchingApps);
         let launchingChanged = false;
 
@@ -529,7 +611,7 @@ Item {
                 }
             }
         }
-        
+
         if (launchingChanged) {
             root.launchingApps = newLaunching;
         }
@@ -545,34 +627,45 @@ Item {
                 }
             }
         }
-        
+
         if (changed) {
             for (let i = dockModel.count - 1; i >= 0; i--) {
                 let found = false;
                 for (let j = 0; j < apps.length; j++) {
-                    if (apps[j].id === dockModel.get(i).appId) { found = true; break; }
+                    if (apps[j].id === dockModel.get(i).appId) {
+                        found = true;
+                        break;
+                    }
                 }
                 if (!found) {
                     dockModel.remove(i);
                 }
             }
-            
+
             for (let i = 0; i < apps.length; i++) {
                 let found = false;
                 for (let j = 0; j < dockModel.count; j++) {
-                    if (dockModel.get(j).appId === apps[i].id) { found = true; break; }
+                    if (dockModel.get(j).appId === apps[i].id) {
+                        found = true;
+                        break;
+                    }
                 }
                 if (!found) {
-                    dockModel.append({ appId: apps[i].id });
+                    dockModel.append({
+                        appId: apps[i].id
+                    });
                 }
             }
-            
+
             for (let i = 0; i < apps.length; i++) {
                 let currentId = apps[i].id;
                 if (dockModel.get(i).appId !== currentId) {
                     let foundIdx = -1;
                     for (let j = i + 1; j < dockModel.count; j++) {
-                        if (dockModel.get(j).appId === currentId) { foundIdx = j; break; }
+                        if (dockModel.get(j).appId === currentId) {
+                            foundIdx = j;
+                            break;
+                        }
                     }
                     if (foundIdx !== -1) {
                         dockModel.move(foundIdx, i, 1);
@@ -580,7 +673,7 @@ Item {
                 }
             }
         }
-        
+
         root.modelDataArray = apps;
         root.modelUpdateTrigger += 1;
     }
@@ -588,8 +681,8 @@ Item {
     property var _toplevels: Hyprland.toplevels.values
 
     on_ToplevelsChanged: {
-        root.rebuildModel()
-        delayedRebuildTimer.restart()
+        root.rebuildModel();
+        delayedRebuildTimer.restart();
     }
 
     Timer {
@@ -603,8 +696,8 @@ Item {
     property var activeTop: Hyprland.activeToplevel
 
     onActiveTopChanged: {
-        root.rebuildModel()
-        delayedRebuildTimer.restart()
+        root.rebuildModel();
+        delayedRebuildTimer.restart();
     }
 
     Connections {

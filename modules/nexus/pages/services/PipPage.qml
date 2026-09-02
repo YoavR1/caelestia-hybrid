@@ -10,30 +10,54 @@ PageBase {
     title: qsTr("Picture in Picture")
 
     readonly property list<MenuItem> positionItems: [
-        MenuItem { text: qsTr("Top left") },
-        MenuItem { text: qsTr("Top center") },
-        MenuItem { text: qsTr("Top right") },
-        MenuItem { text: qsTr("Middle left") },
-        MenuItem { text: qsTr("Middle center") },
-        MenuItem { text: qsTr("Middle right") },
-        MenuItem { text: qsTr("Bottom left") },
-        MenuItem { text: qsTr("Bottom center") },
-        MenuItem { text: qsTr("Bottom right") }
+        MenuItem {
+            text: qsTr("Top left")
+        },
+        MenuItem {
+            text: qsTr("Top center")
+        },
+        MenuItem {
+            text: qsTr("Top right")
+        },
+        MenuItem {
+            text: qsTr("Middle left")
+        },
+        MenuItem {
+            text: qsTr("Middle center")
+        },
+        MenuItem {
+            text: qsTr("Middle right")
+        },
+        MenuItem {
+            text: qsTr("Bottom left")
+        },
+        MenuItem {
+            text: qsTr("Bottom center")
+        },
+        MenuItem {
+            text: qsTr("Bottom right")
+        }
     ]
 
     function getPositionIndex(): int {
         const p = GlobalConfig.services.pipPosition.toLowerCase();
         if (p.includes("top")) {
-            if (p.includes("left")) return 0;
-            if (p.includes("center")) return 1;
+            if (p.includes("left"))
+                return 0;
+            if (p.includes("center"))
+                return 1;
             return 2;
         } else if (p.includes("middle")) {
-            if (p.includes("left")) return 3;
-            if (p.includes("center")) return 4;
+            if (p.includes("left"))
+                return 3;
+            if (p.includes("center"))
+                return 4;
             return 5;
         } else {
-            if (p.includes("left")) return 6;
-            if (p.includes("center")) return 7;
+            if (p.includes("left"))
+                return 6;
+            if (p.includes("center"))
+                return 7;
             return 8;
         }
     }

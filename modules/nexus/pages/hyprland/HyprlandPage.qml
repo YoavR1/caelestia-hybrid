@@ -14,8 +14,6 @@ PageBase {
         width: root.cappedWidth
         spacing: Tokens.spacing.extraSmall / 2
 
-
-
         NavRow {
             first: true
             icon: "data_object"

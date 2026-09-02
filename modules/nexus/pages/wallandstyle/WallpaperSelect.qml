@@ -390,7 +390,8 @@ PageBase {
                         text: qsTr("All")
                         icon: "collections"
                         onClicked: {
-                            if (root.nState) root.nState.wallpaperFilterType = "all"
+                            if (root.nState)
+                                root.nState.wallpaperFilterType = "all";
                         }
                     },
                     MenuItem {
@@ -399,7 +400,8 @@ PageBase {
                         text: qsTr("Images")
                         icon: "image"
                         onClicked: {
-                            if (root.nState) root.nState.wallpaperFilterType = "image"
+                            if (root.nState)
+                                root.nState.wallpaperFilterType = "image";
                         }
                     },
                     MenuItem {
@@ -408,7 +410,8 @@ PageBase {
                         text: qsTr("GIFs")
                         icon: "gif"
                         onClicked: {
-                            if (root.nState) root.nState.wallpaperFilterType = "gif"
+                            if (root.nState)
+                                root.nState.wallpaperFilterType = "gif";
                         }
                     },
                     MenuItem {
@@ -417,7 +420,8 @@ PageBase {
                         text: qsTr("Videos")
                         icon: "movie"
                         onClicked: {
-                            if (root.nState) root.nState.wallpaperFilterType = "video"
+                            if (root.nState)
+                                root.nState.wallpaperFilterType = "video";
                         }
                     }
                 ]

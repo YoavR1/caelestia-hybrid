@@ -12,7 +12,8 @@ Singleton {
     property bool loading: false
 
     function reload() {
-        if (loading) return;
+        if (loading)
+            return;
         loading = true;
 
         Requests.get("https://pastafariancalendar.com/holidays4.json", text => {

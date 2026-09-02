@@ -48,9 +48,7 @@ Column {
             }
 
             KeyNavigation.up: index > 0 ? topButtonsRepeater.itemAt(index - 1) : null
-            KeyNavigation.down: index < topButtonsRepeater.count - 1
-                ? topButtonsRepeater.itemAt(index + 1)
-                : (bottomButtonsRepeater.count > 0 ? bottomButtonsRepeater.itemAt(0) : null)
+            KeyNavigation.down: index < topButtonsRepeater.count - 1 ? topButtonsRepeater.itemAt(index + 1) : (bottomButtonsRepeater.count > 0 ? bottomButtonsRepeater.itemAt(0) : null)
         }
     }
 
@@ -79,12 +77,8 @@ Column {
             icon: modelData.icon
             command: modelData.command
 
-            KeyNavigation.up: index === 0
-                ? (topButtonsRepeater.count > 0 ? topButtonsRepeater.itemAt(topButtonsRepeater.count - 1) : null)
-                : bottomButtonsRepeater.itemAt(index - 1)
-            KeyNavigation.down: index < bottomButtonsRepeater.count - 1
-                ? bottomButtonsRepeater.itemAt(index + 1)
-                : null
+            KeyNavigation.up: index === 0 ? (topButtonsRepeater.count > 0 ? topButtonsRepeater.itemAt(topButtonsRepeater.count - 1) : null) : bottomButtonsRepeater.itemAt(index - 1)
+            KeyNavigation.down: index < bottomButtonsRepeater.count - 1 ? bottomButtonsRepeater.itemAt(index + 1) : null
         }
     }
 

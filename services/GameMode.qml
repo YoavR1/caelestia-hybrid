@@ -50,17 +50,24 @@ Singleton {
     Connections {
         target: GlobalConfig.utilities.gameMode
 
-        function onAutoEnableChanged(): void { root.evaluateAutoEnable(); }
+        function onAutoEnableChanged(): void {
+            root.evaluateAutoEnable();
+        }
 
-        function onAutoEnableRegexesChanged(): void { root.evaluateAutoEnable(); }
+        function onAutoEnableRegexesChanged(): void {
+            root.evaluateAutoEnable();
+        }
     }
 
     function setDynamicConfs(): void {
         const gameModeConfig = GlobalConfig.utilities.gameMode;
         let options = {};
-        if (gameModeConfig.disableHyprlandAnimations) options["animations:enabled"] = 0;
-        if (gameModeConfig.disableHyprlandShadows) options["decoration:shadow:enabled"] = 0;
-        if (gameModeConfig.disableHyprlandBlur) options["decoration:blur:enabled"] = 0;
+        if (gameModeConfig.disableHyprlandAnimations)
+            options["animations:enabled"] = 0;
+        if (gameModeConfig.disableHyprlandShadows)
+            options["decoration:shadow:enabled"] = 0;
+        if (gameModeConfig.disableHyprlandBlur)
+            options["decoration:blur:enabled"] = 0;
         if (gameModeConfig.disableHyprlandGaps) {
             options["general:gaps_in"] = 0;
             options["general:gaps_out"] = 0;
@@ -68,7 +75,7 @@ Singleton {
             options["decoration:rounding"] = 0;
         }
         options["general:allow_tearing"] = 1;
-        
+
         if (gameModeConfig.disableWindowTransparency) {
             options["decoration:active_opacity"] = 1;
             options["decoration:inactive_opacity"] = 1;

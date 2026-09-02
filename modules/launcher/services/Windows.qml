@@ -48,7 +48,7 @@ QtObject {
                 }
             }
         }
-        
+
         if (!search)
             return results;
         const lower = search.toLowerCase();

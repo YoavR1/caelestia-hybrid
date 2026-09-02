@@ -73,9 +73,7 @@ MouseArea {
 
     function save(): void {
         const isSearch = root.loader.searchMode;
-        const tmpfile = isSearch
-            ? Qt.resolvedUrl("/tmp/caelestia-search.png")
-            : Qt.resolvedUrl(`/tmp/caelestia-picker-${Quickshell.processId}-${Date.now()}.png`);
+        const tmpfile = isSearch ? Qt.resolvedUrl("/tmp/caelestia-search.png") : Qt.resolvedUrl(`/tmp/caelestia-picker-${Quickshell.processId}-${Date.now()}.png`);
         CUtils.saveItem(screencopy, tmpfile, Qt.rect(Math.ceil(rsx), Math.ceil(rsy), Math.floor(sw), Math.floor(sh)), path => {
             if (isSearch) {
                 Quickshell.execDetached(["touch", "/tmp/caelestia-search.done"]);

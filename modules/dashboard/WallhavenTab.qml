@@ -72,7 +72,6 @@ Item {
         }
     }
 
-
     Component {
         id: mainContentComponent
 

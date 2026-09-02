@@ -13,15 +13,33 @@ PageBase {
     readonly property list<string> positionValues: ["top-left", "top-center", "top-right", "middle-left", "middle-center", "middle-right", "bottom-left", "bottom-center", "bottom-right"]
 
     readonly property list<MenuItem> positionItems: [
-        MenuItem { text: qsTr("Top Left") },
-        MenuItem { text: qsTr("Top Center") },
-        MenuItem { text: qsTr("Top Right") },
-        MenuItem { text: qsTr("Middle Left") },
-        MenuItem { text: qsTr("Middle Center") },
-        MenuItem { text: qsTr("Middle Right") },
-        MenuItem { text: qsTr("Bottom Left") },
-        MenuItem { text: qsTr("Bottom Center") },
-        MenuItem { text: qsTr("Bottom Right") }
+        MenuItem {
+            text: qsTr("Top Left")
+        },
+        MenuItem {
+            text: qsTr("Top Center")
+        },
+        MenuItem {
+            text: qsTr("Top Right")
+        },
+        MenuItem {
+            text: qsTr("Middle Left")
+        },
+        MenuItem {
+            text: qsTr("Middle Center")
+        },
+        MenuItem {
+            text: qsTr("Middle Right")
+        },
+        MenuItem {
+            text: qsTr("Bottom Left")
+        },
+        MenuItem {
+            text: qsTr("Bottom Center")
+        },
+        MenuItem {
+            text: qsTr("Bottom Right")
+        }
     ]
 
     ColumnLayout {

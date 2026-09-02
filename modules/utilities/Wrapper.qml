@@ -21,11 +21,11 @@ Item {
         property bool recordingListExpanded: false
         property string recordingConfirmDelete
         property string recordingMode
-        
+
         property bool quickShareListExpanded: false
         property bool quickShareDeviceSelectorOpen: false
         property bool quickShareFileDialogOpen: false
-        
+
         property string quickShareConfirmDeletePath
         property int quickShareConfirmDeleteIndex: -1
 

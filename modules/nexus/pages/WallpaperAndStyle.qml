@@ -16,19 +16,38 @@ PageBase {
     id: root
 
     readonly property list<MenuItem> hwDecoderItems: [
-        MenuItem { text: qsTr("Auto") },
-        MenuItem { text: qsTr("Software") },
-        MenuItem { text: "VAAPI" },
-        MenuItem { text: "VDPAU" },
-        MenuItem { text: "CUDA" },
-        MenuItem { text: "Vulkan" },
-        MenuItem { text: "DRM" }
+        MenuItem {
+            text: qsTr("Auto")
+        },
+        MenuItem {
+            text: qsTr("Software")
+        },
+        MenuItem {
+            text: "VAAPI"
+        },
+        MenuItem {
+            text: "VDPAU"
+        },
+        MenuItem {
+            text: "CUDA"
+        },
+        MenuItem {
+            text: "Vulkan"
+        },
+        MenuItem {
+            text: "DRM"
+        }
     ]
     readonly property list<string> hwDecoderValues: ["auto", "none", "vaapi", "vdpau", "cuda", "vulkan", "drm"]
     readonly property var hwDecoderIndexMap: ({
-        "auto": 0, "none": 1, "vaapi": 2, "vdpau": 3,
-        "cuda": 4, "vulkan": 5, "drm": 6
-    })
+            "auto": 0,
+            "none": 1,
+            "vaapi": 2,
+            "vdpau": 3,
+            "cuda": 4,
+            "vulkan": 5,
+            "drm": 6
+        })
 
     function hwDecoderToIndex(val: string): int {
         const v = (val ?? "none").toLowerCase();
@@ -174,7 +193,7 @@ PageBase {
                 type: IconTextButton.Filled
                 horizontalPadding: Tokens.padding.large
                 verticalPadding: Tokens.padding.medium
-                
+
                 visible: Config.background.wallpaperEnabled && Config.background.wallpaperRecolor
                 opacity: visible ? 1 : 0
 
@@ -188,7 +207,7 @@ PageBase {
                     const bgWin = ShellState.componentsFor(root.nState.screen).background;
                     if (bgWin && bgWin.wallpaperLoader && bgWin.wallpaperLoader.item && bgWin.wallpaperLoader.item.current) {
                         const path = Paths.home + "/Downloads/recolored_wallpaper.png";
-                        CUtils.saveItem(bgWin.wallpaperLoader.item.current, "file://" + path, function() {
+                        CUtils.saveItem(bgWin.wallpaperLoader.item.current, "file://" + path, function () {
                             Notifs.sendToast("Wallpaper Saved", "Saved to ~/Downloads/recolored_wallpaper.png", "image", null, null);
                         });
                     }
@@ -350,7 +369,6 @@ PageBase {
             onMoved: v => GlobalConfig.appearance.transparency.layers = v
             enabled: Colours.transparency.enabled
         }
-
 
         ToggleRow {
             Layout.topMargin: Tokens.spacing.extraSmall / 2 - parent.spacing

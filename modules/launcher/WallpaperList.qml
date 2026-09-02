@@ -104,7 +104,8 @@ PathView {
                 } else {
                     return allWalls.filter(w => {
                         let cat = w.parentDir.slice(baseDir.length + 1);
-                        if (cat.includes("/")) cat = cat.slice(0, cat.indexOf("/"));
+                        if (cat.includes("/"))
+                            cat = cat.slice(0, cat.indexOf("/"));
                         return cat === targetCategory;
                     });
                 }

@@ -98,11 +98,7 @@ Scope {
     Process {
         id: startupLockProc
 
-        command: [
-            "sh",
-            "-c",
-            "leader=$(loginctl show-session \"$XDG_SESSION_ID\" -p Leader --value 2>/dev/null); if [ -n \"$leader\" ]; then age=$(ps -o etimes= -p \"$leader\" | tr -d ' '); if [ -n \"$age\" ] && [ \"$age\" -lt 30 ]; then exit 0; else exit 1; fi; else age=$(awk '{print int($1)}' /proc/uptime); if [ -n \"$age\" ] && [ \"$age\" -lt 30 ]; then exit 0; else exit 1; fi; fi"
-        ]
+        command: ["sh", "-c", "leader=$(loginctl show-session \"$XDG_SESSION_ID\" -p Leader --value 2>/dev/null); if [ -n \"$leader\" ]; then age=$(ps -o etimes= -p \"$leader\" | tr -d ' '); if [ -n \"$age\" ] && [ \"$age\" -lt 30 ]; then exit 0; else exit 1; fi; else age=$(awk '{print int($1)}' /proc/uptime); if [ -n \"$age\" ] && [ \"$age\" -lt 30 ]; then exit 0; else exit 1; fi; fi"]
         onExited: code => {
             if (code === 0 && GlobalConfig.lock.lockOnStartup) {
                 startupLockTimer.start();
@@ -116,4 +112,3 @@ Scope {
         }
     }
 }
-

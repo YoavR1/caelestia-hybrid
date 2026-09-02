@@ -184,11 +184,14 @@ RowLayout {
 
                             SafeScreencopy {
                                 captureSource: {
-                                    if (!modelData || !modelData.wayland) return null; // qmllint disable unresolved-type
+                                    if (!modelData || !modelData.wayland)
+                                        return null; // qmllint disable unresolved-type
                                     const ipc = modelData.lastIpcObject;
                                     if (ipc) {
-                                        if (ipc.mapped === false || ipc.hidden) return null;
-                                        if (ipc.size && (ipc.size[0] <= 0 || ipc.size[1] <= 0)) return null;
+                                        if (ipc.mapped === false || ipc.hidden)
+                                            return null;
+                                        if (ipc.size && (ipc.size[0] <= 0 || ipc.size[1] <= 0))
+                                            return null;
                                     }
                                     return modelData.wayland;
                                 }

@@ -23,7 +23,8 @@ ColumnLayout {
     readonly property PwNode playerStream: Audio.streams.find(s => {
         const identity = root.player?.identity?.toLowerCase() ?? "";
         const entry = (root.player?.entry ?? "").toString().toLowerCase();
-        if (!identity && !entry) return false;
+        if (!identity && !entry)
+            return false;
         const streamName = Audio.getStreamName(s).toLowerCase();
         const binary = (s.properties["application.process.binary"] ?? "").toString().toLowerCase();
         const appName = (s.properties["app.name"] ?? "").toString().toLowerCase();
@@ -316,7 +317,8 @@ ColumnLayout {
                 checked: root.player?.shuffle ?? false
                 font: Tokens.font.icon.builders.medium.weight(Font.Medium).build()
                 disabled: !root.player?.shuffleSupported
-                onClicked: if (root.player) root.player.shuffle = !root.player.shuffle
+                onClicked: if (root.player)
+                    root.player.shuffle = !root.player.shuffle
                 implicitWidth: Math.round(implicitHeight * 0.9)
             }
 
@@ -366,7 +368,8 @@ ColumnLayout {
                 font: Tokens.font.icon.builders.medium.weight(Font.Medium).build()
                 disabled: !root.player?.loopSupported
                 onClicked: {
-                    if (!root.player) return;
+                    if (!root.player)
+                        return;
                     const state = root.player.loopState;
                     if (state === MprisLoopState.None)
                         root.player.loopState = MprisLoopState.Track;

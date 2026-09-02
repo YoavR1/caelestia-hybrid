@@ -43,8 +43,6 @@ PageBase {
     ]
     readonly property list<string> gpuValues: ["", "NVIDIA", "GENERIC", "None"]
 
-
-
     function gpuKeyToIndex(key: string): int {
         const u = (key ?? "").trim().toUpperCase();
         if (u === "")
@@ -226,7 +224,6 @@ PageBase {
             subtext: qsTr("Auto-start and discoverability settings")
             onClicked: root.nState.openSubPage(6)
         }
-
 
         SelectRow {
             Layout.fillWidth: true

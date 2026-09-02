@@ -208,7 +208,7 @@ CustomMouseArea {
 
                     implicitWidth: implicitHeight
                     implicitHeight: text.implicitHeight + Tokens.padding.small
-                    
+
                     z: hover.hovered ? 100 : 0
 
                     StyledText {
@@ -234,7 +234,8 @@ CustomMouseArea {
                         id: holidayIndicator
 
                         readonly property var holiday: {
-                            if (!PastafarianCalendar.events) return null;
+                            if (!PastafarianCalendar.events)
+                                return null;
                             const dateStr = Qt.formatDate(dayItem.model.date, "yyyy-MM-dd");
                             for (let i = 0; i < PastafarianCalendar.events.length; i++) {
                                 if (PastafarianCalendar.events[i].day === dateStr) {
@@ -253,7 +254,7 @@ CustomMouseArea {
                         color: Colours.palette.m3primary
                         visible: !!holiday
                     }
-                    
+
                     HoverHandler {
                         id: hover
 
@@ -309,33 +310,40 @@ CustomMouseArea {
 
     Item {
         id: customTooltip
-        
+
         readonly property bool isActive: !!root.hoveredDayItem && !!root.hoveredDayItem.holiday
-        
+
         readonly property real pillSize: root.lastHoveredDayItem ? Math.max(root.lastHoveredDayItem.implicitWidth, root.lastHoveredDayItem.implicitHeight) + Tokens.padding.extraSmall * 2 : 30
         readonly property real br: pillSize / 2
-        
+
         readonly property real targetCenterX: root.lastHoveredDayItem ? root.lastHoveredDayItem.mapToItem(root, 0, 0).x + root.lastHoveredDayItem.width / 2 : 0
         readonly property real targetCenterY: root.lastHoveredDayItem ? root.lastHoveredDayItem.mapToItem(root, 0, 0).y - Tokens.padding.extraSmall - 1 + pillSize / 2 : 0
-        
+
         visible: opacity > 0
         opacity: isActive ? 1 : 0
         z: 9999
-        
+
         x: targetCenterX - width / 2
         y: targetCenterY - (height - br)
-        
+
         width: Math.max(pillSize + 2 * (Tokens.rounding.medium + Tokens.rounding.large), holidayText.implicitWidth + Tokens.padding.large * 2)
         height: (holidayText.implicitHeight + Tokens.padding.medium * 2) + Tokens.rounding.medium + br
-        
+
         scale: isActive ? 1 : 0.8
         transformOrigin: Item.Bottom
 
         Behavior on opacity {
-            NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+            NumberAnimation {
+                duration: 150
+                easing.type: Easing.OutQuad
+            }
         }
         Behavior on scale {
-            NumberAnimation { duration: 250; easing.type: Easing.OutBack; easing.overshoot: 1.2 }
+            NumberAnimation {
+                duration: 250
+                easing.type: Easing.OutBack
+                easing.overshoot: 1.2
+            }
         }
 
         Shape {
@@ -351,7 +359,7 @@ CustomMouseArea {
                 shadowColor: "black"
                 autoPaddingEnabled: true
             }
-            
+
             readonly property real r: Tokens.rounding.large
 
             readonly property real ir: Tokens.rounding.medium
@@ -366,32 +374,94 @@ CustomMouseArea {
                 fillColor: Colours.palette.m3surfaceContainerHighest
                 strokeColor: "transparent"
 
-                startX: bgShape.r; startY: 0
-                
-                PathLine { x: bgShape.width - bgShape.r; y: 0 }
-                PathQuad { x: bgShape.width; y: bgShape.r; controlX: bgShape.width; controlY: 0 }
-                
-                PathLine { x: bgShape.width; y: bgShape.tbh - bgShape.r }
-                PathQuad { x: bgShape.width - bgShape.r; y: bgShape.tbh; controlX: bgShape.width; controlY: bgShape.tbh }
-                
-                PathLine { x: bgShape.width/2 + bgShape.nw/2 + bgShape.ir; y: bgShape.tbh }
-                PathQuad { x: bgShape.width/2 + bgShape.nw/2; y: bgShape.tbh + bgShape.ir; controlX: bgShape.width/2 + bgShape.nw/2; controlY: bgShape.tbh }
-                
-                PathLine { x: bgShape.width/2 + bgShape.nw/2; y: bgShape.height - bgShape.br }
-                PathQuad { x: bgShape.width/2; y: bgShape.height; controlX: bgShape.width/2 + bgShape.nw/2; controlY: bgShape.height }
-                PathQuad { x: bgShape.width/2 - bgShape.nw/2; y: bgShape.height - bgShape.br; controlX: bgShape.width/2 - bgShape.nw/2; controlY: bgShape.height }
-                
-                PathLine { x: bgShape.width/2 - bgShape.nw/2; y: bgShape.tbh + bgShape.ir }
-                PathQuad { x: bgShape.width/2 - bgShape.nw/2 - bgShape.ir; y: bgShape.tbh; controlX: bgShape.width/2 - bgShape.nw/2; controlY: bgShape.tbh }
-                
-                PathLine { x: bgShape.r; y: bgShape.tbh }
-                PathQuad { x: 0; y: bgShape.tbh - bgShape.r; controlX: 0; controlY: bgShape.tbh }
-                
-                PathLine { x: 0; y: bgShape.r }
-                PathQuad { x: bgShape.r; y: 0; controlX: 0; controlY: 0 }
+                startX: bgShape.r
+                startY: 0
+
+                PathLine {
+                    x: bgShape.width - bgShape.r
+                    y: 0
+                }
+                PathQuad {
+                    x: bgShape.width
+                    y: bgShape.r
+                    controlX: bgShape.width
+                    controlY: 0
+                }
+
+                PathLine {
+                    x: bgShape.width
+                    y: bgShape.tbh - bgShape.r
+                }
+                PathQuad {
+                    x: bgShape.width - bgShape.r
+                    y: bgShape.tbh
+                    controlX: bgShape.width
+                    controlY: bgShape.tbh
+                }
+
+                PathLine {
+                    x: bgShape.width / 2 + bgShape.nw / 2 + bgShape.ir
+                    y: bgShape.tbh
+                }
+                PathQuad {
+                    x: bgShape.width / 2 + bgShape.nw / 2
+                    y: bgShape.tbh + bgShape.ir
+                    controlX: bgShape.width / 2 + bgShape.nw / 2
+                    controlY: bgShape.tbh
+                }
+
+                PathLine {
+                    x: bgShape.width / 2 + bgShape.nw / 2
+                    y: bgShape.height - bgShape.br
+                }
+                PathQuad {
+                    x: bgShape.width / 2
+                    y: bgShape.height
+                    controlX: bgShape.width / 2 + bgShape.nw / 2
+                    controlY: bgShape.height
+                }
+                PathQuad {
+                    x: bgShape.width / 2 - bgShape.nw / 2
+                    y: bgShape.height - bgShape.br
+                    controlX: bgShape.width / 2 - bgShape.nw / 2
+                    controlY: bgShape.height
+                }
+
+                PathLine {
+                    x: bgShape.width / 2 - bgShape.nw / 2
+                    y: bgShape.tbh + bgShape.ir
+                }
+                PathQuad {
+                    x: bgShape.width / 2 - bgShape.nw / 2 - bgShape.ir
+                    y: bgShape.tbh
+                    controlX: bgShape.width / 2 - bgShape.nw / 2
+                    controlY: bgShape.tbh
+                }
+
+                PathLine {
+                    x: bgShape.r
+                    y: bgShape.tbh
+                }
+                PathQuad {
+                    x: 0
+                    y: bgShape.tbh - bgShape.r
+                    controlX: 0
+                    controlY: bgShape.tbh
+                }
+
+                PathLine {
+                    x: 0
+                    y: bgShape.r
+                }
+                PathQuad {
+                    x: bgShape.r
+                    y: 0
+                    controlX: 0
+                    controlY: 0
+                }
             }
         }
-        
+
         StyledText {
             id: holidayText
 
@@ -402,7 +472,7 @@ CustomMouseArea {
             color: Colours.palette.m3onSurface
             font: Tokens.font.body.builders.medium.weight(Font.Medium).build()
         }
-        
+
         Item {
             x: root.lastHoveredDayItem ? root.lastHoveredDayItem.mapToItem(root, 0, 0).x - customTooltip.x : 0
             y: root.lastHoveredDayItem ? root.lastHoveredDayItem.mapToItem(root, 0, 0).y - customTooltip.y : 0
@@ -425,8 +495,10 @@ CustomMouseArea {
                 horizontalAlignment: Text.AlignHCenter
                 text: root.lastHoveredModel ? grid.locale.toString(root.lastHoveredModel.day) : ""
                 color: {
-                    if (!root.lastHoveredModel) return "transparent";
-                    if (root.lastHoveredModel.today) return Colours.palette.m3onPrimary;
+                    if (!root.lastHoveredModel)
+                        return "transparent";
+                    if (root.lastHoveredModel.today)
+                        return Colours.palette.m3onPrimary;
                     const dayOfWeek = root.lastHoveredModel.date.getDay();
                     if (dayOfWeek === 0 || dayOfWeek === 6)
                         return Colours.palette.m3tertiary;

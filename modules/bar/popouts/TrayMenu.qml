@@ -98,7 +98,7 @@ StackView {
             id: groupInstantiator
 
             model: menuOpener.children
-            
+
             Item {
                 required property QsMenuEntry modelData
                 property bool isSeparator: modelData.isSeparator

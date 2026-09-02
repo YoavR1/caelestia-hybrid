@@ -24,9 +24,9 @@ Loader {
         id: fileDialog
 
         title: qsTr("Select a file to send")
-        
+
         property string targetDeviceId: ""
-        
+
         onAccepted: path => {
             if (targetDeviceId !== "" && path) {
                 QuickShare.sendFile(targetDeviceId, path.toString().replace("file://", ""));
@@ -43,7 +43,7 @@ Loader {
     opacity: root.props.quickShareDeviceSelectorOpen ? 1 : 0
 
     active: opacity > 0
-    
+
     onActiveChanged: {
         if (active) {
             QuickShare.startBleWakeupBroadcast();
@@ -78,8 +78,6 @@ Loader {
                 }
             }
         }
-
-
 
         StyledRect {
             anchors.centerIn: parent
@@ -126,47 +124,47 @@ Loader {
 
                 StyledListView {
                     id: deviceList
-                    
+
                     Layout.fillWidth: true
                     implicitHeight: count > 0 ? Math.min(count * 50, 200) : 50
                     clip: true
-                    
+
                     model: QuickShare.nearbyDevices
-                    
+
                     Connections {
                         target: QuickShare
 
                         function onNearbyDevicesChanged() {
-                            deviceList.model = null
-                            deviceList.model = QuickShare.nearbyDevices
+                            deviceList.model = null;
+                            deviceList.model = QuickShare.nearbyDevices;
                         }
                     }
-                    
+
                     delegate: WrapperMouseArea {
                         required property var modelData
-                        
+
                         width: deviceList.width
                         height: 50
-                        
+
                         cursorShape: Qt.PointingHandCursor
-                        
+
                         onClicked: {
-                            root.props.quickShareFileDialogOpen = true
-                            fileDialog.targetDeviceId = modelData.id
-                            fileDialog.open()
+                            root.props.quickShareFileDialogOpen = true;
+                            fileDialog.targetDeviceId = modelData.id;
+                            fileDialog.open();
                         }
-                        
+
                         RowLayout {
                             anchors.fill: parent
                             anchors.margins: Tokens.padding.small
                             spacing: Tokens.spacing.medium
-                            
+
                             MaterialIcon {
                                 text: "smartphone"
                                 color: Colours.palette.m3primary
                                 fontStyle: Tokens.font.icon.large
                             }
-                            
+
                             StyledText {
                                 text: modelData.name
                                 font: Tokens.font.body.medium
@@ -174,7 +172,7 @@ Loader {
                             }
                         }
                     }
-                    
+
                     StyledText {
                         anchors.centerIn: parent
                         text: qsTr("No devices found")

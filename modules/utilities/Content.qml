@@ -18,13 +18,15 @@ Item {
 
     readonly property bool mediaActive: Config.utilities.cards.recorder || QuickShare.isEnabled
     readonly property int enabledCards: (idleInhibit.active ? 1 : 0) + (mediaActive ? 1 : 0) + (toggles.active ? 1 : 0)
-    
+
     // Calculate nonAnimHeight
     // For mediaLoader, we take the nonAnimHeight of the active SwipeView page, or its implicitHeight, plus the indicator height
     readonly property real nonAnimHeight: {
         let h = 0;
-        if (idleInhibit.active) h += (idleInhibit.item as IdleInhibit)?.nonAnimHeight ?? 0;
-        if (toggles.active) h += (toggles.item as Toggles)?.implicitHeight ?? 0;
+        if (idleInhibit.active)
+            h += (idleInhibit.item as IdleInhibit)?.nonAnimHeight ?? 0;
+        if (toggles.active)
+            h += (toggles.item as Toggles)?.implicitHeight ?? 0;
         if (mediaActive && mediaLoader.item) {
             h += mediaLoader.item.nonAnimHeight;
         }
@@ -70,7 +72,7 @@ Item {
                 property int currentIndex: 0
 
                 property bool animEnabled: false
-                
+
                 onCurrentIndexChanged: {
                     animEnabled = true;
                     animDisableTimer.restart();
@@ -90,14 +92,14 @@ Item {
                     const itemHeight = swipeItem ? (swipeItem.nonAnimHeight ?? swipeItem.implicitHeight) : lastValidItemHeight;
                     return itemHeight + (mediaRepeater.count > 1 ? bgRow.implicitHeight + spacing : 0);
                 }
-                
+
                 onNonAnimHeightChanged: {
                     const swipeItem = mediaFlickable.currentItem ? mediaFlickable.currentItem.item : null;
                     if (swipeItem) {
                         lastValidItemHeight = (swipeItem.nonAnimHeight ?? swipeItem.implicitHeight);
                     }
                 }
-                
+
                 Behavior on nonAnimHeight {
                     enabled: mediaLayout.animEnabled
 
@@ -122,7 +124,8 @@ Item {
                     property real lastValidImplicitHeight: 0
                     implicitHeight: currentItem ? currentItem.implicitHeight : lastValidImplicitHeight
                     onImplicitHeightChanged: {
-                        if (currentItem) lastValidImplicitHeight = currentItem.implicitHeight;
+                        if (currentItem)
+                            lastValidImplicitHeight = currentItem.implicitHeight;
                     }
 
                     property real lastValidContentX: 0
@@ -131,7 +134,8 @@ Item {
                     contentHeight: mediaRow.implicitHeight
 
                     onContentXChanged: {
-                        if (currentItem && !moving) lastValidContentX = contentX;
+                        if (currentItem && !moving)
+                            lastValidContentX = contentX;
 
                         if (!moving || !currentItem)
                             return;
@@ -163,18 +167,20 @@ Item {
 
                         Repeater {
                             id: mediaRepeater
-                            
+
                             onCountChanged: {
                                 mediaLayout.animEnabled = true;
                                 animDisableTimer.restart();
                             }
-                            
+
                             property int dummy: 0
                             onItemAdded: dummy++
                             model: {
                                 const pages = [];
-                                if (Config.utilities.cards.recorder) pages.push("record");
-                                if (QuickShare.isEnabled) pages.push("quickShare");
+                                if (Config.utilities.cards.recorder)
+                                    pages.push("record");
+                                if (QuickShare.isEnabled)
+                                    pages.push("quickShare");
                                 return pages;
                             }
 
@@ -184,7 +190,7 @@ Item {
 
                                 active: true
                                 sourceComponent: modelData === "record" ? recordComp : quickShareComp
-                                
+
                                 width: mediaFlickable.width
                             }
                         }
@@ -209,7 +215,7 @@ Item {
                     implicitHeight: mediaRepeater.count > 1 ? bgRow.implicitHeight : 0
                     opacity: mediaRepeater.count > 1 ? 1 : 0
                     visible: implicitHeight > 0
-                    
+
                     Behavior on implicitHeight {
                         enabled: mediaLayout.animEnabled
 
@@ -246,8 +252,12 @@ Item {
                         radius: Tokens.rounding.full
                         color: Colours.palette.m3primary
                         x: mediaLayout.currentIndex * (Tokens.spacing.medium + Tokens.spacing.small)
-                        
-                        Behavior on x { Anim { type: Anim.DefaultEffects } }
+
+                        Behavior on x {
+                            Anim {
+                                type: Anim.DefaultEffects
+                            }
+                        }
                     }
                 }
             }

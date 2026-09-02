@@ -23,13 +23,17 @@ Item {
     Connections {
         target: GlobalConfig.ai
 
-        function onEnableOllamaChanged() { checkTabs(); }
+        function onEnableOllamaChanged() {
+            checkTabs();
+        }
     }
 
     Connections {
         target: GlobalConfig.sidebar
 
-        function onShowNewsChanged() { checkTabs(); }
+        function onShowNewsChanged() {
+            checkTabs();
+        }
     }
 
     Connections {
@@ -97,13 +101,25 @@ Item {
 
                             model: {
                                 var tabs = [
-                                    { id: "notifications", label: qsTr("Notifications"), icon: "notifications" }
+                                    {
+                                        id: "notifications",
+                                        label: qsTr("Notifications"),
+                                        icon: "notifications"
+                                    }
                                 ];
                                 if (GlobalConfig.ai.enableOllama) {
-                                    tabs.push({ id: "ai", label: qsTr("AI Assistant"), icon: "smart_toy" });
+                                    tabs.push({
+                                        id: "ai",
+                                        label: qsTr("AI Assistant"),
+                                        icon: "smart_toy"
+                                    });
                                 }
                                 if (GlobalConfig.sidebar.showNews !== false) {
-                                    tabs.push({ id: "news", label: qsTr("News"), icon: "newspaper" });
+                                    tabs.push({
+                                        id: "news",
+                                        label: qsTr("News"),
+                                        icon: "newspaper"
+                                    });
                                 }
                                 return tabs;
                             }
@@ -139,7 +155,11 @@ Item {
                                         fontStyle: Tokens.font.icon.small
                                         fill: tabBtn.active ? 1 : 0
 
-                                        Behavior on fill { Anim { type: Anim.DefaultEffects } }
+                                        Behavior on fill {
+                                            Anim {
+                                                type: Anim.DefaultEffects
+                                            }
+                                        }
                                     }
 
                                     StyledText {
@@ -159,11 +179,12 @@ Item {
 
                         anchors.verticalCenter: parent.bottom
                         implicitHeight: 6
-                        
+
                         property int activeIndex: {
                             var arr = tabRepeater.model;
                             for (var i = 0; i < arr.length; i++) {
-                                if (arr[i].id === root.activeTab) return i;
+                                if (arr[i].id === root.activeTab)
+                                    return i;
                             }
                             return 0;
                         }
@@ -212,9 +233,17 @@ Item {
                         visible: opacity > 0
                         props: root.props
                         screenState: root.screenState
-                        
-                        Behavior on x { Anim { type: Anim.DefaultSpatial } }
-                        Behavior on opacity { Anim { type: Anim.DefaultSpatial } }
+
+                        Behavior on x {
+                            Anim {
+                                type: Anim.DefaultSpatial
+                            }
+                        }
+                        Behavior on opacity {
+                            Anim {
+                                type: Anim.DefaultSpatial
+                            }
+                        }
                     }
 
                     AiAssistant {
@@ -235,8 +264,16 @@ Item {
                             }
                         }
 
-                        Behavior on x { Anim { type: Anim.DefaultSpatial } }
-                        Behavior on opacity { Anim { type: Anim.DefaultSpatial } }
+                        Behavior on x {
+                            Anim {
+                                type: Anim.DefaultSpatial
+                            }
+                        }
+                        Behavior on opacity {
+                            Anim {
+                                type: Anim.DefaultSpatial
+                            }
+                        }
                     }
 
                     News {
@@ -246,9 +283,17 @@ Item {
                         x: root.activeTab === "news" ? 0 : width
                         opacity: root.activeTab === "news" ? 1 : 0
                         visible: opacity > 0
-                        
-                        Behavior on x { Anim { type: Anim.DefaultSpatial } }
-                        Behavior on opacity { Anim { type: Anim.DefaultSpatial } }
+
+                        Behavior on x {
+                            Anim {
+                                type: Anim.DefaultSpatial
+                            }
+                        }
+                        Behavior on opacity {
+                            Anim {
+                                type: Anim.DefaultSpatial
+                            }
+                        }
                     }
                 }
             }

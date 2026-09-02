@@ -121,12 +121,12 @@ StyledRect {
                 id: list
 
                 model: QuickShare.transferHistory
-                
+
                 Layout.fillWidth: true
                 Layout.rightMargin: -Tokens.spacing.small
                 implicitHeight: (Tokens.font.body.large.pointSize + Tokens.padding.small) * (root.props.quickShareListExpanded ? 10 : 3)
                 clip: true
-                
+
                 StyledScrollBar.vertical: StyledScrollBar {
                     flickable: list
                 }
@@ -167,7 +167,7 @@ StyledRect {
                         onClicked: {
                             root.screenState.utilities = false;
                             root.screenState.sidebar = false;
-                            
+
                             const lastSlash = modelData.filePath.lastIndexOf('/');
                             const dir = modelData.filePath.substring(0, lastSlash);
                             Quickshell.execDetached([...GlobalConfig.general.apps.explorer, dir]);
@@ -234,9 +234,17 @@ StyledRect {
                             scale: root.props.quickShareListExpanded ? 1 : 0
                             Layout.preferredHeight: root.props.quickShareListExpanded ? implicitHeight : 0
 
-                            Behavior on opacity { Anim { type: Anim.DefaultEffects } }
-                            Behavior on scale { Anim {} }
-                            Behavior on Layout.preferredHeight { Anim {} }
+                            Behavior on opacity {
+                                Anim {
+                                    type: Anim.DefaultEffects
+                                }
+                            }
+                            Behavior on scale {
+                                Anim {}
+                            }
+                            Behavior on Layout.preferredHeight {
+                                Anim {}
+                            }
                         }
 
                         RowLayout {
@@ -251,9 +259,17 @@ StyledRect {
                                 scale: !root.props.quickShareListExpanded ? 1 : 0
                                 Layout.preferredWidth: !root.props.quickShareListExpanded ? implicitWidth : 0
 
-                                Behavior on opacity { Anim { type: Anim.DefaultEffects } }
-                                Behavior on scale { Anim {} }
-                                Behavior on Layout.preferredWidth { Anim {} }
+                                Behavior on opacity {
+                                    Anim {
+                                        type: Anim.DefaultEffects
+                                    }
+                                }
+                                Behavior on scale {
+                                    Anim {}
+                                }
+                                Behavior on Layout.preferredWidth {
+                                    Anim {}
+                                }
                             }
 
                             StyledText {
@@ -264,7 +280,9 @@ StyledRect {
                     }
 
                     Behavior on opacity {
-                        Anim { type: Anim.DefaultEffects }
+                        Anim {
+                            type: Anim.DefaultEffects
+                        }
                     }
                 }
 

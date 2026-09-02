@@ -91,11 +91,14 @@ Item {
 
                 captureSource: {
                     const top = Hypr.activeToplevel; // qmllint disable unresolved-type
-                    if (!top || !top.wayland) return null;
+                    if (!top || !top.wayland)
+                        return null;
                     const ipc = top.lastIpcObject;
                     if (ipc) {
-                        if (ipc.mapped === false || ipc.hidden) return null;
-                        if (ipc.size && (ipc.size[0] <= 0 || ipc.size[1] <= 0)) return null;
+                        if (ipc.mapped === false || ipc.hidden)
+                            return null;
+                        if (ipc.size && (ipc.size[0] <= 0 || ipc.size[1] <= 0))
+                            return null;
                     }
                     return top.wayland;
                 }

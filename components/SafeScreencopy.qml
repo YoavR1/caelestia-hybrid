@@ -15,20 +15,28 @@ Item {
 
     readonly property bool _isValidSource: {
         const src = root.captureSource;
-        if (!src) return false;
+        if (!src)
+            return false;
 
-        if (typeof src.width === "number" && src.width <= 0) return false;
-        if (typeof src.height === "number" && src.height <= 0) return false;
+        if (typeof src.width === "number" && src.width <= 0)
+            return false;
+        if (typeof src.height === "number" && src.height <= 0)
+            return false;
 
         if (src.size !== undefined) {
-            if (typeof src.size.width === "number" && src.size.width <= 0) return false;
-            if (typeof src.size.height === "number" && src.size.height <= 0) return false;
+            if (typeof src.size.width === "number" && src.size.width <= 0)
+                return false;
+            if (typeof src.size.height === "number" && src.size.height <= 0)
+                return false;
         }
 
-        if (src.hasBuffer !== undefined && !src.hasBuffer) return false;
+        if (src.hasBuffer !== undefined && !src.hasBuffer)
+            return false;
         if (src.bufferSize !== undefined) {
-            if (typeof src.bufferSize.width === "number" && src.bufferSize.width <= 0) return false;
-            if (typeof src.bufferSize.height === "number" && src.bufferSize.height <= 0) return false;
+            if (typeof src.bufferSize.width === "number" && src.bufferSize.width <= 0)
+                return false;
+            if (typeof src.bufferSize.height === "number" && src.bufferSize.height <= 0)
+                return false;
         }
 
         return true;

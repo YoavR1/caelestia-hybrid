@@ -114,7 +114,8 @@ Item {
                 let content = CUtils.readFile(root.modelData.path);
                 try {
                     let json = JSON.parse(content);
-                    if (json.title) return json.title;
+                    if (json.title)
+                        return json.title;
                 } catch (e) {}
                 return root.modelData.path.split('/').slice(-2, -1)[0];
             }

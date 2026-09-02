@@ -31,7 +31,7 @@ Searcher {
     property string rollbackPath: ""
     property string rollbackMode: ""
     property bool isTrackingRollback: false
-    
+
     // Track and restore the last used wallpaper per mode using low-overhead execution
     property string lastStatic: ""
     property string lastAnimated: ""
@@ -41,7 +41,7 @@ Searcher {
     Timer {
         id: colorReleaseTimer
 
-        interval: 180 
+        interval: 180
         repeat: false
         onTriggered: {
             // Safety check: only clear the preview if no new lock has been engaged
@@ -53,8 +53,10 @@ Searcher {
     }
 
     function djb2_hash(s) {
-        if (!s) return "0";
-        if (_hashCache[s] !== undefined) return _hashCache[s];
+        if (!s)
+            return "0";
+        if (_hashCache[s] !== undefined)
+            return _hashCache[s];
 
         let h = 5381;
         for (let i = 0; i < s.length; i++) {
@@ -68,13 +70,15 @@ Searcher {
 
     function getWallpaperThumb(path, buster) {
         let clean = String(path || "").split(/[?#]/)[0];
-        if (clean.indexOf("file://") === 0) clean = clean.substring(7);
+        if (clean.indexOf("file://") === 0)
+            clean = clean.substring(7);
         let b = buster !== undefined ? buster : cacheBuster;
         return Paths.cache + "/videothumbs/" + djb2_hash(clean) + ".jpg" + (b ? "?v=" + b : "");
     }
 
     function isVideo(path: string): bool {
-        if (!path) return false;
+        if (!path)
+            return false;
         const clean = String(path).split(/[?#]/)[0].toLowerCase();
         const index = clean.lastIndexOf(".");
         const ext = index >= 0 ? clean.slice(index + 1) : "";
@@ -89,13 +93,16 @@ Searcher {
             let p = root.list[i].parentDir;
             if (p.includes("steamapps/workshop/content/431960")) {
                 let cat = "Wallpaper Engine";
-                if (!cats.includes(cat)) cats.push(cat);
+                if (!cats.includes(cat))
+                    cats.push(cat);
                 continue;
             }
             if (p !== baseDir) {
                 let cat = p.slice(baseDir.length + 1);
-                if (cat.includes("/")) cat = cat.slice(0, cat.indexOf("/"));
-                if (!cats.includes(cat)) cats.push(cat);
+                if (cat.includes("/"))
+                    cat = cat.slice(0, cat.indexOf("/"));
+                if (!cats.includes(cat))
+                    cats.push(cat);
             }
         }
         return ["Main"].concat(cats.sort());
@@ -104,13 +111,16 @@ Searcher {
     readonly property var grouped: {
         let dummy = root.list;
         const baseDir = Paths.wallsdir;
-        let grp = { "Main": [] };
+        let grp = {
+            "Main": []
+        };
         for (let i = 0; i < root.list.length; i++) {
             let w = root.list[i];
             let p = w.parentDir;
             if (p.includes("steamapps/workshop/content/431960")) {
                 let cat = "Wallpaper Engine";
-                if (!grp[cat]) grp[cat] = [];
+                if (!grp[cat])
+                    grp[cat] = [];
                 grp[cat].push(w);
                 continue;
             }
@@ -118,8 +128,10 @@ Searcher {
                 grp["Main"].push(w);
             } else {
                 let cat = p.slice(baseDir.length + 1);
-                if (cat.includes("/")) cat = cat.slice(0, cat.indexOf("/"));
-                if (!grp[cat]) grp[cat] = [];
+                if (cat.includes("/"))
+                    cat = cat.slice(0, cat.indexOf("/"));
+                if (!grp[cat])
+                    grp[cat] = [];
                 grp[cat].push(w);
             }
         }
@@ -150,7 +162,7 @@ Searcher {
 
     onWallpaperModeChanged: {
         captureRollbackState();
-        
+
         const target = wallpaperMode === "animated" ? lastAnimated : lastStatic;
 
         if (target !== "") {
@@ -178,8 +190,10 @@ Searcher {
 
     function setWallpaper(path: string): void {
         let clean = String(path || "").split(/[?#]/)[0];
-        if (clean.indexOf("file://") === 0) clean = clean.substring(7);
-        if (!clean) return;
+        if (clean.indexOf("file://") === 0)
+            clean = clean.substring(7);
+        if (!clean)
+            return;
 
         let targetPath = clean;
         if (path.endsWith("project.json")) {
@@ -219,10 +233,13 @@ Searcher {
         captureRollbackState();
 
         let clean = String(path || "").split(/[?#]/)[0];
-        if (clean.indexOf("file://") === 0) clean = clean.substring(7);
-        if (!clean) return;
+        if (clean.indexOf("file://") === 0)
+            clean = clean.substring(7);
+        if (!clean)
+            return;
 
-        if (previewPath === clean && showPreview) return;
+        if (previewPath === clean && showPreview)
+            return;
 
         previewPath = clean;
         showPreview = true;
@@ -236,7 +253,7 @@ Searcher {
 
     function stopPreview(): void {
         showPreview = false;
-        
+
         if (getPreviewColoursProc.running) {
             getPreviewColoursProc.running = false;
         }
@@ -245,7 +262,7 @@ Searcher {
             wallpaperMode = rollbackMode;
             actualCurrent = rollbackPath;
             isTrackingRollback = false;
-            
+
             Quickshell.execDetached(["caelestia", "wallpaper", "-f", rollbackPath, ...smartArg]);
         }
 
@@ -313,8 +330,10 @@ Searcher {
         printErrors: false
         onLoaded: {
             const val = text().trim();
-            if (val === "0") root.enableAnimation = false;
-            else if (val === "1") root.enableAnimation = true;
+            if (val === "0")
+                root.enableAnimation = false;
+            else if (val === "1")
+                root.enableAnimation = true;
         }
     }
 
@@ -334,10 +353,12 @@ Searcher {
 
             if (root.isVideo(root.actualCurrent)) {
                 root.wallpaperMode = "animated";
-                if (!root.lastAnimated) root.lastAnimated = wall;
+                if (!root.lastAnimated)
+                    root.lastAnimated = wall;
             } else {
                 root.wallpaperMode = "static";
-                if (!root.lastStatic) root.lastStatic = wall;
+                if (!root.lastStatic)
+                    root.lastStatic = wall;
             }
         }
         onLoadFailed: {
@@ -352,7 +373,8 @@ Searcher {
         printErrors: false
         onLoaded: {
             const val = text().trim();
-            if (val) root.lastStatic = val;
+            if (val)
+                root.lastStatic = val;
         }
     }
 
@@ -361,7 +383,8 @@ Searcher {
         printErrors: false
         onLoaded: {
             const val = text().trim();
-            if (val) root.lastAnimated = val;
+            if (val)
+                root.lastAnimated = val;
         }
     }
 
@@ -379,7 +402,7 @@ Searcher {
     property alias weVolume: weSettings.volume
 
     property alias weSilent: weSettings.silent
-    
+
     Settings {
         id: weSettings
 
@@ -415,14 +438,16 @@ Searcher {
         command: ["caelestia", "wallpaper", "-p", currentProcessingPath, ...root.smartArg]
 
         function startFor(path) {
-            if (!path) return;
+            if (!path)
+                return;
             currentProcessingPath = path;
             running = true;
         }
 
         stdout: StdioCollector {
             onStreamFinished: {
-                if (!root.showPreview) return;
+                if (!root.showPreview)
+                    return;
 
                 const raw = text ? text.trim() : "";
                 if (raw) {
@@ -454,8 +479,9 @@ Searcher {
         printErrors: false
         onLoaded: {
             const raw = text().trim();
-            if (!raw) return;
-            
+            if (!raw)
+                return;
+
             const lines = raw.split("\n");
             let busters = Object.assign({}, root.itemBusters);
             let changed = false;
@@ -463,7 +489,8 @@ Searcher {
 
             for (let i = 0; i < lines.length; i++) {
                 let line = lines[i].trim();
-                if (line.indexOf("file://") === 0) line = line.substring(7);
+                if (line.indexOf("file://") === 0)
+                    line = line.substring(7);
                 if (line && !busters[line]) {
                     busters[line] = now;
                     busters["file://" + line] = now;
@@ -477,7 +504,8 @@ Searcher {
     }
 
     function refreshAnimatedThumbs() {
-        if (_refreshing) return;
+        if (_refreshing)
+            return;
         itemBusters = {};
         _refreshing = true;
         _extractThumbsProc.running = true;

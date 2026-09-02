@@ -31,7 +31,7 @@ Item {
     readonly property int alignment: Config.background.desktopLyrics.alignment
     readonly property bool autoHideFullscreen: Config.background.desktopLyrics.autoHideFullscreen
     readonly property bool autoHideTiled: Config.background.desktopLyrics.autoHideTiled
-    
+
     readonly property bool hasFullscreen: Hypr.monitorFor(screen)?.activeWorkspace?.toplevels?.values.some(t => t.lastIpcObject?.fullscreen !== 0) ?? false
     readonly property bool hasTiled: Hypr.monitorFor(screen)?.activeWorkspace?.toplevels?.values.some(t => !t.lastIpcObject?.floating && t.lastIpcObject?.fullscreen === 0) ?? false
 

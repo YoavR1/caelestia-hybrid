@@ -57,13 +57,15 @@ Item {
     }
 
     function testRegexList(list, str) {
-        if (!list || !str) return false;
+        if (!list || !str)
+            return false;
         let arr = Array.from(list);
         for (let i = 0; i < arr.length; i++) {
             let pattern = arr[i];
             if (pattern.startsWith("^") && pattern.endsWith("$")) {
                 let re = new RegExp(pattern);
-                if (re.test(str)) return true;
+                if (re.test(str))
+                    return true;
             } else if (pattern === str) {
                 return true;
             }
@@ -75,41 +77,69 @@ Item {
         target: Hyprland.toplevels
         ignoreUnknownSignals: true
 
-        function onValuesChanged() { root.updatePresence(); }
+        function onValuesChanged() {
+            root.updatePresence();
+        }
     }
 
     Connections {
         target: GlobalConfig.services
 
-        function onArpcSteamAutoDetectChanged() { root.updatePresence(); }
+        function onArpcSteamAutoDetectChanged() {
+            root.updatePresence();
+        }
 
-        function onArpcTargetWindowsChanged() { root.updatePresence(); }
+        function onArpcTargetWindowsChanged() {
+            root.updatePresence();
+        }
 
-        function onArpcCaelestiaInfoChanged() { root.updatePresence(); }
+        function onArpcCaelestiaInfoChanged() {
+            root.updatePresence();
+        }
 
-        function onArpcSteamBlacklistChanged() { root.updatePresence(); }
+        function onArpcSteamBlacklistChanged() {
+            root.updatePresence();
+        }
 
-        function onArpcAppNameChanged() { root.updatePresence(); }
+        function onArpcAppNameChanged() {
+            root.updatePresence();
+        }
 
-        function onArpcDetailsChanged() { root.updatePresence(); }
+        function onArpcDetailsChanged() {
+            root.updatePresence();
+        }
 
-        function onArpcStateChanged() { root.updatePresence(); }
+        function onArpcStateChanged() {
+            root.updatePresence();
+        }
 
-        function onArpcLargeImageChanged() { root.updatePresence(); }
+        function onArpcLargeImageChanged() {
+            root.updatePresence();
+        }
 
-        function onArpcSmallImageChanged() { root.updatePresence(); }
+        function onArpcSmallImageChanged() {
+            root.updatePresence();
+        }
 
-        function onArpcManualOverrideChanged() { root.updatePresence(); }
+        function onArpcManualOverrideChanged() {
+            root.updatePresence();
+        }
     }
 
     Connections {
         target: Colours
 
-        function onSchemeChanged() { root.updatePresence(); }
+        function onSchemeChanged() {
+            root.updatePresence();
+        }
 
-        function onLightChanged() { root.updatePresence(); }
+        function onLightChanged() {
+            root.updatePresence();
+        }
 
-        function onVariantChanged() { root.updatePresence(); }
+        function onVariantChanged() {
+            root.updatePresence();
+        }
     }
 
     property string currentSteamAppId: ""
@@ -119,8 +149,10 @@ Item {
     property bool fetchingSteam: false
 
     function updatePresence() {
-        if (!active || !DiscordIpc.connected) return;
-        if (fetchingSteam) return; // Prevent loop during async fetch
+        if (!active || !DiscordIpc.connected)
+            return;
+        if (fetchingSteam)
+            return; // Prevent loop during async fetch
 
         // Priority 0: Manual Override
         if (GlobalConfig.services.arpcManualOverride && (GlobalConfig.services.arpcAppName || GlobalConfig.services.arpcDetails || GlobalConfig.services.arpcState)) {
@@ -166,7 +198,7 @@ Item {
             if (appId !== root.currentSteamAppId || !root.currentSteamData) {
                 root.currentSteamAppId = appId;
                 root.fetchSteamData(appId);
-                return; 
+                return;
             }
             if (root.currentSteamData) {
                 root.sendActivity({
@@ -199,13 +231,15 @@ Item {
             let os = SysInfo.osPrettyName || SysInfo.osName || "Linux";
             let kernel = SysInfo.kernel ? SysInfo.kernel : "";
             let qsVersion = CUtils.version ? " (v" + CUtils.version + ")" : "";
-            
+
             let detailsStr = os;
-            if (kernel) detailsStr += " • " + kernel;
+            if (kernel)
+                detailsStr += " • " + kernel;
 
             let schemeName = Colours.scheme || (Colours.light ? "Light Mode" : "Dark Mode");
             let stateStr = "Scheme: " + schemeName;
-            if (Colours.variant) stateStr += " | Variant: " + Colours.variant;
+            if (Colours.variant)
+                stateStr += " | Variant: " + Colours.variant;
 
             root.sendActivity({
                 name: "MiDnight Shell" + qsVersion,
@@ -215,8 +249,14 @@ Item {
                 small_image: "",
                 startTimestamp: root.shellStartTime,
                 buttons: [
-                    { label: "Website", url: "https://caelestiashell.com" },
-                    { label: "GitHub", url: "https://github.com/caelestia-dots/" }
+                    {
+                        label: "Website",
+                        url: "https://caelestiashell.com"
+                    },
+                    {
+                        label: "GitHub",
+                        url: "https://github.com/caelestia-dots/"
+                    }
                 ]
             });
             return;
@@ -227,16 +267,18 @@ Item {
 
     function fetchSteamData(appId) {
         root.fetchingSteam = true;
-        Requests.get("https://store.steampowered.com/api/appdetails?appids=" + appId, function(steamRes) {
+        Requests.get("https://store.steampowered.com/api/appdetails?appids=" + appId, function (steamRes) {
             let steamData = JSON.parse(steamRes);
             let gameName = "Unknown Steam Game (" + appId + ")";
             if (steamData && steamData[appId] && steamData[appId].success) {
                 gameName = steamData[appId].data.name;
             }
-                
-            Requests.get("https://store.steampowered.com/appreviews/" + appId + "?json=1", function(revRes) {
+
+            Requests.get("https://store.steampowered.com/appreviews/" + appId + "?json=1", function (revRes) {
                 let revData = null;
-                try { revData = JSON.parse(revRes); } catch(e) {}
+                try {
+                    revData = JSON.parse(revRes);
+                } catch (e) {}
                 let reviewText = "Playing via Steam";
                 if (revData && revData.query_summary && revData.query_summary.total_reviews > 0) {
                     let score = Math.round((revData.query_summary.total_positive / revData.query_summary.total_reviews) * 100);
@@ -245,15 +287,21 @@ Item {
                 }
 
                 if (root.steamGridDbKey !== "" && steamData && steamData[appId] && steamData[appId].success) {
-                    let headers = { "Authorization": "Bearer " + root.steamGridDbKey };
-                    Requests.get("https://www.steamgriddb.com/api/v2/games/steam/" + appId, function(dbRes) {
+                    let headers = {
+                        "Authorization": "Bearer " + root.steamGridDbKey
+                    };
+                    Requests.get("https://www.steamgriddb.com/api/v2/games/steam/" + appId, function (dbRes) {
                         let dbData = null;
-                        try { dbData = JSON.parse(dbRes); } catch(e) {}
+                        try {
+                            dbData = JSON.parse(dbRes);
+                        } catch (e) {}
                         if (dbData && dbData.success && dbData.data && dbData.data.id) {
                             let sgdbId = dbData.data.id;
-                            Requests.get("https://www.steamgriddb.com/api/v2/icons/game/" + sgdbId, function(iconRes) {
+                            Requests.get("https://www.steamgriddb.com/api/v2/icons/game/" + sgdbId, function (iconRes) {
                                 let iconData = null;
-                                try { iconData = JSON.parse(iconRes); } catch(e) {}
+                                try {
+                                    iconData = JSON.parse(iconRes);
+                                } catch (e) {}
                                 let iconUrl = "";
                                 if (iconData && iconData.success && iconData.data && iconData.data.length > 0) {
                                     for (let i = 0; i < iconData.data.length; i++) {
@@ -262,54 +310,87 @@ Item {
                                             break;
                                         }
                                     }
-                                    if (iconUrl === "") iconUrl = iconData.data[0].url;
+                                    if (iconUrl === "")
+                                        iconUrl = iconData.data[0].url;
                                 }
-                                root.currentSteamData = { name: gameName, icon: iconUrl, state: reviewText };
+                                root.currentSteamData = {
+                                    name: gameName,
+                                    icon: iconUrl,
+                                    state: reviewText
+                                };
                                 root.fetchingSteam = false;
                                 root.updatePresence();
-                            }, function() {
-                                root.currentSteamData = { name: gameName, icon: "", state: reviewText };
+                            }, function () {
+                                root.currentSteamData = {
+                                    name: gameName,
+                                    icon: "",
+                                    state: reviewText
+                                };
                                 root.fetchingSteam = false;
                                 root.updatePresence();
                             }, headers);
                         } else {
-                            root.currentSteamData = { name: gameName, icon: "", state: reviewText };
+                            root.currentSteamData = {
+                                name: gameName,
+                                icon: "",
+                                state: reviewText
+                            };
                             root.fetchingSteam = false;
                             root.updatePresence();
                         }
-                    }, function() {
-                        root.currentSteamData = { name: gameName, icon: "", state: reviewText };
+                    }, function () {
+                        root.currentSteamData = {
+                            name: gameName,
+                            icon: "",
+                            state: reviewText
+                        };
                         root.fetchingSteam = false;
                         root.updatePresence();
                     }, headers);
                 } else {
-                    root.currentSteamData = { name: gameName, icon: "", state: reviewText };
+                    root.currentSteamData = {
+                        name: gameName,
+                        icon: "",
+                        state: reviewText
+                    };
                     root.fetchingSteam = false;
                     root.updatePresence();
                 }
-            }, function() {
-                root.currentSteamData = { name: gameName, icon: "", state: "Playing via Steam" };
+            }, function () {
+                root.currentSteamData = {
+                    name: gameName,
+                    icon: "",
+                    state: "Playing via Steam"
+                };
                 root.fetchingSteam = false;
                 root.updatePresence();
             });
-        }, function() {
+        }, function () {
             root.fetchingSteam = false;
         });
     }
 
     function sendActivity(data) {
-        if (!DiscordIpc.connected) return;
+        if (!DiscordIpc.connected)
+            return;
 
         const activity = {};
-        if (data.name && data.name !== "") activity.name = data.name;
-        if (data.state && data.state !== "") activity.state = data.state;
-        if (data.details && data.details !== "") activity.details = data.details;
-        
+        if (data.name && data.name !== "")
+            activity.name = data.name;
+        if (data.state && data.state !== "")
+            activity.state = data.state;
+        if (data.details && data.details !== "")
+            activity.details = data.details;
+
         const assets = {};
-        if (data.large_image && data.large_image !== "") assets.large_image = data.large_image;
-        if (data.large_text && data.large_text !== "") assets.large_text = data.large_text;
-        if (data.small_image && data.small_image !== "") assets.small_image = data.small_image;
-        if (Object.keys(assets).length > 0) activity.assets = assets;
+        if (data.large_image && data.large_image !== "")
+            assets.large_image = data.large_image;
+        if (data.large_text && data.large_text !== "")
+            assets.large_text = data.large_text;
+        if (data.small_image && data.small_image !== "")
+            assets.small_image = data.small_image;
+        if (Object.keys(assets).length > 0)
+            activity.assets = assets;
 
         if (data.buttons && data.buttons.length > 0) {
             activity.buttons = data.buttons;
@@ -324,7 +405,8 @@ Item {
     }
 
     function clearActivity() {
-        if (!DiscordIpc.connected) return;
+        if (!DiscordIpc.connected)
+            return;
         DiscordIpc.clearActivity();
     }
 

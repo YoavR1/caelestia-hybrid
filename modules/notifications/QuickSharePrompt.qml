@@ -17,7 +17,7 @@ StyledRect {
 
     implicitWidth: layout.implicitWidth + Tokens.padding.large * 2
     implicitHeight: layout.implicitHeight + Tokens.padding.large * 2
-    
+
     radius: Tokens.rounding.large
     color: Colours.tPalette.m3surfaceContainerHigh
 
@@ -84,7 +84,7 @@ StyledRect {
     Behavior on opacity {
         Anim {}
     }
-    
+
     Behavior on scale {
         Anim {}
     }

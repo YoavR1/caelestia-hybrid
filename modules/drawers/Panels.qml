@@ -104,7 +104,6 @@ Item {
                 anchors.right: parent.right
             }
         },
-
         State {
             name: "bottom"
             Config.screen: root.screen.name

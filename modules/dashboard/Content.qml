@@ -99,13 +99,15 @@ Item {
             property real lastValidImplicitWidth: 0
             implicitWidth: currentItem ? currentItem.implicitWidth : lastValidImplicitWidth
             onImplicitWidthChanged: {
-                if (currentItem) lastValidImplicitWidth = currentItem.implicitWidth;
+                if (currentItem)
+                    lastValidImplicitWidth = currentItem.implicitWidth;
             }
 
             property real lastValidImplicitHeight: 0
             implicitHeight: currentItem ? currentItem.implicitHeight : lastValidImplicitHeight
             onImplicitHeightChanged: {
-                if (currentItem) lastValidImplicitHeight = currentItem.implicitHeight;
+                if (currentItem)
+                    lastValidImplicitHeight = currentItem.implicitHeight;
             }
 
             property real lastValidContentX: 0
@@ -161,7 +163,8 @@ Item {
 
                         sourceComponent: modelData.component
 
-                        onActiveChanged: if (active) active = true
+                        onActiveChanged: if (active)
+                            active = true
 
                         Component.onCompleted: active = Qt.binding(() => {
                             if (index === view.currentIndex)

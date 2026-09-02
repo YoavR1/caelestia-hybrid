@@ -91,7 +91,8 @@ Singleton {
     }
 
     function checkPip(): void {
-        if (GlobalConfig.services.pipPaused) return;
+        if (GlobalConfig.services.pipPaused)
+            return;
 
         let foundPip = false;
         const toplevels = Hyprland.toplevels.values;
@@ -102,7 +103,7 @@ Singleton {
                 foundPip = true;
             }
         }
-        
+
         if (!foundPip) {
             root.currentPipAddress = "";
             root.lastPipX = -1;
@@ -112,14 +113,15 @@ Singleton {
     }
 
     function movePip(t: HyprlandToplevel): void {
-        if (GlobalConfig.services.pipPaused) return;
+        if (GlobalConfig.services.pipPaused)
+            return;
 
         if (Hyprland.activeToplevel && Hyprland.activeToplevel.address === t.address) {
             return; // Pause auto-alignment while the user is interacting with the window!
         }
 
         const addr = "address:0x" + t.address;
-        
+
         if (root.currentPipAddress !== addr) {
             root.lastPipX = -1;
             root.lastPipY = -1;
@@ -133,7 +135,8 @@ Singleton {
             monitor = Hyprland.focusedMonitor;
         }
 
-        if (!monitor) return;
+        if (!monitor)
+            return;
 
         if (root.lastPipMonitor !== monitor.name) {
             root.tempPipPosition = "";
@@ -167,13 +170,19 @@ Singleton {
                 const centerY = relY + sizeY / 2;
 
                 let newPos = "";
-                if (centerY < monitor_height / 3) newPos += "top";
-                else if (centerY > monitor_height * 2 / 3) newPos += "bottom";
-                else newPos += "middle";
+                if (centerY < monitor_height / 3)
+                    newPos += "top";
+                else if (centerY > monitor_height * 2 / 3)
+                    newPos += "bottom";
+                else
+                    newPos += "middle";
 
-                if (centerX < monitor_width / 3) newPos += " left";
-                else if (centerX > monitor_width * 2 / 3) newPos += " right";
-                else newPos += " center";
+                if (centerX < monitor_width / 3)
+                    newPos += " left";
+                else if (centerX > monitor_width * 2 / 3)
+                    newPos += " right";
+                else
+                    newPos += " center";
 
                 root.tempPipPosition = newPos.trim();
             }
@@ -205,10 +214,14 @@ Singleton {
             barSize = Tokens.forScreen(monitor.name).sizes.bar.innerWidth + padding * 2;
         }
 
-        if (bPos === "left") res_left += barSize;
-        else if (bPos === "right") res_right += barSize;
-        else if (bPos === "top") res_top += barSize;
-        else if (bPos === "bottom") res_bottom += barSize;
+        if (bPos === "left")
+            res_left += barSize;
+        else if (bPos === "right")
+            res_right += barSize;
+        else if (bPos === "top")
+            res_top += barSize;
+        else if (bPos === "bottom")
+            res_bottom += barSize;
 
         const avail_w = monitor_width - res_left - res_right - x_resize;
         const avail_h = monitor_height - res_top - res_bottom - y_resize;

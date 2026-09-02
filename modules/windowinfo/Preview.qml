@@ -69,11 +69,14 @@ Item {
 
             captureSource: {
                 const client = root.client;
-                if (!client || !client.wayland) return null; // qmllint disable unresolved-type
+                if (!client || !client.wayland) // qmllint disable unresolved-type
+                    return null;
                 const ipc = client.lastIpcObject;
                 if (ipc) {
-                    if (ipc.mapped === false || ipc.hidden) return null;
-                    if (ipc.size && (ipc.size[0] <= 0 || ipc.size[1] <= 0)) return null;
+                    if (ipc.mapped === false || ipc.hidden)
+                        return null;
+                    if (ipc.size && (ipc.size[0] <= 0 || ipc.size[1] <= 0))
+                        return null;
                 }
                 return client.wayland;
             }

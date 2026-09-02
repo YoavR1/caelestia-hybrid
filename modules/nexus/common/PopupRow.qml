@@ -13,7 +13,7 @@ ConnectedRect {
 
     property bool showDelete: false
 
-    signal deleted()
+    signal deleted
 
     property alias icon: icon.text
 
@@ -92,7 +92,6 @@ ConnectedRect {
                 animate: true
             }
         }
-
 
         Item {
             id: triggerArea

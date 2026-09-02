@@ -21,7 +21,7 @@ Item {
     }
 
     Component.onCompleted: {
-        var w = testComp.createObject(null)
-        w.visible = true
+        var w = testComp.createObject(null);
+        w.visible = true;
     }
 }

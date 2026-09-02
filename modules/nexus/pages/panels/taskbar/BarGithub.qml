@@ -106,7 +106,7 @@ PageBase {
                     Layout.preferredHeight: 32
                     radius: Tokens.rounding.small
                     color: Colours.layer(Colours.palette.m3surfaceVariant, 2)
-                    
+
                     StyledTextField {
                         id: tokenInput
 
@@ -133,8 +133,8 @@ PageBase {
                     Layout.preferredHeight: 32
                     icon: "close"
                     onClicked: {
-                        tokenInput.text = ""
-                        root.saveToken("")
+                        tokenInput.text = "";
+                        root.saveToken("");
                     }
                 }
             }

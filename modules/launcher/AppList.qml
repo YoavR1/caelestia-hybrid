@@ -50,24 +50,26 @@ StyledListView {
             return Schemes.query(text);
         case "variant":
             return M3Variants.query(text);
-        case "emoji": {
-            const prefix = GlobalConfig.launcher.actionPrefix;
-            const queryText = text.slice((prefix + "emoji ").length).toLowerCase();
-            if (!queryText)
-                return Emojis.getSortedItems();
-            return Emojis.items.filter(function (item) {
-                return item.name.toLowerCase().includes(queryText);
-            });
-        }
-        case "clipboard": {
-            const prefix = GlobalConfig.launcher.actionPrefix;
-            const queryText = text.slice((prefix + "clipboard ").length).toLowerCase();
-            if (!queryText)
-                return Clipboard.getSortedItems();
-            return Clipboard.items.filter(function (item) {
-                return item.preview.toLowerCase().includes(queryText);
-            });
-        }
+        case "emoji":
+            {
+                const prefix = GlobalConfig.launcher.actionPrefix;
+                const queryText = text.slice((prefix + "emoji ").length).toLowerCase();
+                if (!queryText)
+                    return Emojis.getSortedItems();
+                return Emojis.items.filter(function (item) {
+                    return item.name.toLowerCase().includes(queryText);
+                });
+            }
+        case "clipboard":
+            {
+                const prefix = GlobalConfig.launcher.actionPrefix;
+                const queryText = text.slice((prefix + "clipboard ").length).toLowerCase();
+                if (!queryText)
+                    return Clipboard.getSortedItems();
+                return Clipboard.items.filter(function (item) {
+                    return item.preview.toLowerCase().includes(queryText);
+                });
+            }
         case "windows":
             return Windows.items;
         default:
@@ -112,7 +114,7 @@ StyledListView {
             Emojis.reload();
         if (state === "clipboard")
             Clipboard.reload();
-            
+
         if (state !== "scheme" && state !== "variant") {
             Colours.showPreview = false;
         }
@@ -134,10 +136,17 @@ StyledListView {
 
         interval: 100
         onTriggered: {
-            if (!root.currentItem || !root.currentItem.modelData) return;
+            if (!root.currentItem || !root.currentItem.modelData)
+                return;
             if (root.state === "scheme") {
                 const schemeData = root.currentItem.modelData;
-                Colours.load(JSON.stringify({ name: schemeData.name, flavour: schemeData.flavour, variant: Colours.variant, mode: Colours.light ? "light" : "dark", colours: schemeData.colours }), true);
+                Colours.load(JSON.stringify({
+                    name: schemeData.name,
+                    flavour: schemeData.flavour,
+                    variant: Colours.variant,
+                    mode: Colours.light ? "light" : "dark",
+                    colours: schemeData.colours
+                }), true);
                 Colours.showPreview = true;
             } else if (root.state === "variant") {
                 const variantData = root.currentItem.modelData;

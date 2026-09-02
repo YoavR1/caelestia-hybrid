@@ -49,14 +49,18 @@ QtObject {
                     for (const b of binds) {
                         const action = b.dispatcher + (b.arg ? " " + b.arg : "");
                         const description = (b.has_description !== undefined && b.has_description && b.description) ? b.description : action;
-                        
+
                         let mods = [];
                         const m = b.modmask;
-                        if (m & 64) mods.push("Super");
-                        if (m & 8) mods.push("Alt");
-                        if (m & 4) mods.push("Ctrl");
-                        if (m & 1) mods.push("Shift");
-                        
+                        if (m & 64)
+                            mods.push("Super");
+                        if (m & 8)
+                            mods.push("Alt");
+                        if (m & 4)
+                            mods.push("Ctrl");
+                        if (m & 1)
+                            mods.push("Shift");
+
                         let keyText = b.key;
                         if (keyText === "") {
                             if (b.catch_all) {
@@ -67,7 +71,8 @@ QtObject {
                         }
 
                         let bindText = mods.join(" + ");
-                        if (bindText !== "") bindText += " + ";
+                        if (bindText !== "")
+                            bindText += " + ";
                         bindText += keyText;
 
                         formattedBinds.push({
@@ -76,7 +81,7 @@ QtObject {
                             description: description
                         });
                     }
-                    
+
                     root.keybinds = formattedBinds;
                     root.initialized = true;
                     root.loaded();
@@ -115,11 +120,7 @@ QtObject {
             return keybinds;
 
         const queryText = searchText.toLowerCase().trim();
-        return keybinds.filter(k => 
-            (k.bind && k.bind.toLowerCase().includes(queryText)) ||
-            (k.description && k.description.toLowerCase().includes(queryText)) ||
-            (k.action && k.action.toLowerCase().includes(queryText))
-        );
+        return keybinds.filter(k => (k.bind && k.bind.toLowerCase().includes(queryText)) || (k.description && k.description.toLowerCase().includes(queryText)) || (k.action && k.action.toLowerCase().includes(queryText)));
     }
 
     function execute(item) {

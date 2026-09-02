@@ -10,7 +10,7 @@ StyledSwitch {
 
     property bool showDelete: false
 
-    signal deleted()
+    signal deleted
 
     property var configNode
 

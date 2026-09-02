@@ -49,7 +49,7 @@ Item {
         Component {
             id: lyricComp
 
-            LyricList { }
+            LyricList {}
         }
 
         Component {
