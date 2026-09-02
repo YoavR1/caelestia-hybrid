@@ -38,7 +38,7 @@ Item {
 
     Connections {
         function onEnableOllamaChanged() {
-            checkTabs();
+            root.checkTabs();
         }
 
         target: GlobalConfig.ai
@@ -46,7 +46,7 @@ Item {
 
     Connections {
         function onShowNewsChanged() {
-            checkTabs();
+            root.checkTabs();
         }
 
         target: GlobalConfig.sidebar
@@ -56,7 +56,7 @@ Item {
         function onSidebarChanged() {
             if (root.screenState.sidebar) {
                 root.activeTab = Visibilities.initialSidebarTab;
-                checkTabs();
+                root.checkTabs();
             }
         }
 

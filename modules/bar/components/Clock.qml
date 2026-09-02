@@ -126,7 +126,7 @@ StyledRect {
             visible: active
 
             sourceComponent: ColumnLayout {
-                spacing: layout.spacing - 4
+                spacing: verticalLayout.spacing - 4
 
                 StyledText {
                     Layout.alignment: Qt.AlignHCenter

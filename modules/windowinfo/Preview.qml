@@ -82,7 +82,7 @@ Item {
             }
             live: visible
 
-            constraintSize.width: (root.client && root.client.lastIpcObject?.size && root.client.lastIpcObject.size[1] > 0) ? parent.height * Math.min(root.screen.width / root.screen.height, root.client.lastIpcObject.size[0] / root.client.lastIpcObject.size[1]) : parent.height
+            constraintSize.width: (root.client && root.client.lastIpcObject.size && root.client.lastIpcObject.size[1] > 0) ? parent.height * Math.min(root.screen.width / root.screen.height, root.client.lastIpcObject.size[0] / root.client.lastIpcObject.size[1]) : parent.height
             constraintSize.height: parent.height
         }
     }

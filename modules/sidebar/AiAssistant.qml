@@ -838,7 +838,7 @@ Item {
                 stop();
                 chatHistory.setProperty(targetIdx, "text", fullText);
                 chatHistory.setProperty(targetIdx, "isFinished", true);
-                saveHistory();
+                root.saveHistory();
                 root.isTyping = false;
                 root.isThinking = false;
                 root.inAgentLoop = false;
@@ -1764,7 +1764,7 @@ Item {
                                             root.inAgentLoop = false;
                                             typingTimer.stop();
                                             chatHistory.setProperty(chatHistory.count - 1, "isFinished", true);
-                                            saveHistory();
+                                            root.saveHistory();
                                         } else if (inputArea.text.length > 0) {
                                             root.sendPrompt(inputArea.text);
                                             inputArea.clear();
@@ -1816,6 +1816,8 @@ Item {
                     model: historySessionsModel
 
                     delegate: Item {
+                        id: session
+
                         required property var model
                         property string chatId: model && model.id ? String(model.id) : ""
                         property string chatTitle: model && model.title ? String(model.title) : ""
@@ -1831,7 +1833,7 @@ Item {
 
                             StateLayer {
                                 radius: Tokens.rounding.medium
-                                onClicked: loadChat(chatId)
+                                onClicked: root.loadChat(session.chatId)
                             }
 
                             RowLayout {
@@ -1860,7 +1862,7 @@ Item {
                                     Text {
                                         Layout.fillWidth: true
                                         Layout.alignment: Qt.AlignVCenter
-                                        text: chatTitle ? chatTitle : "New Chat"
+                                        text: session.chatTitle ? session.chatTitle : "New Chat"
                                         color: Colours.palette.m3onSurface
                                         font: Tokens.font.label.small
                                         elide: Text.ElideRight
@@ -1900,7 +1902,7 @@ Item {
                                         anchors.fill: parent
                                         hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
-                                        onClicked: deleteChat(chatId)
+                                        onClicked: root.deleteChat(session.chatId)
                                     }
                                 }
                             }
@@ -1921,7 +1923,7 @@ Item {
 
                     StateLayer {
                         radius: 16
-                        onClicked: clearAllHistory()
+                        onClicked: root.clearAllHistory()
                     }
 
                     RowLayout {
@@ -1956,7 +1958,7 @@ Item {
 
                     StateLayer {
                         radius: 16
-                        onClicked: createNewChat()
+                        onClicked: root.createNewChat()
                     }
 
                     RowLayout {

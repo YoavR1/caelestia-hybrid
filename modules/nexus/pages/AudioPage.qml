@@ -240,6 +240,8 @@ PageBase {
             Repeater {
                 model: GlobalConfig.audio.sounds.disabledNotifApps
                 delegate: StyledRect {
+                    id: chip
+
                     required property string modelData
                     required property int index
 
@@ -258,7 +260,7 @@ PageBase {
                         spacing: Tokens.spacing.extraSmall
 
                         StyledText {
-                            text: modelData
+                            text: chip.modelData
                         }
 
                         MaterialIcon {
@@ -268,7 +270,7 @@ PageBase {
                             StateLayer {
                                 onClicked: {
                                     let list = Array.from(GlobalConfig.audio.sounds.disabledNotifApps);
-                                    list.splice(index, 1);
+                                    list.splice(chip.index, 1);
                                     GlobalConfig.audio.sounds.disabledNotifApps = list;
                                     GlobalConfig.save();
                                 }

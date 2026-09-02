@@ -132,6 +132,8 @@ StyledRect {
                 }
 
                 delegate: RowLayout {
+                    id: entry
+
                     required property var modelData
                     required property int index
 
@@ -144,8 +146,8 @@ StyledRect {
                         Layout.fillWidth: true
                         Layout.rightMargin: Tokens.spacing.extraSmall
                         text: {
-                            const date = new Date(modelData.timestamp * 1000);
-                            return qsTr("%1 at %2").arg(modelData.fileName).arg(Qt.formatDateTime(date, Qt.locale()));
+                            const date = new Date(entry.modelData.timestamp * 1000);
+                            return qsTr("%1 at %2").arg(entry.modelData.fileName).arg(Qt.formatDateTime(date, Qt.locale()));
                         }
                         color: Colours.palette.m3onSurfaceVariant
                         elide: Text.ElideRight
@@ -157,7 +159,7 @@ StyledRect {
                         onClicked: {
                             root.screenState.utilities = false;
                             root.screenState.sidebar = false;
-                            Quickshell.execDetached(["xdg-open", modelData.filePath]);
+                            Quickshell.execDetached(["xdg-open", entry.modelData.filePath]);
                         }
                     }
 
@@ -168,8 +170,8 @@ StyledRect {
                             root.screenState.utilities = false;
                             root.screenState.sidebar = false;
 
-                            const lastSlash = modelData.filePath.lastIndexOf('/');
-                            const dir = modelData.filePath.substring(0, lastSlash);
+                            const lastSlash = entry.modelData.filePath.lastIndexOf('/');
+                            const dir = entry.modelData.filePath.substring(0, lastSlash);
                             Quickshell.execDetached([...GlobalConfig.general.apps.explorer, dir]);
                         }
                     }
@@ -180,8 +182,8 @@ StyledRect {
                         label.color: Colours.palette.m3error
                         stateLayer.color: Colours.palette.m3error
                         onClicked: {
-                            root.props.quickShareConfirmDeletePath = modelData.filePath;
-                            root.props.quickShareConfirmDeleteIndex = index;
+                            root.props.quickShareConfirmDeletePath = entry.modelData.filePath;
+                            root.props.quickShareConfirmDeleteIndex = entry.index;
                         }
                     }
                 }

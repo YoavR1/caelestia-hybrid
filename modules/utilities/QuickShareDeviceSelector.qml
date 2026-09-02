@@ -112,6 +112,8 @@ Loader {
                     model: QuickShare.nearbyDevices
 
                     delegate: WrapperMouseArea {
+                        id: device
+
                         required property var modelData
 
                         width: deviceList.width
@@ -121,7 +123,7 @@ Loader {
 
                         onClicked: {
                             root.props.quickShareFileDialogOpen = true;
-                            fileDialog.targetDeviceId = modelData.id;
+                            fileDialog.targetDeviceId = device.modelData.id;
                             fileDialog.open();
                         }
 
@@ -137,7 +139,7 @@ Loader {
                             }
 
                             StyledText {
-                                text: modelData.name
+                                text: device.modelData.name
                                 font: Tokens.font.body.medium
                                 Layout.fillWidth: true
                             }

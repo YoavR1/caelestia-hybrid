@@ -516,7 +516,7 @@ Searcher {
         id: _extractThumbsProc
 
         command: ["caelestia", "wallpaper", "--extract-thumbs"]
-        onExited: (exitCode, exitStatus) => {
+        onExited: (exitCode, exitStatus) => { // qmllint disable signal-handler-parameters
             root._refreshing = false;
             root.cacheBuster = Date.now().toString();
             root.restoreWallpaperMode = true;

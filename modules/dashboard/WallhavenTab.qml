@@ -194,6 +194,8 @@ Item {
                     }
 
                     delegate: Item {
+                        id: result
+
                         required property var modelData
                         required property int index
                         readonly property real itemMargin: Tokens.spacing.small / 2
@@ -202,19 +204,19 @@ Item {
                         height: resultsGrid.cellHeight
 
                         StateLayer {
-                            onClicked: root.selectWallpaper(index)
+                            onClicked: root.selectWallpaper(result.index)
 
                             anchors.fill: parent
-                            anchors.leftMargin: itemMargin
-                            anchors.rightMargin: itemMargin
-                            anchors.topMargin: itemMargin
-                            anchors.bottomMargin: itemMargin
+                            anchors.leftMargin: result.itemMargin
+                            anchors.rightMargin: result.itemMargin
+                            anchors.topMargin: result.itemMargin
+                            anchors.bottomMargin: result.itemMargin
 
                             radius: Tokens.rounding.medium
 
                             CachingImage {
                                 anchors.fill: parent
-                                source: modelData.thumbs?.large || modelData.thumbs?.small || ""
+                                source: result.modelData.thumbs?.large || result.modelData.thumbs?.small || ""
                                 asynchronous: true
                                 fillMode: Image.PreserveAspectCrop
                             }

@@ -73,6 +73,8 @@ RowLayout {
         model: root.model ? root.model.toplevels : []
 
         delegate: StyledRect {
+            id: card
+
             required property var modelData
 
             readonly property real windowRatio: (modelData.lastIpcObject && modelData.lastIpcObject.size[0] > 0) ? (modelData.lastIpcObject.size[1] / modelData.lastIpcObject.size[0]) : 0.75
@@ -95,7 +97,7 @@ RowLayout {
                 // Title row
                 RowLayout {
                     Layout.fillWidth: true
-                    Layout.maximumWidth: targetWidth
+                    Layout.maximumWidth: card.targetWidth
 
                     IconImage {
                         asynchronous: true
@@ -108,7 +110,7 @@ RowLayout {
                         id: titleText
 
                         Layout.fillWidth: true
-                        text: modelData.title || ""
+                        text: card.modelData.title || ""
                         font.pointSize: Tokens.font.body.small.pointSize
                         color: Colours.palette.m3onSurfaceVariant
                         elide: Text.ElideRight
@@ -125,7 +127,7 @@ RowLayout {
                             radius: Tokens.rounding.small
                             // Set the specific client to be used by the window info popout
                             onClicked: {
-                                root.popouts.selectedClientAddress = modelData.address;
+                                root.popouts.selectedClientAddress = card.modelData.address;
                                 root.popouts.detachRequested("winfo");
                             }
                         }
@@ -149,7 +151,7 @@ RowLayout {
                             anchors.fill: parent
                             radius: Tokens.rounding.small
                             onClicked: {
-                                Hypr.dispatch(Hypr.usingLua ? `hl.dsp.window.close({ window = "address:0x${modelData.address}" })` : `closewindow address:0x${modelData.address}`);
+                                Hypr.dispatch(Hypr.usingLua ? `hl.dsp.window.close({ window = "address:0x${card.modelData.address}" })` : `closewindow address:0x${card.modelData.address}`);
                                 root.popouts.hasCurrent = false;
                             }
                         }
@@ -166,15 +168,15 @@ RowLayout {
 
                 // Preview
                 Item {
-                    Layout.preferredWidth: targetWidth
-                    Layout.preferredHeight: targetHeight
+                    Layout.preferredWidth: card.targetWidth
+                    Layout.preferredHeight: card.targetHeight
 
                     StateLayer {
                         radius: Tokens.rounding.small
                         color: "transparent"
 
                         onClicked: {
-                            Hypr.dispatch(Hypr.usingLua ? `hl.dsp.focus({ window = "address:0x${modelData.address}" })` : `focuswindow address:0x${modelData.address}`);
+                            Hypr.dispatch(Hypr.usingLua ? `hl.dsp.focus({ window = "address:0x${card.modelData.address}" })` : `focuswindow address:0x${card.modelData.address}`);
                             root.popouts.hasCurrent = false;
                         }
 
@@ -185,20 +187,20 @@ RowLayout {
 
                             SafeScreencopy {
                                 captureSource: {
-                                    if (!modelData || !modelData.wayland)
+                                    if (!card.modelData || !card.modelData.wayland)
                                         return null; // qmllint disable unresolved-type
-                                    const ipc = modelData.lastIpcObject;
+                                    const ipc = card.modelData.lastIpcObject;
                                     if (ipc) {
                                         if (ipc.mapped === false || ipc.hidden)
                                             return null;
                                         if (ipc.size && (ipc.size[0] <= 0 || ipc.size[1] <= 0))
                                             return null;
                                     }
-                                    return modelData.wayland;
+                                    return card.modelData.wayland;
                                 }
                                 live: visible
-                                constraintSize.width: targetWidth
-                                constraintSize.height: targetHeight
+                                constraintSize.width: card.targetWidth
+                                constraintSize.height: card.targetHeight
                             }
                         }
                     }

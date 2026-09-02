@@ -214,7 +214,7 @@ Item {
         id: physicsLoop
 
         running: true
-        onTriggered: tick(frameTime)
+        onTriggered: root.tick(frameTime)
     }
 
     Timer {
@@ -239,9 +239,9 @@ Item {
                 if (Math.abs(root.vx) < 0.5) {
                     const roll = Math.random();
                     if (roll < 0.3) {
-                        pickIdle();
+                        root.pickIdle();
                     } else if (roll < 0.55) {
-                        walkRandom();
+                        root.walkRandom();
                     } else if (roll < 0.75) {
                         root.currentAnim = "dangle";
                         root.frameIndex = 0;

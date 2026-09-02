@@ -38,7 +38,7 @@ QtObject {
         let results = items;
         if (GlobalConfig.launcher.windowSwitcherActiveWorkspaceOnly) {
             const monitor = Hyprland.focusedMonitor;
-            const specialWs = monitor?.lastIpcObject?.specialWorkspace?.name;
+            const specialWs = monitor?.lastIpcObject.specialWorkspace?.name;
             if (specialWs) {
                 results = results.filter(w => w.workspace === specialWs);
             } else {

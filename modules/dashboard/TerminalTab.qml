@@ -206,21 +206,21 @@ Item {
             stdout: SplitParser {
                 onRead: text => {
                     root.outputBuffer += text + "\n";
-                    outputArea.text = ansiToHtml(root.outputBuffer);
-                    scrollToBottom();
+                    outputArea.text = root.ansiToHtml(root.outputBuffer);
+                    root.scrollToBottom();
                 }
             }
             stderr: SplitParser {
                 onRead: text => {
                     root.outputBuffer += "\x1b[31m" + text + "\x1b[0m\n";
-                    outputArea.text = ansiToHtml(root.outputBuffer);
-                    scrollToBottom();
+                    outputArea.text = root.ansiToHtml(root.outputBuffer);
+                    root.scrollToBottom();
                 }
             }
             Component.onCompleted: {
                 root.activeProcessesCount++;
             }
-            onExited: code => {
+            onExited: code => { // qmllint disable signal-handler-parameters
                 root.activeProcessesCount--;
                 destroy();
             }
@@ -244,8 +244,8 @@ Item {
             stderr: StdioCollector {
                 onStreamFinished: {
                     root.outputBuffer += "\x1b[31m" + this.text + "\x1b[0m\n";
-                    outputArea.text = ansiToHtml(root.outputBuffer);
-                    scrollToBottom();
+                    outputArea.text = root.ansiToHtml(root.outputBuffer);
+                    root.scrollToBottom();
                     destroy();
                 }
             }

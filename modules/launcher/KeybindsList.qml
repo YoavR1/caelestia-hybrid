@@ -16,7 +16,7 @@ StyledListView {
     required property SearchBar search
     required property ScreenState screenState
 
-    readonly property string searchQuery: search?.text?.startsWith(GlobalConfig.launcher.actionPrefix + "keybinds ") ? search.text.slice((GlobalConfig.launcher.actionPrefix + "keybinds ").length).toLowerCase() : ""
+    readonly property string searchQuery: search?.text.startsWith(GlobalConfig.launcher.actionPrefix + "keybinds ") ? search.text.slice((GlobalConfig.launcher.actionPrefix + "keybinds ").length).toLowerCase() : ""
 
     function refreshModel() {
         if (!search)
@@ -139,7 +139,7 @@ StyledListView {
 
     Connections {
         function onLoaded() {
-            handleKeybindsLoaded();
+            root.handleKeybindsLoaded();
         }
 
         target: Keybinds
@@ -147,7 +147,7 @@ StyledListView {
 
     Connections {
         function onTextChanged() {
-            handleSearchTextChanged();
+            root.handleSearchTextChanged();
         }
 
         target: root.search

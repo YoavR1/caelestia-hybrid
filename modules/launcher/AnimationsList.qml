@@ -16,7 +16,7 @@ StyledListView {
     required property SearchBar search
     required property ScreenState screenState
 
-    readonly property string searchQuery: search?.text?.startsWith(GlobalConfig.launcher.actionPrefix + "animations ") ? search.text.slice((GlobalConfig.launcher.actionPrefix + "animations ").length).toLowerCase().trim() : ""
+    readonly property string searchQuery: search?.text.startsWith(GlobalConfig.launcher.actionPrefix + "animations ") ? search.text.slice((GlobalConfig.launcher.actionPrefix + "animations ").length).toLowerCase().trim() : ""
 
     function refreshModel() {
         if (!search)
@@ -149,7 +149,7 @@ StyledListView {
 
     Connections {
         function onTextChanged() {
-            handleSearchTextChanged();
+            root.handleSearchTextChanged();
         }
 
         target: root.search
@@ -157,7 +157,7 @@ StyledListView {
 
     Connections {
         function onLoaded() {
-            refreshModel();
+            root.refreshModel();
         }
 
         target: Animations

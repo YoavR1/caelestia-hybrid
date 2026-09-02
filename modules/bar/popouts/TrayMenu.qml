@@ -217,7 +217,7 @@ StackView {
                                         font: label.font
 
                                         elide: Text.ElideRight
-                                        elideWidth: root.popouts.isHorizontal ? trayMenuWidth - (icon.active ? icon.implicitWidth + label.anchors.leftMargin : 0) - (expand.active ? expand.implicitWidth + Tokens.spacing.medium : 0) : 200
+                                        elideWidth: root.popouts.isHorizontal ? item.trayMenuWidth - (icon.active ? icon.implicitWidth + label.anchors.leftMargin : 0) - (expand.active ? expand.implicitWidth + Tokens.spacing.medium : 0) : 200
                                     }
 
                                     Loader {

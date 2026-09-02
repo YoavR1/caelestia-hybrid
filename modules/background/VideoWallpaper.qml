@@ -22,7 +22,7 @@ Item {
 
     property int _activePlaybackState: _usePlayerA ? playerA.playbackState : playerB.playbackState
     property int _activeMediaStatus: _usePlayerA ? playerA.mediaStatus : playerB.mediaStatus
-    property int _activeError: _usePlayerA ? playerA.error : playerB.error
+    property var _activeError: _usePlayerA ? playerA.error : playerB.error
     property string _activeErrorString: _usePlayerA ? playerA.errorString : playerB.errorString
 
     // Prevent re-entrant swaps during load
@@ -38,7 +38,7 @@ Item {
         // Note: _swapping selects the incoming player. If play() is called during a swap,
         // it acts on the incoming video.
         const active = _swapping ? (_pendingSwapToA ? playerA : playerB) : (_usePlayerA ? playerA : playerB);
-        if (videoSource != "" && videoSource.toString() !== "")
+        if (videoSource.toString() !== "")
             active.play();
     }
 
@@ -93,13 +93,13 @@ Item {
     anchors.fill: parent
 
     onVideoSourceChanged: {
-        if (videoSource == "" || videoSource.toString() === "") {
+        if (videoSource.toString() === "") {
             playerA.source = "";
             playerB.source = "";
             return;
         }
 
-        if (playerA.source == "" && playerB.source == "") {
+        if (playerA.source.toString() === "" && playerB.source.toString() === "") {
             playerA.source = videoSource;
             _usePlayerA = true;
             return;
@@ -110,7 +110,7 @@ Item {
     }
 
     Component.onCompleted: {
-        if (videoSource != "" && videoSource.toString() !== "") {
+        if (videoSource.toString() !== "") {
             playerA.source = videoSource;
             _usePlayerA = true;
         }
@@ -155,7 +155,7 @@ Item {
             }
 
             // First load: player A loaded and is already the active player
-            if (root._usePlayerA && mediaStatus === MediaPlayer.LoadedMedia && playerB.source == "" && !root._swapping) {
+            if (root._usePlayerA && mediaStatus === MediaPlayer.LoadedMedia && playerB.source.toString() === "" && !root._swapping) {
                 if (root.autoStart) {
                     playerA.play();
                 } else {

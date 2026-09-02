@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import Caelestia
 import Caelestia.Config
 import Caelestia.Models
 import qs.components
@@ -31,7 +32,7 @@ Item {
         id: thumbGenerator
 
         command: ["bash", "-c", `mkdir -p "$(dirname "${thumbImg.path.toString().replace("file://", "")}")" && ffmpeg -i "${root.modelData.path}" -vframes 1 -q:v 2 "${thumbImg.path.toString().replace("file://", "")}" -y`]
-        onExited: {
+        onExited: { // qmllint disable signal-handler-parameters
             let oldSource = thumbImg.path;
             thumbImg.path = "";
             thumbImg.path = oldSource;

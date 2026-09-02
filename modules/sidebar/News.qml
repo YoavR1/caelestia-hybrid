@@ -108,7 +108,7 @@ Item {
 
             IconButton {
                 icon: "refresh"
-                onClicked: fetchNews()
+                onClicked: root.fetchNews()
             }
         }
 

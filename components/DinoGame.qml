@@ -326,7 +326,7 @@ Item {
 
             root.spawnTimer += dt;
             if (root.spawnTimer >= root.nextSpawnTime) {
-                spawnObstacle();
+                root.spawnObstacle();
                 root.spawnTimer = 0;
                 // Match real dino game gaps by ensuring a minimum time to jump (0.6s jump duration)
                 let speedRatio = root.initialSpeed / root.gameSpeed;
@@ -343,8 +343,8 @@ Item {
                 root.scoreTimer = 0;
             }
 
-            checkCollisions();
-            updateObstacleRects();
+            root.checkCollisions();
+            root.updateObstacleRects();
         }
     }
 
@@ -360,7 +360,7 @@ Item {
             if (mouse.button === Qt.RightButton) {
                 root.isDucking = true;
             } else {
-                jump();
+                root.jump();
             }
         }
         onReleased: mouse => {
@@ -574,7 +574,7 @@ Item {
         IconButton {
             Layout.alignment: Qt.AlignHCenter
             icon: "refresh"
-            onClicked: startGame()
+            onClicked: root.startGame()
         }
     }
 }

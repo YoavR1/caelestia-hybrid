@@ -49,7 +49,7 @@ QtObject {
                 }
 
                 root.items = result;
-                preloadImages();
+                root.preloadImages();
             }
         }
     }
