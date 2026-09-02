@@ -1,14 +1,16 @@
 #include "quickshare_service.hpp"
 
-#include <QDebug>
-#include <QDir>
-#include <QFile>
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QStandardPaths>
-#include <QSysInfo>
-#include <QTimer>
+#include <qdebug.h>
+#include <qdir.h>
+#include <qfile.h>
+#include <qjsonarray.h>
+#include <qjsondocument.h>
+#include <qjsonobject.h>
+#include <qstandardpaths.h>
+#include <qsysinfo.h>
+#include <qtimer.h>
+
+#include <algorithm>
 
 namespace caelestia::services {
 
@@ -107,13 +109,13 @@ QVariantList QuickShareService::transferHistory() const {
 }
 
 void QuickShareService::sendFile(const QString& deviceId, const QString& filePath) {
-    auto it = std::find_if(m_devices.begin(), m_devices.end(), [&](const QuickShareDevice& d) {
+    auto it = std::ranges::find_if(m_devices, [&](const QuickShareDevice& d) {
         return d.id == deviceId;
     });
     if (it == m_devices.end())
         return;
 
-    QuickShareConnection* conn = new QuickShareConnection(it->address, it->port, this);
+    auto* conn = new QuickShareConnection(it->address, it->port, this);
     m_activeConnections.insert(deviceId, conn);
 
     connect(conn, &QuickShareConnection::transferProgress, this, [this, deviceId](qint64 sent, qint64 total) {
@@ -136,7 +138,7 @@ void QuickShareService::sendFile(const QString& deviceId, const QString& filePat
         }
 
         if (m_activeConnections.contains(deviceId)) {
-            QuickShareConnection* c = m_activeConnections.take(deviceId);
+            QuickShareConnection const* c = m_activeConnections.take(deviceId);
             QTimer::singleShot(2000, c, &QObject::deleteLater);
         }
     });
@@ -174,7 +176,7 @@ void QuickShareService::onDeviceFound(const QuickShareDevice& device) {
     if (device.name == QSysInfo::machineHostName())
         return;
 
-    auto it = std::find_if(m_devices.begin(), m_devices.end(), [&](const QuickShareDevice& d) {
+    auto it = std::ranges::find_if(m_devices, [&](const QuickShareDevice& d) {
         return d.id == device.id;
     });
     if (it == m_devices.end()) {
@@ -184,7 +186,7 @@ void QuickShareService::onDeviceFound(const QuickShareDevice& device) {
 }
 
 void QuickShareService::onDeviceLost(const QString& deviceId) {
-    auto it = std::find_if(m_devices.begin(), m_devices.end(), [&](const QuickShareDevice& d) {
+    auto it = std::ranges::find_if(m_devices, [&](const QuickShareDevice& d) {
         return d.id == deviceId;
     });
     if (it != m_devices.end()) {
@@ -198,7 +200,7 @@ void QuickShareService::onNewConnection() {
     if (!socket)
         return;
 
-    QuickShareConnection* conn = new QuickShareConnection(socket, this);
+    auto* conn = new QuickShareConnection(socket, this);
     m_pendingIncomingConnection = conn;
 
     connect(
@@ -214,7 +216,7 @@ void QuickShareService::onNewConnection() {
     connect(conn, &QuickShareConnection::transferFinished, this, [this](bool success) {
         if (success && m_pendingIncomingConnection) {
             QVariantMap entry;
-            QString fileName = m_pendingIncomingConnection->incomingFileName();
+            QString const fileName = m_pendingIncomingConnection->incomingFileName();
             entry[u"fileName"_s] = fileName;
             entry[u"filePath"_s] = QDir::homePath() + u"/Downloads/"_s + fileName;
             entry[u"timestamp"_s] = QDateTime::currentDateTime().toSecsSinceEpoch();
@@ -257,10 +259,11 @@ void QuickShareService::stopBleWakeupBroadcast() {
 }
 
 void QuickShareService::loadHistory() {
-    QString path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + u"/quickshare_history.json"_s;
+    QString const path =
+        QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + u"/quickshare_history.json"_s;
     QFile file(path);
     if (file.open(QIODevice::ReadOnly)) {
-        QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
+        QJsonDocument const doc = QJsonDocument::fromJson(file.readAll());
         if (doc.isArray()) {
             m_transferHistory = doc.array().toVariantList();
         }
@@ -268,11 +271,12 @@ void QuickShareService::loadHistory() {
 }
 
 void QuickShareService::saveHistory() {
-    QString path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + u"/quickshare_history.json"_s;
+    QString const path =
+        QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + u"/quickshare_history.json"_s;
     QFile file(path);
     if (file.open(QIODevice::WriteOnly)) {
-        QJsonArray arr = QJsonArray::fromVariantList(m_transferHistory);
-        QJsonDocument doc(arr);
+        QJsonArray const arr = QJsonArray::fromVariantList(m_transferHistory);
+        QJsonDocument const doc(arr);
         file.write(doc.toJson());
     }
 }

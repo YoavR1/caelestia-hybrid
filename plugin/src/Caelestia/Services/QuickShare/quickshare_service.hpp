@@ -1,11 +1,10 @@
 #pragma once
 
+#include <qobject.h>
 #include <qqmlintegration.h>
-
-#include <QObject>
-#include <QTcpServer>
-#include <QVariantList>
-#include <QVariantMap>
+#include <qtcpserver.h>
+#include <qvariantlist.h>
+#include <qvariantmap.h>
 
 #include "QuickShareBle.hpp"
 #include "QuickShareConnection.hpp"
@@ -27,14 +26,14 @@ public:
     explicit QuickShareService(QObject* parent = nullptr);
     ~QuickShareService() override;
 
-    bool isEnabled() const;
+    [[nodiscard]] [[nodiscard]] bool isEnabled() const;
     void setEnabled(bool enabled);
 
-    bool isVisible() const;
+    [[nodiscard]] [[nodiscard]] bool isVisible() const;
     void setVisible(bool visible);
 
-    QVariantList nearbyDevices() const;
-    QVariantList transferHistory() const;
+    [[nodiscard]] [[nodiscard]] QVariantList nearbyDevices() const;
+    [[nodiscard]] [[nodiscard]] QVariantList transferHistory() const;
 
     Q_INVOKABLE void sendFile(const QString& deviceId, const QString& filePath);
     Q_INVOKABLE void acceptIncomingTransfer();

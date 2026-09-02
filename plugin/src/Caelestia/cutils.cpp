@@ -115,7 +115,7 @@ QString CUtils::sha256(const QString& path) {
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
         qCWarning(lcCUtils) << "sha256: failed to open" << path;
-        return QString();
+        return {};
     }
 
     QCryptographicHash hash(QCryptographicHash::Sha256);
@@ -133,7 +133,7 @@ QString CUtils::readFile(const QString& path) {
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qCWarning(lcCUtils) << "readFile: failed to open" << path;
-        return QString();
+        return {};
     }
     return QString::fromUtf8(file.readAll());
 }

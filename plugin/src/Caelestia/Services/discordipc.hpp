@@ -1,11 +1,11 @@
 #pragma once
 
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QLocalSocket>
-#include <QObject>
-#include <QQmlEngine>
-#include <QTimer>
+#include <qjsondocument.h>
+#include <qjsonobject.h>
+#include <qlocalsocket.h>
+#include <qobject.h>
+#include <qqmlengine.h>
+#include <qtimer.h>
 
 namespace caelestia {
 
@@ -20,7 +20,7 @@ public:
     explicit DiscordIpc(QObject* parent = nullptr);
     ~DiscordIpc() override;
 
-    bool connected() const;
+    [[nodiscard]] [[nodiscard]] bool connected() const;
 
     Q_INVOKABLE void connectIpc(const QString& clientId);
     Q_INVOKABLE void disconnectIpc();

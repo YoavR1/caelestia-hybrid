@@ -60,7 +60,7 @@ QUrl IUtils::animatedUrlForPath(const QString& path) {
     return QUrl::fromLocalFile(path);
 }
 
-bool IUtils::fileExists(const QString& path) const {
+bool IUtils::fileExists(const QString& path) {
     return QFileInfo::exists(path);
 }
 

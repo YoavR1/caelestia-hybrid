@@ -1,12 +1,12 @@
 #include "QuickShareDiscovery.hpp"
 
-#include <QDBusConnection>
-#include <QDBusMessage>
-#include <QDBusMetaType>
-#include <QDBusReply>
-#include <QDebug>
-#include <QHostInfo>
-#include <QRandomGenerator>
+#include <qdbusconnection.h>
+#include <qdbusmessage.h>
+#include <qdbusmetatype.h>
+#include <qdbusreply.h>
+#include <qdebug.h>
+#include <qhostinfo.h>
+#include <qrandom.h>
 
 namespace caelestia::services {
 
@@ -39,11 +39,11 @@ bool QuickShareDiscovery::startDiscovery() {
         return false;
     }
 
-    QDBusReply<QDBusObjectPath> browserPath = avahiServer.call(u"ServiceBrowserNew"_s,
+    QDBusReply<QDBusObjectPath> const browserPath = avahiServer.call(u"ServiceBrowserNew"_s,
         -1, // AVAHI_IF_UNSPEC
         -1, // AVAHI_PROTO_UNSPEC
         u"_FC9F5ED42C8A._tcp"_s, u"local"_s,
-        (uint)0); // flags
+        static_cast<uint>(0)); // flags
 
     if (!browserPath.isValid()) {
         qWarning() << "QuickShareDiscovery: Failed to create ServiceBrowser:" << browserPath.error().message();
@@ -90,7 +90,7 @@ bool QuickShareDiscovery::advertise(const QString& deviceName, int port) {
     if (!avahiServer.isValid())
         return false;
 
-    QDBusReply<QDBusObjectPath> groupPath = avahiServer.call(u"EntryGroupNew"_s);
+    QDBusReply<QDBusObjectPath> const groupPath = avahiServer.call(u"EntryGroupNew"_s);
     if (!groupPath.isValid())
         return false;
 
@@ -110,11 +110,11 @@ bool QuickShareDiscovery::advertise(const QString& deviceName, int port) {
     nameB.append(static_cast<char>(0x5E));
     nameB.append(static_cast<char>(0x00)); // unknown bytes
     nameB.append(static_cast<char>(0x00));
-    QString serviceName =
+    QString const serviceName =
         QString::fromLatin1(nameB.toBase64(QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals));
 
     QByteArray recordBytes;
-    char deviceType = 3; // laptop
+    char const deviceType = 3; // laptop
     recordBytes.append(static_cast<char>(deviceType << 1));
 
     for (int i = 0; i < 16; i++) {
@@ -128,16 +128,16 @@ bool QuickShareDiscovery::advertise(const QString& deviceName, int port) {
     recordBytes.append(static_cast<char>(dNameBytes.length()));
     recordBytes.append(dNameBytes);
 
-    QString endpointInfo =
+    QString const endpointInfo =
         QString::fromLatin1(recordBytes.toBase64(QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals));
 
     QList<QByteArray> txtRecord;
     txtRecord.append("n=" + endpointInfo.toUtf8());
 
-    QDBusMessage reply = m_entryGroup->call(u"AddService"_s,
-        -1,      // AVAHI_IF_UNSPEC
-        -1,      // AVAHI_PROTO_UNSPEC
-        (uint)0, // flags
+    QDBusMessage const reply = m_entryGroup->call(u"AddService"_s,
+        -1,                   // AVAHI_IF_UNSPEC
+        -1,                   // AVAHI_PROTO_UNSPEC
+        static_cast<uint>(0), // flags
         serviceName, u"_FC9F5ED42C8A._tcp"_s, u"local"_s,
         QString(), // host
         QVariant::fromValue<quint16>(port), QVariant::fromValue(txtRecord));
@@ -147,7 +147,7 @@ bool QuickShareDiscovery::advertise(const QString& deviceName, int port) {
         return false;
     }
 
-    QDBusMessage commitReply = m_entryGroup->call(u"Commit"_s);
+    QDBusMessage const commitReply = m_entryGroup->call(u"Commit"_s);
     if (commitReply.type() == QDBusMessage::ErrorMessage) {
         qWarning() << "QuickShareDiscovery: Commit failed:" << commitReply.errorMessage();
         return false;
@@ -201,11 +201,11 @@ void QuickShareDiscovery::onItemNew(
     QDBusInterface avahiServer(
         u"org.freedesktop.Avahi"_s, u"/"_s, u"org.freedesktop.Avahi.Server"_s, QDBusConnection::systemBus());
 
-    QDBusReply<QDBusObjectPath> reply =
-        avahiServer.call(u"ServiceResolverNew"_s, interface, protocol, name, type, domain, -1, (uint)0);
+    QDBusReply<QDBusObjectPath> const reply =
+        avahiServer.call(u"ServiceResolverNew"_s, interface, protocol, name, type, domain, -1, static_cast<uint>(0));
 
     if (reply.isValid()) {
-        QString path = reply.value().path();
+        QString const path = reply.value().path();
         QDBusConnection::systemBus().connect(u"org.freedesktop.Avahi"_s, path,
             u"org.freedesktop.Avahi.ServiceResolver"_s, u"Found"_s, this, SLOT(onServiceResolved(QDBusMessage)));
     }
@@ -225,7 +225,7 @@ void QuickShareDiscovery::onServiceResolved(const QDBusMessage& msg) {
 
         for (const QByteArray& txt : txtRecords) {
             if (txt.startsWith("n=")) {
-                QByteArray b64 = txt.mid(2);
+                QByteArray const b64 = txt.mid(2);
                 QByteArray decoded =
                     QByteArray::fromBase64(b64, QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals);
                 if (decoded.isEmpty())
@@ -234,7 +234,7 @@ void QuickShareDiscovery::onServiceResolved(const QDBusMessage& msg) {
                     decoded = QByteArray::fromBase64(b64);
 
                 if (decoded.length() >= 18) {
-                    int nameLen = static_cast<unsigned char>(decoded[17]);
+                    int const nameLen = static_cast<unsigned char>(decoded[17]);
                     if (decoded.length() >= 18 + nameLen) {
                         device.name = QString::fromUtf8(decoded.mid(18, nameLen));
                     }

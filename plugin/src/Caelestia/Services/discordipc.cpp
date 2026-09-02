@@ -1,11 +1,11 @@
 #include "discordipc.hpp"
 
-#include <QCoreApplication>
-#include <QDataStream>
-#include <QDateTime>
-#include <QDebug>
-#include <QDir>
-#include <QStandardPaths>
+#include <qcoreapplication.h>
+#include <qdatastream.h>
+#include <qdatetime.h>
+#include <qdebug.h>
+#include <qdir.h>
+#include <qstandardpaths.h>
 
 namespace caelestia {
 
@@ -70,8 +70,8 @@ void DiscordIpc::checkReconnect() {
     if (m_socket->state() == QLocalSocket::ConnectedState || m_socket->state() == QLocalSocket::ConnectingState)
         return;
 
-    QString runtimeDir = QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation);
-    QString pipePath = runtimeDir + u"/discord-ipc-0"_s;
+    QString const runtimeDir = QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation);
+    QString const pipePath = runtimeDir + u"/discord-ipc-0"_s;
 
     m_socket->connectToServer(pipePath);
 }
@@ -112,10 +112,10 @@ void DiscordIpc::onReadyRead() {
             break; // Wait for more data
         }
 
-        QByteArray payloadData = m_buffer.mid(8, length);
+        QByteArray const payloadData = m_buffer.mid(8, length);
         m_buffer.remove(0, 8 + length);
 
-        QJsonDocument doc = QJsonDocument::fromJson(payloadData);
+        QJsonDocument const doc = QJsonDocument::fromJson(payloadData);
         if (doc.isObject()) {
             processPayload(opcode, doc.object());
         }
@@ -139,8 +139,8 @@ void DiscordIpc::sendFrame(int opcode, const QJsonObject& payload) {
     if (m_socket->state() != QLocalSocket::ConnectedState)
         return;
 
-    QJsonDocument doc(payload);
-    QByteArray data = doc.toJson(QJsonDocument::Compact);
+    QJsonDocument const doc(payload);
+    QByteArray const data = doc.toJson(QJsonDocument::Compact);
 
     QByteArray header;
     QDataStream stream(&header, QIODevice::WriteOnly);

@@ -1,9 +1,9 @@
 #pragma once
 
-#include <openssl/evp.h>
+#include <qbytearray.h>
+#include <qstring.h>
 
-#include <QByteArray>
-#include <QString>
+#include <openssl/evp.h>
 
 namespace caelestia::services {
 
@@ -26,19 +26,19 @@ public:
     QByteArray encryptPayload(const QByteArray& plaintext);
     QByteArray decryptPayload(const QByteArray& ciphertext);
 
-    bool isHandshakeComplete() const { return m_handshakeComplete; }
+    [[nodiscard]] [[nodiscard]] bool isHandshakeComplete() const { return m_handshakeComplete; }
 
-    bool isClient() const { return !m_isServer; }
+    [[nodiscard]] [[nodiscard]] bool isClient() const { return !m_isServer; }
 
-    QByteArray encodeKey() const { return m_encodeKey; }
+    [[nodiscard]] [[nodiscard]] QByteArray encodeKey() const { return m_encodeKey; }
 
-    QByteArray decodeKey() const { return m_decodeKey; }
+    [[nodiscard]] [[nodiscard]] QByteArray decodeKey() const { return m_decodeKey; }
 
-    QByteArray hmacEncodeKey() const { return m_hmacEncodeKey; }
+    [[nodiscard]] [[nodiscard]] QByteArray hmacEncodeKey() const { return m_hmacEncodeKey; }
 
-    QByteArray hmacDecodeKey() const { return m_hmacDecodeKey; }
+    [[nodiscard]] [[nodiscard]] QByteArray hmacDecodeKey() const { return m_hmacDecodeKey; }
 
-    QString pinCode() const;
+    [[nodiscard]] [[nodiscard]] QString pinCode() const;
 
 private:
     void generateDhKeypair();

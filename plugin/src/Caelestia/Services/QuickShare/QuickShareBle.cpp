@@ -1,11 +1,10 @@
 #include "QuickShareBle.hpp"
 
-#include <QDBusConnection>
-#include <QDBusMessage>
-#include <QDBusPendingCall>
-#include <QDBusPendingCallWatcher>
-#include <QDBusPendingReply>
-#include <QDebug>
+#include <qdbusconnection.h>
+#include <qdbusmessage.h>
+#include <qdbuspendingcall.h>
+#include <qdbuspendingreply.h>
+#include <qdebug.h>
 
 // --------------------------------------------------------------------------------
 // QuickShareBleAdvertisementAdaptor
@@ -16,9 +15,10 @@ QuickShareBleAdvertisementAdaptor::QuickShareBleAdvertisementAdaptor(QObject* pa
 
 QVariantMap QuickShareBleAdvertisementAdaptor::serviceData() const {
     QVariantMap map;
-    const char rawData[] = { (char)252, 18, (char)142, 1, 66, 0, 0, 0, 0, 0, 0, 0, 0, 0, (char)191, 45, 91, (char)160,
-        (char)225, (char)216, 117, 36, (char)202, 0 };
-    QByteArray data(rawData, 24);
+    const char rawData[] = { static_cast<char>(252), 18, static_cast<char>(142), 1, 66, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        static_cast<char>(191), 45, 91, static_cast<char>(160), static_cast<char>(225), static_cast<char>(216), 117, 36,
+        static_cast<char>(202), 0 };
+    QByteArray const data(rawData, 24);
     map.insert(u"0000fe2c-0000-1000-8000-00805f9b34fb"_s, QVariant::fromValue(data));
     return map;
 }
@@ -48,7 +48,7 @@ void QuickShareBleAdvertiser::startAdvertising() {
     if (m_isAdvertising)
         return;
 
-    QDBusMessage msg = QDBusMessage::createMethodCall(
+    QDBusMessage const msg = QDBusMessage::createMethodCall(
         u"org.bluez"_s, u"/"_s, u"org.freedesktop.DBus.ObjectManager"_s, u"GetManagedObjects"_s);
 
     QDBusConnection::systemBus().callWithCallback(msg, this, SLOT(onGetManagedObjectsFinished(QDBusMessage)));
@@ -71,7 +71,7 @@ void QuickShareBleAdvertiser::onGetManagedObjectsFinished(const QDBusMessage& re
         return;
     }
 
-    const QDBusArgument arg = reply.arguments().at(0).value<QDBusArgument>();
+    const auto arg = reply.arguments().at(0).value<QDBusArgument>();
     QMap<QDBusObjectPath, QMap<QString, QVariantMap>> objects;
     arg >> objects;
 
@@ -123,7 +123,7 @@ void QuickShareBleScanner::startScanning() {
     if (m_isScanning)
         return;
 
-    QDBusMessage msg = QDBusMessage::createMethodCall(
+    QDBusMessage const msg = QDBusMessage::createMethodCall(
         u"org.bluez"_s, u"/"_s, u"org.freedesktop.DBus.ObjectManager"_s, u"GetManagedObjects"_s);
 
     QDBusConnection::systemBus().callWithCallback(msg, this, SLOT(onGetManagedObjectsFinished(QDBusMessage)));
@@ -133,7 +133,7 @@ void QuickShareBleScanner::stopScanning() {
     if (!m_isScanning || m_adapterPath.isEmpty())
         return;
 
-    QDBusMessage msg =
+    QDBusMessage const msg =
         QDBusMessage::createMethodCall(u"org.bluez"_s, m_adapterPath, u"org.bluez.Adapter1"_s, u"StopDiscovery"_s);
     QDBusConnection::systemBus().call(msg);
     m_isScanning = false;
@@ -145,7 +145,7 @@ void QuickShareBleScanner::onGetManagedObjectsFinished(const QDBusMessage& reply
         return;
     }
 
-    const QDBusArgument arg = reply.arguments().at(0).value<QDBusArgument>();
+    const auto arg = reply.arguments().at(0).value<QDBusArgument>();
     QMap<QDBusObjectPath, QMap<QString, QVariantMap>> objects;
     arg >> objects;
 
@@ -174,7 +174,7 @@ void QuickShareBleScanner::onSetDiscoveryFilterFinished(const QDBusMessage& repl
         qWarning() << "Failed to set discovery filter:" << reply.errorMessage();
     }
 
-    QDBusMessage startMsg =
+    QDBusMessage const startMsg =
         QDBusMessage::createMethodCall(u"org.bluez"_s, m_adapterPath, u"org.bluez.Adapter1"_s, u"StartDiscovery"_s);
     QDBusConnection::systemBus().callWithCallback(startMsg, this, SLOT(onStartDiscoveryFinished(QDBusMessage)));
 }
@@ -191,7 +191,7 @@ void QuickShareBleScanner::onStartDiscoveryFinished(const QDBusMessage& reply) {
 void QuickShareBleScanner::onInterfacesAdded(
     const QDBusObjectPath& objectPath, const QMap<QString, QVariantMap>& interfacesAndProperties) {
     if (interfacesAndProperties.contains(u"org.bluez.Device1"_s)) {
-        QVariantMap props = interfacesAndProperties.value(u"org.bluez.Device1"_s);
+        QVariantMap const props = interfacesAndProperties.value(u"org.bluez.Device1"_s);
         checkDeviceProperties(props);
 
         QDBusConnection::systemBus().connect(u"org.bluez"_s, objectPath.path(), u"org.freedesktop.DBus.Properties"_s,
@@ -209,26 +209,26 @@ void QuickShareBleScanner::onPropertiesChanged(
 
 void QuickShareBleScanner::checkDeviceProperties(const QVariantMap& props) {
     if (props.contains(u"ServiceData"_s)) {
-        const QDBusArgument arg = props.value(u"ServiceData"_s).value<QDBusArgument>();
+        const auto arg = props.value(u"ServiceData"_s).value<QDBusArgument>();
         QMap<QString, QVariant> serviceData;
         arg >> serviceData;
 
         // Sometimes QDBusArgument converts to QMap<QString, QByteArray> or QVariant
         if (serviceData.contains(u"0000fe2c-0000-1000-8000-00805f9b34fb"_s)) {
             QByteArray data;
-            QVariant val = serviceData.value(u"0000fe2c-0000-1000-8000-00805f9b34fb"_s);
+            QVariant const val = serviceData.value(u"0000fe2c-0000-1000-8000-00805f9b34fb"_s);
             if (val.userType() == QMetaType::QByteArray) {
                 data = val.toByteArray();
             } else if (val.canConvert<QDBusArgument>()) {
-                const QDBusArgument barg = val.value<QDBusArgument>();
+                const auto barg = val.value<QDBusArgument>();
                 barg >> data;
             }
 
             if (!data.isEmpty()) {
-                QDateTime now = QDateTime::currentDateTime();
+                QDateTime const now = QDateTime::currentDateTime();
                 if (!m_lastEmit.isValid() || m_lastEmit.msecsTo(now) > 10000) {
                     m_lastEmit = now;
-                    QString address = props.value(u"Address"_s).toString();
+                    QString const address = props.value(u"Address"_s).toString();
                     emit deviceFound(address, data);
                     qDebug() << "QuickShareBleScanner found device:" << address;
                 }

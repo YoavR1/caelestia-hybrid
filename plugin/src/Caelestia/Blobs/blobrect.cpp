@@ -58,8 +58,8 @@ void BlobRect::updatePhysics() {
     const float dt = static_cast<float>(m_elapsed.restart()) / 1000.0f;
 
     // Check for teleport (instant jump > 300px) to prevent spring physics explosion
-    const float dx = static_cast<float>(scenePos.x() - m_prevScenePos.x());
-    const float dy = static_cast<float>(scenePos.y() - m_prevScenePos.y());
+    const auto dx = static_cast<float>(scenePos.x() - m_prevScenePos.x());
+    const auto dy = static_cast<float>(scenePos.y() - m_prevScenePos.y());
     if (std::sqrt(dx * dx + dy * dy) > 300.0f) {
         m_prevScenePos = scenePos;
         m_dm00 = 1.0f;

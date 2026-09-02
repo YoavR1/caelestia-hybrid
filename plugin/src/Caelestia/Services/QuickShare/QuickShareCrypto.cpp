@@ -1,5 +1,7 @@
 #include "QuickShareCrypto.hpp"
 
+#include <qdebug.h>
+
 #include <openssl/ec.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
@@ -8,7 +10,6 @@
 #include <openssl/rand.h>
 #include <openssl/sha.h>
 
-#include <QDebug>
 #include <string>
 
 #include "securemessage.pb.h"
@@ -22,31 +23,31 @@ static QByteArray hkdfInternal(
     const EVP_MD* md, const QByteArray& salt, const QByteArray& ikm, const QByteArray& info, size_t outLen) {
     EVP_PKEY_CTX* pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_HKDF, nullptr);
     if (!pctx)
-        return QByteArray();
+        return {};
     if (EVP_PKEY_derive_init(pctx) <= 0) {
         EVP_PKEY_CTX_free(pctx);
-        return QByteArray();
+        return {};
     }
     if (EVP_PKEY_CTX_set_hkdf_md(pctx, md) <= 0) {
         EVP_PKEY_CTX_free(pctx);
-        return QByteArray();
+        return {};
     }
     if (!salt.isEmpty()) {
         if (EVP_PKEY_CTX_set1_hkdf_salt(pctx, reinterpret_cast<const unsigned char*>(salt.constData()), salt.size()) <=
             0) {
             EVP_PKEY_CTX_free(pctx);
-            return QByteArray();
+            return {};
         }
     }
     if (EVP_PKEY_CTX_set1_hkdf_key(pctx, reinterpret_cast<const unsigned char*>(ikm.constData()), ikm.size()) <= 0) {
         EVP_PKEY_CTX_free(pctx);
-        return QByteArray();
+        return {};
     }
     if (!info.isEmpty()) {
         if (EVP_PKEY_CTX_add1_hkdf_info(pctx, reinterpret_cast<const unsigned char*>(info.constData()), info.size()) <=
             0) {
             EVP_PKEY_CTX_free(pctx);
-            return QByteArray();
+            return {};
         }
     }
     QByteArray out;
@@ -54,7 +55,7 @@ static QByteArray hkdfInternal(
     size_t out_len = outLen;
     if (EVP_PKEY_derive(pctx, reinterpret_cast<unsigned char*>(out.data()), &out_len) <= 0) {
         EVP_PKEY_CTX_free(pctx);
-        return QByteArray();
+        return {};
     }
     EVP_PKEY_CTX_free(pctx);
     return out;
@@ -107,7 +108,7 @@ void QuickShareCrypto::deriveKeys(const QByteArray& peerPublicKeyBytes) {
         EC_GROUP_free(group);
     }
 
-    QByteArray sharedSecret = extractSharedSecret(peerKey);
+    QByteArray const sharedSecret = extractSharedSecret(peerKey);
 
     if (peerKey) {
         EVP_PKEY_free(peerKey);
@@ -122,22 +123,22 @@ void QuickShareCrypto::deriveKeys(const QByteArray& peerPublicKeyBytes) {
     EVP_DigestFinal_ex(mdctx, reinterpret_cast<unsigned char*>(derivedSecret.data()), &mdLen);
     EVP_MD_CTX_free(mdctx);
 
-    QByteArray ukeyInfo = m_clientInitMsgData + m_serverInitMsgData;
+    QByteArray const ukeyInfo = m_clientInitMsgData + m_serverInitMsgData;
 
-    QByteArray authString = hkdfSha256("UKEY2 v1 auth", derivedSecret, ukeyInfo, 32);
-    QByteArray nextSecret = hkdfSha256("UKEY2 v1 next", derivedSecret, ukeyInfo, 32);
+    QByteArray const authString = hkdfSha256("UKEY2 v1 auth", derivedSecret, ukeyInfo, 32);
+    QByteArray const nextSecret = hkdfSha256("UKEY2 v1 next", derivedSecret, ukeyInfo, 32);
 
     m_authString = authString;
 
-    QByteArray salt1 = QByteArray::fromHex("82AA55A0D397F88346CA1CEE8D3909B95F13FA7DEB1D4AB38376B8256DA85510");
-    QByteArray d2dClient = hkdfSha256(salt1, nextSecret, QByteArray("client"), 32);
-    QByteArray d2dServer = hkdfSha256(salt1, nextSecret, QByteArray("server"), 32);
+    QByteArray const salt1 = QByteArray::fromHex("82AA55A0D397F88346CA1CEE8D3909B95F13FA7DEB1D4AB38376B8256DA85510");
+    QByteArray const d2dClient = hkdfSha256(salt1, nextSecret, QByteArray("client"), 32);
+    QByteArray const d2dServer = hkdfSha256(salt1, nextSecret, QByteArray("server"), 32);
 
-    QByteArray salt2 = QByteArray::fromHex("BF9D2A53C63616D75DB0A7165B91C1EF73E537F2427405FA23610A4BE657642E");
-    QByteArray clientKey = hkdfSha256(salt2, d2dClient, QByteArray("ENC:2"), 32);
-    QByteArray clientHmacKey = hkdfSha256(salt2, d2dClient, QByteArray("SIG:1"), 32);
-    QByteArray serverKey = hkdfSha256(salt2, d2dServer, QByteArray("ENC:2"), 32);
-    QByteArray serverHmacKey = hkdfSha256(salt2, d2dServer, QByteArray("SIG:1"), 32);
+    QByteArray const salt2 = QByteArray::fromHex("BF9D2A53C63616D75DB0A7165B91C1EF73E537F2427405FA23610A4BE657642E");
+    QByteArray const clientKey = hkdfSha256(salt2, d2dClient, QByteArray("ENC:2"), 32);
+    QByteArray const clientHmacKey = hkdfSha256(salt2, d2dClient, QByteArray("SIG:1"), 32);
+    QByteArray const serverKey = hkdfSha256(salt2, d2dServer, QByteArray("ENC:2"), 32);
+    QByteArray const serverHmacKey = hkdfSha256(salt2, d2dServer, QByteArray("SIG:1"), 32);
 
     if (m_isServer) {
         m_encodeKey = serverKey;
@@ -158,8 +159,8 @@ QString QuickShareCrypto::pinCode() const {
 
     int hash = 0;
     int multiplier = 1;
-    for (unsigned char byte : m_authString) {
-        int signedByte = static_cast<int>(static_cast<signed char>(byte));
+    for (unsigned char const byte : m_authString) {
+        int const signedByte = static_cast<int>(static_cast<signed char>(byte));
         hash = (hash + signedByte * multiplier) % kHashModulo;
         multiplier = (multiplier * kHashBaseMultiplier) % kHashModulo;
     }
@@ -169,7 +170,7 @@ QString QuickShareCrypto::pinCode() const {
 
 QByteArray QuickShareCrypto::extractSharedSecret(EVP_PKEY* peerKey) {
     if (!m_dhKey || !peerKey)
-        return QByteArray();
+        return {};
     EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(m_dhKey, nullptr);
     EVP_PKEY_derive_init(ctx);
     EVP_PKEY_derive_set_peer(ctx, peerKey);
@@ -177,7 +178,7 @@ QByteArray QuickShareCrypto::extractSharedSecret(EVP_PKEY* peerKey) {
     EVP_PKEY_derive(ctx, nullptr, &secretLen);
     QByteArray secret;
     secret.resize(secretLen);
-    EVP_PKEY_derive(ctx, (unsigned char*)secret.data(), &secretLen);
+    EVP_PKEY_derive(ctx, reinterpret_cast<unsigned char*>(secret.data()), &secretLen);
     EVP_PKEY_CTX_free(ctx);
     return secret;
 }
@@ -198,13 +199,13 @@ QByteArray QuickShareCrypto::processClientInit(const QByteArray& data) {
     m_clientInitMsgData = data;
     securegcm::Ukey2Message msg;
     if (!msg.ParseFromArray(data.constData(), data.size()))
-        return QByteArray();
+        return {};
     if (msg.message_type() != securegcm::Ukey2Message::CLIENT_INIT)
-        return QByteArray();
+        return {};
 
     securegcm::Ukey2ClientInit clientInit;
     if (!clientInit.ParseFromString(msg.message_data()))
-        return QByteArray();
+        return {};
 
     return generateServerInit();
 }
@@ -213,19 +214,19 @@ QByteArray QuickShareCrypto::processServerInit(const QByteArray& data) {
     m_serverInitMsgData = data;
     securegcm::Ukey2Message msg;
     if (!msg.ParseFromArray(data.constData(), data.size()))
-        return QByteArray();
+        return {};
     if (msg.message_type() != securegcm::Ukey2Message::SERVER_INIT)
-        return QByteArray();
+        return {};
 
     securegcm::Ukey2ServerInit serverInit;
     if (!serverInit.ParseFromString(msg.message_data()))
-        return QByteArray();
+        return {};
 
     securemessage::GenericPublicKey genericPubKey;
     if (!genericPubKey.ParseFromString(serverInit.public_key()))
-        return QByteArray();
+        return {};
     if (genericPubKey.type() != securemessage::EC_P256)
-        return QByteArray();
+        return {};
 
     std::string xRaw = genericPubKey.ec_p256_public_key().x();
     std::string yRaw = genericPubKey.ec_p256_public_key().y();
@@ -290,7 +291,7 @@ QByteArray QuickShareCrypto::generateClientInit() {
         if (ecKey) {
             const EC_GROUP* group = EC_KEY_get0_group(ecKey);
             const EC_POINT* point = EC_KEY_get0_public_key(ecKey);
-            size_t len = EC_POINT_point2oct(group, point, POINT_CONVERSION_UNCOMPRESSED, nullptr, 0, nullptr);
+            size_t const len = EC_POINT_point2oct(group, point, POINT_CONVERSION_UNCOMPRESSED, nullptr, 0, nullptr);
             QByteArray pubKeyBytes(len, '\0');
             EC_POINT_point2oct(group, point, POINT_CONVERSION_UNCOMPRESSED,
                 reinterpret_cast<unsigned char*>(pubKeyBytes.data()), len, nullptr);
@@ -347,7 +348,7 @@ QByteArray QuickShareCrypto::generateClientInit() {
     clientInit.set_version(1);
     QByteArray randData;
     randData.resize(32);
-    RAND_bytes((unsigned char*)randData.data(), 32);
+    RAND_bytes(reinterpret_cast<unsigned char*>(randData.data()), 32);
     clientInit.set_random(randData.constData(), 32);
     clientInit.set_next_protocol("AES_256_CBC-HMAC_SHA256");
 
@@ -371,7 +372,7 @@ QByteArray QuickShareCrypto::generateServerInit() {
     serverInit.set_version(1);
     QByteArray randData;
     randData.resize(32);
-    RAND_bytes((unsigned char*)randData.data(), 32);
+    RAND_bytes(reinterpret_cast<unsigned char*>(randData.data()), 32);
     serverInit.set_random(randData.constData(), 32);
     serverInit.set_handshake_cipher(securegcm::P256_SHA512);
 
@@ -381,7 +382,7 @@ QByteArray QuickShareCrypto::generateServerInit() {
         if (ecKey) {
             const EC_GROUP* group = EC_KEY_get0_group(ecKey);
             const EC_POINT* point = EC_KEY_get0_public_key(ecKey);
-            size_t len = EC_POINT_point2oct(group, point, POINT_CONVERSION_UNCOMPRESSED, nullptr, 0, nullptr);
+            size_t const len = EC_POINT_point2oct(group, point, POINT_CONVERSION_UNCOMPRESSED, nullptr, 0, nullptr);
             QByteArray pubKeyBytes;
             pubKeyBytes.resize(len);
             EC_POINT_point2oct(group, point, POINT_CONVERSION_UNCOMPRESSED,
@@ -440,22 +441,23 @@ QByteArray QuickShareCrypto::encryptPayload(const QByteArray& plaintext) {
 
     QByteArray iv;
     iv.resize(16);
-    RAND_bytes((unsigned char*)iv.data(), iv.size());
+    RAND_bytes(reinterpret_cast<unsigned char*>(iv.data()), iv.size());
 
     EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
-    EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, (const unsigned char*)m_encodeKey.constData(),
-        (const unsigned char*)iv.constData());
+    EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, reinterpret_cast<const unsigned char*>(m_encodeKey.constData()),
+        reinterpret_cast<const unsigned char*>(iv.constData()));
 
     QByteArray ciphertext;
     ciphertext.resize(plaintext.size() + EVP_CIPHER_block_size(EVP_aes_256_cbc()));
-    int len1 = 0, len2 = 0;
-    EVP_EncryptUpdate(
-        ctx, (unsigned char*)ciphertext.data(), &len1, (const unsigned char*)plaintext.constData(), plaintext.size());
-    EVP_EncryptFinal_ex(ctx, (unsigned char*)ciphertext.data() + len1, &len2);
+    int len1 = 0;
+    int len2 = 0;
+    EVP_EncryptUpdate(ctx, reinterpret_cast<unsigned char*>(ciphertext.data()), &len1,
+        reinterpret_cast<const unsigned char*>(plaintext.constData()), plaintext.size());
+    EVP_EncryptFinal_ex(ctx, reinterpret_cast<unsigned char*>(ciphertext.data()) + len1, &len2);
     EVP_CIPHER_CTX_free(ctx);
     ciphertext.resize(len1 + len2);
 
-    QByteArray hmacData = iv + ciphertext;
+    QByteArray const hmacData = iv + ciphertext;
     QByteArray hmac;
     hmac.resize(32);
     unsigned int hmacLen = 0;
@@ -471,13 +473,13 @@ QByteArray QuickShareCrypto::decryptPayload(const QByteArray& ciphertextBytes) {
         return ciphertextBytes;
 
     if (ciphertextBytes.size() < 16 + 32)
-        return QByteArray();
+        return {};
 
-    QByteArray iv = ciphertextBytes.left(16);
-    QByteArray hmac = ciphertextBytes.right(32);
-    QByteArray ciphertext = ciphertextBytes.mid(16, ciphertextBytes.size() - 16 - 32);
+    QByteArray const iv = ciphertextBytes.left(16);
+    QByteArray const hmac = ciphertextBytes.right(32);
+    QByteArray const ciphertext = ciphertextBytes.mid(16, ciphertextBytes.size() - 16 - 32);
 
-    QByteArray hmacData = iv + ciphertext;
+    QByteArray const hmacData = iv + ciphertext;
     QByteArray expectedHmac;
     expectedHmac.resize(32);
     unsigned int hmacLen = 0;
@@ -486,7 +488,7 @@ QByteArray QuickShareCrypto::decryptPayload(const QByteArray& ciphertextBytes) {
         reinterpret_cast<unsigned char*>(expectedHmac.data()), &hmacLen);
 
     if (hmac != expectedHmac) {
-        return QByteArray();
+        return {};
     }
 
     EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
@@ -496,7 +498,8 @@ QByteArray QuickShareCrypto::decryptPayload(const QByteArray& ciphertextBytes) {
     QByteArray plaintext;
     plaintext.resize(ciphertext.size());
 
-    int len1 = 0, len2 = 0;
+    int len1 = 0;
+    int len2 = 0;
     EVP_DecryptUpdate(ctx, reinterpret_cast<unsigned char*>(plaintext.data()), &len1,
         reinterpret_cast<const unsigned char*>(ciphertext.constData()), ciphertext.size());
     EVP_DecryptFinal_ex(ctx, reinterpret_cast<unsigned char*>(plaintext.data()) + len1, &len2);

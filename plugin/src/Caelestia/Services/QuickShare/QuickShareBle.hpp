@@ -1,13 +1,13 @@
 #pragma once
 
-#include <QDBusAbstractAdaptor>
-#include <QDBusMessage>
-#include <QDBusObjectPath>
-#include <QDateTime>
-#include <QObject>
-#include <QString>
-#include <QStringList>
-#include <QVariantMap>
+#include <qdatetime.h>
+#include <qdbusabstractadaptor.h>
+#include <qdbusextratypes.h>
+#include <qdbusmessage.h>
+#include <qobject.h>
+#include <qstring.h>
+#include <qstringlist.h>
+#include <qvariantmap.h>
 
 using Qt::StringLiterals::operator""_s;
 
@@ -21,14 +21,18 @@ class QuickShareBleAdvertisementAdaptor : public QDBusAbstractAdaptor {
 public:
     explicit QuickShareBleAdvertisementAdaptor(QObject* parent);
 
-    QString type() const { return u"broadcast"_s; }
+    // NOLINTNEXTLINE(readability-convert-member-functions-to-static): moc requires a
+    // member function for a Q_PROPERTY READ accessor.
+    [[nodiscard]] QString type() const { return u"broadcast"_s; }
 
-    QStringList serviceUUIDs() const { return { u"0000fe2c-0000-1000-8000-00805f9b34fb"_s }; }
+    // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+    [[nodiscard]] QStringList serviceUUIDs() const { return { u"0000fe2c-0000-1000-8000-00805f9b34fb"_s }; }
 
-    QVariantMap serviceData() const;
+    // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+    [[nodiscard]] QVariantMap serviceData() const;
 
 public slots:
-    void Release();
+    static void Release();
 };
 
 class QuickShareBleAdvertiser : public QObject {

@@ -1,10 +1,10 @@
 #pragma once
 
-#include <QDBusInterface>
-#include <QObject>
-#include <QString>
-#include <QTimer>
-#include <QVariantMap>
+#include <qdbusinterface.h>
+#include <qobject.h>
+#include <qstring.h>
+#include <qtimer.h>
+#include <qvariantmap.h>
 
 namespace caelestia::services {
 

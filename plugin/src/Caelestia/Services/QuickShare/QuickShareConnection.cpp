@@ -1,17 +1,17 @@
 #include "QuickShareConnection.hpp"
 
+#include <qdebug.h>
+#include <qdir.h>
+#include <qendian.h>
+#include <qfile.h>
+#include <qfileinfo.h>
+#include <qmimedatabase.h>
+#include <qmimetype.h>
+#include <qrandom.h>
+#include <qsysinfo.h>
+
 #include <openssl/hmac.h>
 #include <openssl/rand.h>
-
-#include <QDebug>
-#include <QDir>
-#include <QFile>
-#include <QFileInfo>
-#include <QMimeDatabase>
-#include <QMimeType>
-#include <QRandomGenerator>
-#include <QSysInfo>
-#include <QtEndian>
 
 #include "device_to_device_messages.pb.h"
 #include "offline_wire_formats.pb.h"
@@ -114,7 +114,7 @@ void QuickShareConnection::sendFile(const QString& filePath) {
     if (m_state != ConnectionAccepted)
         return;
 
-    QFileInfo fileInfo(filePath);
+    QFileInfo const fileInfo(filePath);
     if (!fileInfo.exists()) {
         qWarning() << "QuickShareConnection: File to send does not exist:" << filePath;
         emit transferFinished(false);
@@ -133,8 +133,8 @@ void QuickShareConnection::sendFile(const QString& filePath) {
     auto* fileMeta = intro->add_file_metadata();
     fileMeta->set_name(fileInfo.fileName().toStdString());
 
-    QMimeDatabase db;
-    QMimeType mimeType = db.mimeTypeForFile(fileInfo);
+    QMimeDatabase const db;
+    QMimeType const mimeType = db.mimeTypeForFile(fileInfo);
     QString mimeString = mimeType.name();
     if (mimeString.isEmpty())
         mimeString = u"application/octet-stream"_s;
@@ -192,8 +192,8 @@ void QuickShareConnection::sendEncryptedSharingFrame(const sharing::nearby::Fram
     frameData.resize(frame.ByteSizeLong());
     (void)frame.SerializeToArray(frameData.data(), static_cast<int>(frameData.size()));
 
-    qint64 payloadId = QRandomGenerator::global()->generate64();
-    qint64 bodySize = frameData.size();
+    qint64 const payloadId = QRandomGenerator::global()->generate64();
+    qint64 const bodySize = frameData.size();
 
     location::nearby::connections::PayloadTransferFrame ptf1;
     auto* header1 = ptf1.mutable_payload_header();
@@ -320,7 +320,7 @@ void QuickShareConnection::onReadyRead() {
             break;
         }
 
-        QByteArray frameData = m_buffer.mid(4, length);
+        QByteArray const frameData = m_buffer.mid(4, length);
         m_buffer.remove(0, 4 + length);
 
         switch (m_state) {
@@ -379,7 +379,7 @@ void QuickShareConnection::handleUkey2(const QByteArray& data) {
         securegcm::Ukey2Message msg;
         if (msg.ParseFromArray(data.constData(), static_cast<int>(data.size()))) {
             if (msg.message_type() == securegcm::Ukey2Message::CLIENT_INIT) {
-                QByteArray serverInit = m_crypto.processClientInit(data);
+                QByteArray const serverInit = m_crypto.processClientInit(data);
                 if (serverInit.isEmpty()) {
                     qWarning() << "QuickShareConnection: m_crypto.processClientInit failed";
                 } else {
@@ -387,7 +387,7 @@ void QuickShareConnection::handleUkey2(const QByteArray& data) {
                 }
             } else if (msg.message_type() == securegcm::Ukey2Message::SERVER_INIT) {
                 (void)m_crypto.processServerInit(data);
-                QByteArray clientFinished = m_crypto.generateClientFinished();
+                QByteArray const clientFinished = m_crypto.generateClientFinished();
                 writeLengthPrefixed(m_socket, clientFinished);
 
                 location::nearby::connections::OfflineFrame respFrame;
@@ -413,7 +413,7 @@ void QuickShareConnection::handleUkey2(const QByteArray& data) {
                 } else {
                     m_state = PostHandshake;
                     emit stateChanged(m_state);
-                    QString pin = m_crypto.pinCode();
+                    QString const pin = m_crypto.pinCode();
                     emit pinCodeReady(pin);
                 }
             }
@@ -481,7 +481,8 @@ QByteArray QuickShareConnection::wrapInSecureMessage(const QByteArray& offlineFr
 
     QByteArray ciphertext;
     ciphertext.resize(d2dData.size() + EVP_CIPHER_block_size(EVP_aes_256_cbc()));
-    int len1 = 0, len2 = 0;
+    int len1 = 0;
+    int len2 = 0;
     EVP_EncryptUpdate(ctx, reinterpret_cast<unsigned char*>(ciphertext.data()), &len1,
         reinterpret_cast<const unsigned char*>(d2dData.constData()), d2dData.size());
     EVP_EncryptFinal_ex(ctx, reinterpret_cast<unsigned char*>(ciphertext.data()) + len1, &len2);
@@ -529,7 +530,7 @@ QByteArray QuickShareConnection::unwrapSecureMessage(const QByteArray& secureMes
     securemessage::SecureMessage secMsg;
     if (!secMsg.ParseFromArray(secureMessageData.constData(), static_cast<int>(secureMessageData.size()))) {
         qWarning() << "QuickShareConnection: Failed to parse SecureMessage";
-        return QByteArray();
+        return {};
     }
 
     const QByteArray headerAndBodyBytes(secMsg.header_and_body().data(), secMsg.header_and_body().size());
@@ -543,18 +544,18 @@ QByteArray QuickShareConnection::unwrapSecureMessage(const QByteArray& secureMes
     if (static_cast<int>(hmacLen) != secMsg.signature().size() ||
         memcmp(hmacResult, secMsg.signature().data(), hmacLen) != 0) {
         qWarning() << "QuickShareConnection: HMAC verification failed";
-        return QByteArray();
+        return {};
     }
 
     securemessage::HeaderAndBody headerAndBody;
     if (!headerAndBody.ParseFromArray(headerAndBodyBytes.constData(), static_cast<int>(headerAndBodyBytes.size()))) {
         qWarning() << "QuickShareConnection: Failed to parse HeaderAndBody";
-        return QByteArray();
+        return {};
     }
 
     const auto& header = headerAndBody.header();
-    QByteArray iv(header.iv().data(), header.iv().size());
-    QByteArray ciphertext(headerAndBody.body().data(), headerAndBody.body().size());
+    QByteArray const iv(header.iv().data(), header.iv().size());
+    QByteArray const ciphertext(headerAndBody.body().data(), headerAndBody.body().size());
 
     EVP_CIPHER_CTX* ctx = EVP_CIPHER_CTX_new();
     EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr,
@@ -563,7 +564,8 @@ QByteArray QuickShareConnection::unwrapSecureMessage(const QByteArray& secureMes
 
     QByteArray plaintext;
     plaintext.resize(ciphertext.size() + EVP_CIPHER_block_size(EVP_aes_256_cbc()));
-    int len1 = 0, len2 = 0;
+    int len1 = 0;
+    int len2 = 0;
     EVP_DecryptUpdate(ctx, reinterpret_cast<unsigned char*>(plaintext.data()), &len1,
         reinterpret_cast<const unsigned char*>(ciphertext.constData()), ciphertext.size());
     EVP_DecryptFinal_ex(ctx, reinterpret_cast<unsigned char*>(plaintext.data()) + len1, &len2);
@@ -573,14 +575,16 @@ QByteArray QuickShareConnection::unwrapSecureMessage(const QByteArray& secureMes
     securegcm::DeviceToDeviceMessage d2dMsg;
     if (!d2dMsg.ParseFromArray(plaintext.constData(), static_cast<int>(plaintext.size()))) {
         qWarning() << "QuickShareConnection: Failed to parse DeviceToDeviceMessage";
-        return QByteArray();
+        return {};
     }
 
-    return QByteArray(d2dMsg.message().data(), d2dMsg.message().size());
+    // Not a braced init list: protobuf's size() is size_t and QByteArray's is qsizetype,
+    // and braces make that narrowing an error rather than a conversion.
+    return QByteArray(d2dMsg.message().data(), static_cast<qsizetype>(d2dMsg.message().size()));
 }
 
 void QuickShareConnection::handleEncryptedFrame(const QByteArray& data) {
-    QByteArray plaintext = unwrapSecureMessage(data);
+    QByteArray const plaintext = unwrapSecureMessage(data);
     if (plaintext.isEmpty()) {
         qWarning() << "QuickShareConnection: Failed to unwrap encrypted frame";
         return;
@@ -613,8 +617,8 @@ void QuickShareConnection::handlePayloadTransfer(const QByteArray& plaintext) {
     const auto& payloadHeader = payloadTransfer.payload_header();
     const auto& payloadChunk = payloadTransfer.payload_chunk();
 
-    qint64 payloadId = payloadHeader.id();
-    QByteArray chunkBody(payloadChunk.body().data(), payloadChunk.body().size());
+    qint64 const payloadId = payloadHeader.id();
+    QByteArray const chunkBody(payloadChunk.body().data(), payloadChunk.body().size());
 
     if (payloadHeader.type() == location::nearby::connections::PayloadTransferFrame::PayloadHeader::FILE) {
         if (!m_fileTransferActive) {
@@ -633,7 +637,7 @@ void QuickShareConnection::handlePayloadTransfer(const QByteArray& plaintext) {
         emit transferProgress(m_fileBuffer.size(), m_incomingFileSize);
 
         if ((payloadChunk.flags() & 1) == 1) {
-            QString savePath = QDir::homePath() + u"/Downloads/"_s + m_incomingFileName;
+            QString const savePath = QDir::homePath() + u"/Downloads/"_s + m_incomingFileName;
             QFile file(savePath);
             if (file.open(QIODevice::WriteOnly)) {
                 file.write(m_fileBuffer);
@@ -706,7 +710,7 @@ void QuickShareConnection::handlePayloadTransfer(const QByteArray& plaintext) {
                                 const qint64 CHUNK_SIZE = 1024 * 1024; // 1MB chunks
 
                                 while (!file.atEnd()) {
-                                    QByteArray fileData = file.read(CHUNK_SIZE);
+                                    QByteArray const fileData = file.read(CHUNK_SIZE);
 
                                     location::nearby::connections::PayloadTransferFrame ptfFile;
                                     auto* headerF = ptfFile.mutable_payload_header();
