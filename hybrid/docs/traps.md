@@ -420,11 +420,25 @@ the real config.** `services/Colours.qml:130` does exactly that:
 Component.onCompleted: root.requestReloadHyprRules()
 ```
 
-and the first call is not debounced, so on a Lua setup it sends
+and the first call is not debounced, so on a Lua setup it sent
 `keyword layerrule blur ..., match:namespace caelestia-drawers` — which Hyprland rejects.
-Blur and `ignore_alpha` for the drawers, polkit and desktop-lyrics layer surfaces are
-silently never applied. Not yet fixed; the fix is to re-run on `usingLuaChanged` rather
-than only at `Component.onCompleted`.
+Blur and `ignore_alpha` for the drawers, polkit and desktop-lyrics layer surfaces were
+silently never applied.
+
+Fixed by resending from `onUsingLuaChanged` on the `Hypr` singleton. Verified by
+instrumenting the handler and booting under each config:
+
+```
+lua   TMPPROBE onCompleted, usingLua = false
+lua   TMPPROBE onUsingLuaChanged fired, usingLua = true     <- resend, correct spelling
+conf  TMPPROBE onCompleted, usingLua = false                <- correct already, no resend
+```
+
+**Connect to `Hypr`, not to `Hyprland`.** Quickshell's `usingLua` is a
+`QObjectBindableProperty`; a QML binding on it re-evaluates, but
+`Connections { target: Hyprland; function onUsingLuaChanged() }` never fires. `Hypr`
+re-exposes it as an ordinary QML property (`readonly property bool usingLua:
+Hyprland.usingLua`), whose change signal does. Both were tested.
 
 `smoke-matrix.sh` boots under a Lua config by default and takes `--hypr conf` / `--hypr
 both`. Note what that does and does not cover: the axis genuinely flips `usingLua`, but

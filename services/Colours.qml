@@ -134,6 +134,14 @@ Singleton {
             root.reloadHyprRules();
         }
 
+        // usingLua is only known once Quickshell's IPC handshake lands, which is after
+        // Component.onCompleted -- so the startup call above always picks the legacy
+        // `keyword layerrule` spelling, and Hyprland rejects it on a lua config. Resend
+        // once the real answer arrives. See trap T17.
+        function onUsingLuaChanged(): void {
+            root.requestReloadHyprRules();
+        }
+
         target: Hypr
     }
 
