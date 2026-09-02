@@ -43,7 +43,8 @@ python3 scripts/qml-lint-conventions.py        # --fix handles all but section-o
 ./hybrid/tools/qml-lint.sh                     # or --summary for category counts
 
 # 4. Preset smoke matrix — the project's real gate
-./hybrid/tools/smoke-matrix.sh
+./hybrid/tools/smoke-matrix.sh              # nested Hyprland, lua config
+./hybrid/tools/smoke-matrix.sh --hypr both  # both Hyprland config formats
 ```
 
 Steps 2 and 3 mirror `.github/workflows/check-format.yml` and `lint.yml`. If those workflows
@@ -65,6 +66,17 @@ expected to fail on PanelWindow — its exit code is meaningless — and it is r
 
 `smoke-matrix.sh` spawns a **nested Hyprland**, then boots the shell under each preset against
 it in an isolated `XDG_CONFIG_HOME`, and kills it after a window.
+
+Two compositor backends:
+
+| | when | covers |
+|---|---|---|
+| Hyprland (default) | a display exists to nest in | everything, including Hyprland IPC and the `usingLua` lua/conf axis (`--hypr both`) |
+| headless sway (`--compositor sway`) | no display — CI, a tty, a container | load errors, unresolved types, binding errors. `Hypr.*` is inert |
+
+It picks automatically and says which it chose. Hyprland **cannot** run headless — see T12 — so
+CI uses sway, with `hybrid/tools/smoke-ignore-headless.txt` layered on top of the main ignore
+list for that run only.
 
 It cannot use `QT_QPA_PLATFORM=offscreen`: Quickshell's `PanelWindow` is a wlr-layer-shell
 surface, and with no Wayland backend it is unavailable — which poisons the entire singleton

@@ -11,10 +11,12 @@
 #   ./hybrid/tools/smoke-matrix.sh --keep-logs
 #   ./hybrid/tools/smoke-matrix.sh --baseline         # record environment noise
 #   ./hybrid/tools/smoke-matrix.sh --hypr both        # under both compositor configs
+#   ./hybrid/tools/smoke-matrix.sh --compositor sway  # headless sway, for CI
 #
 # Env:
 #   BUILD_DIR    default ./build
 #   QS           quickshell binary, default `qs`
+#   SWAY         sway binary, default `sway`
 #   SMOKE_SOCKET pre-existing WAYLAND_DISPLAY to test against instead of spawning
 #                a nested compositor. Must NOT be your live session (see below).
 #
@@ -23,6 +25,21 @@
 # ("No PanelWindow backend loaded"). QT_QPA_PLATFORM=offscreen therefore CANNOT boot
 # this shell. Upstream's lint.yml runs an offscreen `qs` only to emit .qmlls.ini for the
 # linter -- its exit code is never checked. So we spawn a nested Hyprland instead.
+#
+# HYPRLAND vs SWAY: Hyprland has no headless backend it will select on its own -- with no
+# parent Wayland or X11 display and no free DRM node it dies with `CBackend::create()
+# failed!`, and neither XDG_BACKEND nor WLR_BACKENDS changes that (aquamarine's headless
+# backend is a fallback for output management, not something you can ask for). So it cannot
+# run in a CI container. Headless sway can: it is wlroots, it implements wlr-layer-shell,
+# and `WLR_BACKENDS=headless WLR_RENDERER=pixman` needs no GPU at all. Without the pixman
+# renderer the shell loads and then dies on `importing the supplied dmabufs failed` ->
+# `Could not create EGL surface` -> Wayland protocol error.
+#
+# Hyprland is still the default where it can run, because sway loses everything that goes
+# through Hyprland IPC -- including the lua/conf axis below. The sway run is a narrower
+# gate: it still catches load errors, missing types and binding errors across every preset,
+# which is most of what this is for. Its extra environment noise lives in a separate
+# smoke-ignore-sway.txt so the Hyprland gate stays strict.
 #
 # LUA vs CONF: Hyprland 0.56 reads a Lua config if it finds one and calls the ini format
 # "legacy" in its own logs, so the nested compositor uses Lua by default.
@@ -53,15 +70,27 @@ cd "$ROOT"
 
 BUILD_DIR=${BUILD_DIR:-$ROOT/build}
 QS=${QS:-qs}
+SWAY=${SWAY:-sway}
 PRESET_DIR=$ROOT/hybrid/presets
 IGNORE_FILE=$ROOT/hybrid/tools/smoke-ignore.txt
+IGNORE_HEADLESS=$ROOT/hybrid/tools/smoke-ignore-headless.txt
 LOG_DIR=$ROOT/.smoke-logs
+# A CI container has no XDG_RUNTIME_DIR and no /run/user/<uid>. Wayland needs one, so
+# make a private one rather than failing in the compositor with something obscure.
 RUNTIME=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
+RUNTIME_TMP=""
+if [ ! -d "$RUNTIME" ]; then
+    RUNTIME_TMP=$(mktemp -d)
+    chmod 700 "$RUNTIME_TMP"
+    RUNTIME=$RUNTIME_TMP
+    export XDG_RUNTIME_DIR="$RUNTIME"
+fi
 
 TIMEOUT_S=15
 KEEP_LOGS=0
 BASELINE=0
 HYPR_FMTS=(lua)
+COMPOSITOR=auto
 WANTED=()
 
 while [ $# -gt 0 ]; do
@@ -69,6 +98,12 @@ while [ $# -gt 0 ]; do
         --timeout)   TIMEOUT_S=$2; shift 2 ;;
         --keep-logs) KEEP_LOGS=1; shift ;;
         --baseline)  BASELINE=1; KEEP_LOGS=1; shift ;;
+        --compositor)
+            case $2 in
+                hyprland|sway|auto) COMPOSITOR=$2 ;;
+                *) printf 'unknown --compositor value: %s (want hyprland, sway or auto)\n' "$2" >&2; exit 2 ;;
+            esac
+            shift 2 ;;
         --hypr)
             case $2 in
                 lua|conf) HYPR_FMTS=("$2") ;;
@@ -114,13 +149,52 @@ cleanup() {
         kill -KILL "-$COMP_PID" 2>/dev/null
     fi
     [ -n "$COMP_DIR" ] && rm -rf "$COMP_DIR"
+    [ -n "$RUNTIME_TMP" ] && rm -rf "$RUNTIME_TMP"
 }
 trap cleanup EXIT INT TERM
+
+# Sway is the CI path: wlroots, real wlr-layer-shell, and a headless backend that needs
+# no GPU. It knows nothing about Hyprland IPC, so it is a narrower gate -- see the header.
+start_sway() {
+    command -v "$SWAY" >/dev/null || {
+        printf '%s %s not found.\n' "$(red fail)" "$SWAY"
+        exit 2
+    }
+
+    COMP_DIR=$(mktemp -d)
+    printf 'output HEADLESS-1 mode 1920x1080@60Hz\ndefault_border none\n' > "$COMP_DIR/sway.conf"
+
+    local before after
+    before=$(ls "$RUNTIME" 2>/dev/null | grep -E '^wayland-[0-9]+$' | sort)
+
+    # pixman, not the GL renderer: a headless output has no scanout buffer, so Qt's EGL
+    # surface creation fails and the client is killed with a Wayland protocol error.
+    env -u WAYLAND_DISPLAY -u DISPLAY XDG_RUNTIME_DIR="$RUNTIME" \
+        WLR_BACKENDS=headless WLR_LIBINPUT_NO_DEVICES=1 WLR_RENDERER=pixman \
+        setsid "$SWAY" -c "$COMP_DIR/sway.conf" > "$COMP_DIR/compositor.log" 2>&1 &
+    COMP_PID=$!
+
+    for _ in $(seq 1 40); do
+        after=$(ls "$RUNTIME" 2>/dev/null | grep -E '^wayland-[0-9]+$' | sort)
+        SOCKET=$(comm -13 <(printf '%s\n' "$before") <(printf '%s\n' "$after") | head -1)
+        [ -n "$SOCKET" ] && break
+        kill -0 "$COMP_PID" 2>/dev/null || break
+        sleep 0.5
+    done
+
+    [ -n "$SOCKET" ] || {
+        printf '%s headless sway failed to start\n' "$(red fail)"
+        tail -15 "$COMP_DIR/compositor.log" | sed 's/^/      /'
+        exit 2
+    }
+    SIG=""
+}
 
 start_compositor() {
     command -v Hyprland >/dev/null || {
         printf '%s Hyprland not found, and no SMOKE_SOCKET given.\n' "$(red fail)"
         printf '      The shell needs a wlr-layer-shell compositor to instantiate PanelWindow.\n'
+        printf '      Headless sway works too:  --compositor sway\n'
         exit 2
     }
 
@@ -205,8 +279,15 @@ fi
 [ ${#presets[@]} -gt 0 ] || { printf '%s no presets in %s\n' "$(red fail)" "$PRESET_DIR"; exit 2; }
 
 filter_ignored() {
-    if [ -s "$IGNORE_FILE" ] && grep -qEv '^[[:space:]]*(#|$)' "$IGNORE_FILE" 2>/dev/null; then
-        grep -Ev -f <(grep -Ev '^[[:space:]]*(#|$)' "$IGNORE_FILE") || true
+    local files=("$IGNORE_FILE")
+    # Sway is not Hyprland and a CI container has no GPU, PipeWire or session bus. That
+    # noise is environmental *there* and a real signal under Hyprland, so it is a separate
+    # list rather than more entries in the main one.
+    [ "$COMPOSITOR" = sway ] && files+=("$IGNORE_HEADLESS")
+    local pats
+    pats=$(cat "${files[@]}" 2>/dev/null | grep -Ev '^[[:space:]]*(#|$)' || true)
+    if [ -n "$pats" ]; then
+        grep -Ev -f <(printf '%s\n' "$pats") || true
     else
         cat
     fi
@@ -291,18 +372,39 @@ if [ -n "${SMOKE_SOCKET:-}" ]; then
     printf 'smoke matrix: %d preset(s), %ss window each\n\n' "${#presets[@]}" "$TIMEOUT_S"
     for preset in "${presets[@]}"; do run_preset "$preset" ""; done
 else
-    for fmt in "${HYPR_FMTS[@]}"; do
-        printf 'starting nested compositor (%s config)... ' "$fmt"
-        start_compositor "$fmt"
+    if [ "$COMPOSITOR" = auto ]; then
+        if command -v Hyprland >/dev/null && [ -n "${WAYLAND_DISPLAY:-}${DISPLAY:-}" ]; then
+            COMPOSITOR=hyprland
+        elif command -v "$SWAY" >/dev/null; then
+            COMPOSITOR=sway
+            printf '%s no display to nest Hyprland in; falling back to headless sway\n' "$(yellow note)"
+        else
+            COMPOSITOR=hyprland   # let start_compositor print the real error
+        fi
+    fi
+
+    if [ "$COMPOSITOR" = sway ]; then
+        printf 'starting headless sway... '
+        start_sway
         printf 'up on %s\n' "$SOCKET"
         printf 'smoke matrix: %d preset(s), %ss window each\n\n' "${#presets[@]}" "$TIMEOUT_S"
-        for preset in "${presets[@]}"; do
-            run_preset "$preset" "$([ ${#HYPR_FMTS[@]} -gt 1 ] && printf '%s' "$fmt")"
-        done
+        for preset in "${presets[@]}"; do run_preset "$preset" "sway"; done
         cleanup
         COMP_PID=""; COMP_DIR=""; SOCKET=""; SIG=""
-        echo
-    done
+    else
+        for fmt in "${HYPR_FMTS[@]}"; do
+            printf 'starting nested Hyprland (%s config)... ' "$fmt"
+            start_compositor "$fmt"
+            printf 'up on %s\n' "$SOCKET"
+            printf 'smoke matrix: %d preset(s), %ss window each\n\n' "${#presets[@]}" "$TIMEOUT_S"
+            for preset in "${presets[@]}"; do
+                run_preset "$preset" "$([ ${#HYPR_FMTS[@]} -gt 1 ] && printf '%s' "$fmt")"
+            done
+            cleanup
+            COMP_PID=""; COMP_DIR=""; SOCKET=""; SIG=""
+            echo
+        done
+    fi
 fi
 
 echo

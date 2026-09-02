@@ -1,0 +1,37 @@
+name: Smoke matrix
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+
+    container:
+      image: ghcr.io/caelestia-dots/shell-arch-env:latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build
+        run: |
+          cmake -B build -G Ninja -DVERSION= -DGIT_REVISION=
+          cmake --build build
+
+      # Hyprland cannot run here: with no parent display and no DRM node it dies in
+      # CBackend::create(), and it has no headless backend to ask for. Sway does, and it
+      # speaks the only protocol PanelWindow actually needs -- wlr-layer-shell.
+      - name: Install headless compositor
+        run: pacman -Sy --noconfirm --needed sway
+
+      - name: Smoke matrix
+        run: ./hybrid/tools/smoke-matrix.sh --compositor sway --keep-logs
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: smoke-logs
+          path: .smoke-logs/

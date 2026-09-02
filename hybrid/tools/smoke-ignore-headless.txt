@@ -1,0 +1,32 @@
+# Additional noise suppressed ONLY under `--compositor sway` -- the headless backend, which
+# is how CI runs the matrix. Never applied to a Hyprland run, where every one of these
+# would be a real signal.
+#
+# Sway is wlroots and implements wlr-layer-shell, which is all PanelWindow needs, but it
+# advertises none of the hyprland-* protocols and speaks no Hyprland IPC. Anything the
+# shell reaches for through those is unavailable there by construction.
+#
+# Adding to this file narrows an already narrower gate. Prefer fixing, or running the
+# Hyprland matrix locally, over appending here.
+
+The active compositor does not support hyprland_global_shortcuts_v1
+GlobalShortcut will not work\.
+Compositor does not support hyprland-toplevel-mapping-v1
+
+# No Hyprland instance to talk to. Everything behind Hypr.* is inert under sway; that is
+# the coverage this backend trades away, and it is the reason Hyprland stays the default
+# wherever it can run.
+\$HYPRLAND_INSTANCE_SIGNATURE is unset
+Unable to connect to Hyprland socket
+Cannot connect to hyprland
+
+# A headless wlroots output has no DRM render node, so Quickshell cannot negotiate dmabuf
+# and falls back to shared memory. CI containers have no GPU at all and land here too.
+Failed to find render device: no render or primary node found
+Render format initialization failed\. All buffers will fall back to SHM
+
+# No audio server. A CI container has neither PipeWire nor PulseAudio, so the notification
+# sound player has no device to open.
+Failed to connect pipewire context\. Errno: 112
+PulseAudioService: pa_context_connect\(\) failed
+QSoundEffect: playback of this format is not supported on the selected audio device

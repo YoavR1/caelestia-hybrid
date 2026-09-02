@@ -300,8 +300,30 @@ code is never checked — it is *expected* to fail this way.
   With neither it dies with `CBackend::create() failed!`.
 - `--socket NAME` does **not** name a new socket; it requires `--wayland-fd` and is for socket
   handover. Let Hyprland pick, then diff `$XDG_RUNTIME_DIR/wayland-*` before and after.
-- CI has neither a parent display nor a free DRM device, so this will not work in a GitHub Actions
-  container as-is. Needs `cage` / `sway --headless` / `vkms` there.
+- CI has neither a parent display nor a free DRM device, so Hyprland cannot run there at all.
+  Confirmed: `XDG_BACKEND=headless`, `WLR_BACKENDS=headless` and a bare run with `WAYLAND_DISPLAY`
+  and `DISPLAY` unset all abort in `CBackend::create()`. Aquamarine *has* a `CHeadlessBackend`,
+  but it is a fallback for output management, not a backend you can select.
+
+**CI runs headless sway instead** (`--compositor sway`, `.github/workflows/smoke.yml`). It is
+wlroots, it implements wlr-layer-shell — the only protocol `PanelWindow` needs — and
+`WLR_BACKENDS=headless` needs no display. Three things are load-bearing:
+
+- **`WLR_RENDERER=pixman`.** With the GL renderer a headless output has no scanout buffer, so the
+  client dies *after* loading successfully:
+  `importing the supplied dmabufs failed` → `Could not create EGL surface (EGL error 0x3000)` →
+  `The Wayland connection experienced a fatal error: Protocol error`. Easy to misread as a shell
+  bug; it is not.
+- **`XDG_RUNTIME_DIR`.** A CI container has none and no `/run/user/<uid>`. `smoke-matrix.sh`
+  creates a private one when the configured path does not exist.
+- **A separate ignore list.** Sway advertises none of the `hyprland-*` protocols and a container
+  has no GPU, PipeWire or session bus, so `hybrid/tools/smoke-ignore-headless.txt` is applied on
+  top of the main list *only* under `--compositor sway`.
+
+Sway is a **narrower gate**: everything behind `Hypr.*` is inert there, including the lua/conf
+axis of T17. It still catches load errors, unresolved types and binding errors across every
+preset, which is most of the value. Hyprland stays the default wherever a display exists, and
+`smoke-matrix.sh` falls back to sway on its own when there is none.
 
 ---
 
