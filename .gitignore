@@ -3,6 +3,6 @@
 /.qmlls.ini
 build/
 .cache/
-logs.smoke-logs/
-.qmlls.ini
+logs
+.smoke-logs/
 *.bak

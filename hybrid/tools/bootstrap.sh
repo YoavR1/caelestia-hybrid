@@ -121,8 +121,17 @@ fi
 
 # ------------------------------------------------------------------- gitignore
 
+# MiDnight's .gitignore ends in `logs` with NO trailing newline. Appending to it
+# blindly fuses the new entry onto that last line -- destroying `logs` and never
+# activating the entry. This actually happened; guard before every append.
+if [ -s .gitignore ] && [ -n "$(tail -c1 .gitignore)" ]; then
+    say "gitignore: restoring missing trailing newline"
+    printf '\n' >> .gitignore
+fi
+
 for entry in '.smoke-logs/' '.qmlls.ini'; do
-    if [ -f .gitignore ] && grep -qxF "$entry" .gitignore; then
+    # Upstream already ignores '/.qmlls.ini' -- match rooted and unrooted forms.
+    if [ -f .gitignore ] && { grep -qxF "$entry" .gitignore || grep -qxF "/$entry" .gitignore; }; then
         continue
     fi
     say "gitignore += $entry"
