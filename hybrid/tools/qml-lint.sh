@@ -57,13 +57,20 @@ esac
 
 # ------------------------------------------------- import paths via .qmlls.ini
 
-# qs creates .qmlls.ini as a SYMLINK into its per-run VFS
-# (/run/user/.../quickshell/vfs/<shell-id>/). That dir is transient, so the link goes
-# dangling between runs -- and writing through a dangling symlink fails with ENOENT.
-# Always clear it before regenerating; never create it ourselves.
+# Two things about .qmlls.ini, both load-bearing:
+#
+#   * qs only WRITES it if the path already exists -- hence upstream's `touch`.
+#     Without that, the run silently produces nothing.
+#   * What it then leaves behind is a SYMLINK into that run's VFS
+#     (/run/user/.../quickshell/vfs/<shell-id>/). That dir is transient, so the link
+#     goes dangling later, and writing through a dangling symlink fails with ENOENT.
+#
+# So: clear, then create, then run. `-s` follows the link, so a dangling one is falsy
+# and regenerates.
 if [ ! -s .qmlls.ini ]; then
     tmp=$(mktemp -d)
     rm -f .qmlls.ini
+    touch .qmlls.ini
     XDG_STATE_HOME="$tmp/state" XDG_CACHE_HOME="$tmp/cache" XDG_CONFIG_HOME="$tmp/config" \
     QT_QPA_PLATFORM=offscreen QS_NO_RELOAD_POPUP=1 \
     QML2_IMPORT_PATH="$BUILD_DIR/qml:${QML2_IMPORT_PATH:-}" \
