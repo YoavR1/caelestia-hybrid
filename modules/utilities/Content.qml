@@ -67,23 +67,9 @@ Item {
             sourceComponent: ColumnLayout {
                 id: mediaLayout
 
-                spacing: Tokens.spacing.small
-
                 property int currentIndex: 0
 
                 property bool animEnabled: false
-
-                onCurrentIndexChanged: {
-                    animEnabled = true;
-                    animDisableTimer.restart();
-                }
-
-                Timer {
-                    id: animDisableTimer
-
-                    interval: 400
-                    onTriggered: mediaLayout.animEnabled = false
-                }
 
                 property real lastValidItemHeight: 0
 
@@ -93,11 +79,25 @@ Item {
                     return itemHeight + (mediaRepeater.count > 1 ? bgRow.implicitHeight + spacing : 0);
                 }
 
+                spacing: Tokens.spacing.small
+
+                onCurrentIndexChanged: {
+                    animEnabled = true;
+                    animDisableTimer.restart();
+                }
+
                 onNonAnimHeightChanged: {
                     const swipeItem = mediaFlickable.currentItem ? mediaFlickable.currentItem.item : null;
                     if (swipeItem) {
                         lastValidItemHeight = (swipeItem.nonAnimHeight ?? swipeItem.implicitHeight);
                     }
+                }
+
+                Timer {
+                    id: animDisableTimer
+
+                    interval: 400
+                    onTriggered: mediaLayout.animEnabled = false
                 }
 
                 Behavior on nonAnimHeight {
@@ -108,10 +108,6 @@ Item {
 
                 Flickable {
                     id: mediaFlickable
-                    Layout.fillWidth: true
-
-                    clip: true
-                    interactive: mediaRepeater.count > 1
 
                     readonly property Item currentItem: {
                         mediaRepeater.count;
@@ -119,16 +115,23 @@ Item {
                         return mediaRepeater.itemAt(mediaLayout.currentIndex);
                     }
 
-                    flickableDirection: Flickable.HorizontalFlick
-
                     property real lastValidImplicitHeight: 0
+
+                    property real lastValidContentX: 0
+
+                    Layout.fillWidth: true
+
+                    clip: true
+                    interactive: mediaRepeater.count > 1
+
+                    flickableDirection: Flickable.HorizontalFlick
                     implicitHeight: currentItem ? currentItem.implicitHeight : lastValidImplicitHeight
+
                     onImplicitHeightChanged: {
                         if (currentItem)
                             lastValidImplicitHeight = currentItem.implicitHeight;
                     }
 
-                    property real lastValidContentX: 0
                     contentX: currentItem ? currentItem.x : lastValidContentX
                     contentWidth: mediaRow.implicitWidth
                     contentHeight: mediaRow.implicitHeight
@@ -168,13 +171,15 @@ Item {
                         Repeater {
                             id: mediaRepeater
 
+                            property int dummy: 0
+
                             onCountChanged: {
                                 mediaLayout.animEnabled = true;
                                 animDisableTimer.restart();
                             }
 
-                            property int dummy: 0
                             onItemAdded: dummy++
+
                             model: {
                                 const pages = [];
                                 if (Config.utilities.cards.recorder)

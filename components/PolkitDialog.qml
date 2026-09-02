@@ -24,6 +24,7 @@ StyledWindow {
     readonly property int passwordMaxWidth: centerWidth * 0.8
 
     readonly property string rawMessage: agent.flow ? agent.flow.message : ""
+
     readonly property var splitMessage: {
         let msg = rawMessage.trim();
         let cmd = "";
@@ -55,10 +56,12 @@ StyledWindow {
             command: cmd
         };
     }
+
     readonly property string mainMessage: splitMessage.message
     readonly property string commandText: splitMessage.command
 
     property string buffer: ""
+
     readonly property list<int> shapeQueue: {
         const shapes = [MaterialShape.Slanted, MaterialShape.Arch, MaterialShape.Fan, MaterialShape.Arrow, MaterialShape.SemiCircle, MaterialShape.Triangle, MaterialShape.Diamond, MaterialShape.ClamShell, MaterialShape.Pentagon, MaterialShape.Gem, MaterialShape.Sunny, MaterialShape.VerySunny, MaterialShape.Cookie4Sided, MaterialShape.Ghostish, MaterialShape.SoftBurst];
         for (let i = shapes.length - 1; i > 0; i--) {
@@ -68,11 +71,11 @@ StyledWindow {
         return shapes;
     }
 
+    property bool isActive: agent.isActive && agent.flow != null
+
     name: "polkit"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-
-    property bool isActive: agent.isActive && agent.flow != null
     visible: isActive || closeAnim.running
 
     anchors.top: true
@@ -246,6 +249,7 @@ StyledWindow {
                 duration: 500
             }
         }
+
         Behavior on implicitHeight {
             Anim {
                 type: Anim.Emphasized
@@ -362,27 +366,19 @@ StyledWindow {
 
             StyledRect {
                 id: passwordRect
+
                 Layout.alignment: Qt.AlignHCenter
 
                 implicitWidth: {
                     const emptyW = nonAnimPlaceholder.width + iconWrapper.implicitWidth + enterButton.implicitWidth + passwordInputLayout.spacing * 2 + Tokens.padding.medium * 2;
                     return root.buffer.length > 0 ? root.passwordMaxWidth : Math.min(root.passwordMaxWidth, emptyW);
                 }
+
                 implicitHeight: passwordInputLayout.implicitHeight + Tokens.padding.small
                 color: Colours.layer(Colours.palette.m3surfaceContainer, 1)
                 radius: Tokens.rounding.full
 
                 focus: true
-
-                Behavior on implicitWidth {
-                    Anim {}
-                }
-
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.IBeamCursor
-                    onClicked: passwordRect.forceActiveFocus()
-                }
 
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_Enter || event.key === Qt.Key_Return) {
@@ -411,6 +407,16 @@ StyledWindow {
                         root.buffer += event.text;
                         event.accepted = true;
                     }
+                }
+
+                Behavior on implicitWidth {
+                    Anim {}
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.IBeamCursor
+                    onClicked: passwordRect.forceActiveFocus()
                 }
 
                 Connections {

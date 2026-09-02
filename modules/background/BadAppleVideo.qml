@@ -12,6 +12,8 @@ Item {
 
     readonly property bool playing: BadApplePlayer.shouldPlay
 
+    property Item videoOutput: loader.item ? loader.item.videoOutput : null
+
     function play() {
         BadApplePlayer.play();
     }
@@ -19,8 +21,6 @@ Item {
     function stop() {
         BadApplePlayer.stop();
     }
-
-    property Item videoOutput: loader.item ? loader.item.videoOutput : null
 
     Component.onCompleted: {
         root.isFirstInstance = (BadApplePlayer.firstInstance === null);

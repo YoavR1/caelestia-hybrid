@@ -10,7 +10,6 @@ Item {
     id: root
 
     required property ShellScreen screen
-    Config.screen: screen.name
     required property var bar
     required property real borderThickness
     required property ScreenState screenState
@@ -18,6 +17,8 @@ Item {
     readonly property alias content: content
     readonly property bool isHorizontal: bar.isHorizontal
     property real offsetScale: content.isDetached || content.hasCurrent ? 0 : 1
+
+    Config.screen: screen.name
 
     visible: width > 0 && height > 0
     clip: true
@@ -42,6 +43,7 @@ Item {
             return parent.width - implicitWidth;
         return 0;
     }
+
     y: {
         if (content.isDetached)
             return (parent.height - content.nonAnimHeight) / 2;

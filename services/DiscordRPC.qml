@@ -17,13 +17,6 @@ Item {
 
     property string steamGridDbKey: ""
 
-    onSteamGridDbKeyChanged: {
-        if (root.currentSteamAppId !== "") {
-            root.currentSteamData = null;
-            root.updatePresence();
-        }
-    }
-
     property Process readTokenProc: Process {
         command: ["secret-tool", "lookup", "service", "caelestia-shell", "account", "steamgriddb"]
         stdout: StdioCollector {
@@ -32,29 +25,14 @@ Item {
             }
         }
     }
-    Component.onCompleted: {
-        readTokenProc.running = true;
-        if (root.active) {
-            DiscordIpc.connectIpc(root.clientId);
-        }
-    }
 
     property real shellStartTime: Date.now() / 1000
 
-    Connections {
-        target: DiscordIpc
+    property string currentSteamAppId: ""
 
-        function onConnectedChanged() {
-            if (DiscordIpc.connected) {
-                console.log("Discord ARPC connected");
-                root.updatePresence();
-            }
-        }
+    property var currentSteamData: null
 
-        function onErrorOccurred(errorString) {
-            console.log("Discord ARPC error: " + errorString);
-        }
-    }
+    property bool fetchingSteam: false
 
     function testRegexList(list, str) {
         if (!list || !str)
@@ -72,81 +50,6 @@ Item {
         }
         return false;
     }
-
-    Connections {
-        target: Hyprland.toplevels
-        ignoreUnknownSignals: true
-
-        function onValuesChanged() {
-            root.updatePresence();
-        }
-    }
-
-    Connections {
-        target: GlobalConfig.services
-
-        function onArpcSteamAutoDetectChanged() {
-            root.updatePresence();
-        }
-
-        function onArpcTargetWindowsChanged() {
-            root.updatePresence();
-        }
-
-        function onArpcCaelestiaInfoChanged() {
-            root.updatePresence();
-        }
-
-        function onArpcSteamBlacklistChanged() {
-            root.updatePresence();
-        }
-
-        function onArpcAppNameChanged() {
-            root.updatePresence();
-        }
-
-        function onArpcDetailsChanged() {
-            root.updatePresence();
-        }
-
-        function onArpcStateChanged() {
-            root.updatePresence();
-        }
-
-        function onArpcLargeImageChanged() {
-            root.updatePresence();
-        }
-
-        function onArpcSmallImageChanged() {
-            root.updatePresence();
-        }
-
-        function onArpcManualOverrideChanged() {
-            root.updatePresence();
-        }
-    }
-
-    Connections {
-        target: Colours
-
-        function onSchemeChanged() {
-            root.updatePresence();
-        }
-
-        function onLightChanged() {
-            root.updatePresence();
-        }
-
-        function onVariantChanged() {
-            root.updatePresence();
-        }
-    }
-
-    property string currentSteamAppId: ""
-
-    property var currentSteamData: null
-
-    property bool fetchingSteam: false
 
     function updatePresence() {
         if (!active || !DiscordIpc.connected)
@@ -410,6 +313,20 @@ Item {
         DiscordIpc.clearActivity();
     }
 
+    onSteamGridDbKeyChanged: {
+        if (root.currentSteamAppId !== "") {
+            root.currentSteamData = null;
+            root.updatePresence();
+        }
+    }
+
+    Component.onCompleted: {
+        readTokenProc.running = true;
+        if (root.active) {
+            DiscordIpc.connectIpc(root.clientId);
+        }
+    }
+
     onActiveChanged: {
         if (!active) {
             DiscordIpc.disconnectIpc();
@@ -417,5 +334,89 @@ Item {
             readTokenProc.running = true; // refresh token just in case
             DiscordIpc.connectIpc(root.clientId);
         }
+    }
+
+    Connections {
+        function onConnectedChanged() {
+            if (DiscordIpc.connected) {
+                console.log("Discord ARPC connected");
+                root.updatePresence();
+            }
+        }
+
+        function onErrorOccurred(errorString) {
+            console.log("Discord ARPC error: " + errorString);
+        }
+
+        target: DiscordIpc
+    }
+
+    Connections {
+        function onValuesChanged() {
+            root.updatePresence();
+        }
+
+        target: Hyprland.toplevels
+        ignoreUnknownSignals: true
+    }
+
+    Connections {
+        function onArpcSteamAutoDetectChanged() {
+            root.updatePresence();
+        }
+
+        function onArpcTargetWindowsChanged() {
+            root.updatePresence();
+        }
+
+        function onArpcCaelestiaInfoChanged() {
+            root.updatePresence();
+        }
+
+        function onArpcSteamBlacklistChanged() {
+            root.updatePresence();
+        }
+
+        function onArpcAppNameChanged() {
+            root.updatePresence();
+        }
+
+        function onArpcDetailsChanged() {
+            root.updatePresence();
+        }
+
+        function onArpcStateChanged() {
+            root.updatePresence();
+        }
+
+        function onArpcLargeImageChanged() {
+            root.updatePresence();
+        }
+
+        function onArpcSmallImageChanged() {
+            root.updatePresence();
+        }
+
+        function onArpcManualOverrideChanged() {
+            root.updatePresence();
+        }
+
+        target: GlobalConfig.services
+    }
+
+    Connections {
+        function onSchemeChanged() {
+            root.updatePresence();
+        }
+
+        function onLightChanged() {
+            root.updatePresence();
+        }
+
+        function onVariantChanged() {
+            root.updatePresence();
+        }
+
+        target: Colours
     }
 }

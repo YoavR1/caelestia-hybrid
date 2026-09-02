@@ -2,6 +2,11 @@ import QtQuick
 import Quickshell
 
 Item {
+    Component.onCompleted: {
+        var w = testComp.createObject(null);
+        w.visible = true;
+    }
+
     Component {
         id: testComp
 
@@ -18,10 +23,5 @@ Item {
                 onClicked: console.log("CLICKED")
             }
         }
-    }
-
-    Component.onCompleted: {
-        var w = testComp.createObject(null);
-        w.visible = true;
     }
 }

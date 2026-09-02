@@ -7,9 +7,6 @@ import qs.modules.nexus.common
 PageBase {
     id: root
 
-    title: qsTr("Desktop lyrics")
-    isSubPage: true
-
     readonly property list<string> positionValues: ["top-left", "top-center", "top-right", "middle-left", "middle-center", "middle-right", "bottom-left", "bottom-center", "bottom-right"]
 
     readonly property list<MenuItem> positionItems: [
@@ -41,6 +38,9 @@ PageBase {
             text: qsTr("Bottom Right")
         }
     ]
+
+    title: qsTr("Desktop lyrics")
+    isSubPage: true
 
     ColumnLayout {
         anchors.horizontalCenter: parent.horizontalCenter

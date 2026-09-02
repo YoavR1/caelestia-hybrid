@@ -91,6 +91,7 @@ StyledListView {
     highlightRangeMode: ListView.ApplyRange
 
     highlightFollowsCurrentItem: false
+
     highlight: StyledRect {
         radius: Tokens.rounding.large
         color: Colours.palette.m3onSurface
@@ -129,30 +130,6 @@ StyledListView {
 
     Component.onDestruction: {
         Colours.showPreview = false;
-    }
-
-    Timer {
-        id: previewTimer
-
-        interval: 100
-        onTriggered: {
-            if (!root.currentItem || !root.currentItem.modelData)
-                return;
-            if (root.state === "scheme") {
-                const schemeData = root.currentItem.modelData;
-                Colours.load(JSON.stringify({
-                    name: schemeData.name,
-                    flavour: schemeData.flavour,
-                    variant: Colours.variant,
-                    mode: Colours.light ? "light" : "dark",
-                    colours: schemeData.colours
-                }), true);
-                Colours.showPreview = true;
-            } else if (root.state === "variant") {
-                const variantData = root.currentItem.modelData;
-                M3Variants.previewVariant(variantData.variant);
-            }
-        }
     }
 
     Component.onCompleted: displayText = search.text
@@ -331,6 +308,30 @@ StyledListView {
             type: Anim.DefaultEffects
             property: "opacity"
             to: 1
+        }
+    }
+
+    Timer {
+        id: previewTimer
+
+        interval: 100
+        onTriggered: {
+            if (!root.currentItem || !root.currentItem.modelData)
+                return;
+            if (root.state === "scheme") {
+                const schemeData = root.currentItem.modelData;
+                Colours.load(JSON.stringify({
+                    name: schemeData.name,
+                    flavour: schemeData.flavour,
+                    variant: Colours.variant,
+                    mode: Colours.light ? "light" : "dark",
+                    colours: schemeData.colours
+                }), true);
+                Colours.showPreview = true;
+            } else if (root.state === "variant") {
+                const variantData = root.currentItem.modelData;
+                M3Variants.previewVariant(variantData.variant);
+            }
         }
     }
 

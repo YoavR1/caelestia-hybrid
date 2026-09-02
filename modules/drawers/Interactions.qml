@@ -11,7 +11,6 @@ CustomMouseArea {
     id: root
 
     required property ShellScreen screen
-    Config.screen: screen.name
     required property BarPopouts.Wrapper popouts
     required property ScreenState screenState
     required property Panels panels
@@ -89,11 +88,14 @@ CustomMouseArea {
         }
     }
 
+    Config.screen: screen.name
+
     anchors.fill: parent
     acceptedButtons: fullscreen ? Qt.NoButton : Qt.AllButtons
     hoverEnabled: true
 
     onPressed: event => dragStart = Qt.point(event.x, event.y)
+
     onContainsMouseChanged: {
         if (!containsMouse) {
             // Only hide if not activated by shortcut

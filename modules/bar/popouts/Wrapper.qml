@@ -39,6 +39,7 @@ Item {
     // Dummy object so Tokens attached prop resolves to global config
     // Anim configs are not per-monitor
     readonly property QtObject dummy: QtObject {}
+
     property int animLength: dummy.Tokens.anim.durations.expressiveDefaultSpatial
     property var animCurve: dummy.Tokens.anim.expressiveDefaultSpatial // The easingCurve type is Qt 6.11+ so we gotta use var for now
 
@@ -69,6 +70,7 @@ Item {
     implicitHeight: nonAnimHeight
 
     focus: hasCurrent
+
     Keys.onEscapePressed: {
         // Forward escape to password popout if active, otherwise close
         if (currentName === "wirelesspassword" && content.item) {
@@ -98,12 +100,12 @@ Item {
     }
 
     Connections {
-        target: popoutState
-
         function onHasCurrentChanged() {
             if (!popoutState.hasCurrent)
                 root.currentSection = "";
         }
+
+        target: popoutState
     }
 
     HyprlandFocusGrab {

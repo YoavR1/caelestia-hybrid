@@ -11,6 +11,12 @@ import qs.services
 Scope {
     property alias lock: lock
 
+    Component.onCompleted: {
+        if (GlobalConfig.lock.lockOnStartup) {
+            startupLockProc.running = true;
+        }
+    }
+
     WlSessionLock {
         id: lock
 
@@ -103,12 +109,6 @@ Scope {
             if (code === 0 && GlobalConfig.lock.lockOnStartup) {
                 startupLockTimer.start();
             }
-        }
-    }
-
-    Component.onCompleted: {
-        if (GlobalConfig.lock.lockOnStartup) {
-            startupLockProc.running = true;
         }
     }
 }

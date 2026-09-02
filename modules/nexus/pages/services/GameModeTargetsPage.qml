@@ -160,6 +160,7 @@ PageBase {
                         easing.type: Easing.OutCubic
                     }
                 }
+
                 moveDisplaced: Transition {
                     NumberAnimation {
                         properties: "y"
@@ -182,12 +183,12 @@ PageBase {
                     RowLayout {
                         id: itemLayout
 
+                        property bool isRegex: delegateRect.modelData.startsWith("^") && delegateRect.modelData.endsWith("$")
+
                         anchors.fill: parent
                         anchors.leftMargin: Tokens.padding.medium
                         anchors.rightMargin: Tokens.padding.medium
                         spacing: Tokens.spacing.medium
-
-                        property bool isRegex: delegateRect.modelData.startsWith("^") && delegateRect.modelData.endsWith("$")
 
                         IconImage {
                             visible: !itemLayout.isRegex
@@ -255,6 +256,7 @@ PageBase {
                 p = p.parent;
             return p?.opacity < 1;
         }
+
         popup.topMovement: Math.max(Tokens.sizes.nexus.minPopupHeight - popupHeight, Tokens.padding.large)
 
         Loader {
@@ -271,16 +273,6 @@ PageBase {
 
                     VerticalFadeListView {
                         id: list
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-
-                        Connections {
-                            target: Hyprland.toplevels
-
-                            function onValuesChanged() {
-                                list.updateModel();
-                            }
-                        }
 
                         function updateModel() {
                             let toplevels = [];
@@ -291,6 +283,9 @@ PageBase {
                             }
                             list.model = toplevels.sort((a, b) => (a.lastIpcObject?.title ?? "").localeCompare(b.lastIpcObject?.title ?? ""));
                         }
+
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
 
                         Component.onCompleted: updateModel()
 
@@ -345,6 +340,14 @@ PageBase {
                                     }
                                 }
                             }
+                        }
+
+                        Connections {
+                            function onValuesChanged() {
+                                list.updateModel();
+                            }
+
+                            target: Hyprland.toplevels
                         }
                     }
                 }

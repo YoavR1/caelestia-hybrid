@@ -38,7 +38,9 @@ PageBase {
             text: "DRM"
         }
     ]
+
     readonly property list<string> hwDecoderValues: ["auto", "none", "vaapi", "vdpau", "cuda", "vulkan", "drm"]
+
     readonly property var hwDecoderIndexMap: ({
             "auto": 0,
             "none": 1,
@@ -66,10 +68,12 @@ PageBase {
             id: wallWrapper
 
             Layout.alignment: Qt.AlignHCenter
+
             implicitWidth: {
                 const screen = root.nState.screen;
                 return implicitHeight / screen.height * screen.width;
             }
+
             implicitHeight: {
                 const screen = root.nState.screen;
                 const cWidth = root.cappedWidth;
@@ -197,12 +201,6 @@ PageBase {
                 visible: Config.background.wallpaperEnabled && Config.background.wallpaperRecolor
                 opacity: visible ? 1 : 0
 
-                Behavior on opacity {
-                    Anim {
-                        type: Anim.DefaultEffects
-                    }
-                }
-
                 onClicked: {
                     const bgWin = ShellState.componentsFor(root.nState.screen).background;
                     if (bgWin && bgWin.wallpaperLoader && bgWin.wallpaperLoader.item && bgWin.wallpaperLoader.item.current) {
@@ -210,6 +208,12 @@ PageBase {
                         CUtils.saveItem(bgWin.wallpaperLoader.item.current, "file://" + path, function () {
                             Notifs.sendToast("Wallpaper Saved", "Saved to ~/Downloads/recolored_wallpaper.png", "image", null, null);
                         });
+                    }
+                }
+
+                Behavior on opacity {
+                    Anim {
+                        type: Anim.DefaultEffects
                     }
                 }
             }

@@ -45,6 +45,28 @@ StackView {
         property bool isSubMenu
         property bool shown
 
+        property var itemGroups: []
+
+        function updateGroups() {
+            let groups = [];
+            let currentGroup = [];
+            for (let i = 0; i < groupInstantiator.count; ++i) {
+                let obj = groupInstantiator.objectAt(i);
+                if (obj && obj.isSeparator) {
+                    if (currentGroup.length > 0) {
+                        groups.push(currentGroup);
+                        currentGroup = [];
+                    }
+                } else if (obj) {
+                    currentGroup.push(obj.entry);
+                }
+            }
+            if (currentGroup.length > 0) {
+                groups.push(currentGroup);
+            }
+            itemGroups = groups;
+        }
+
         padding: Tokens.padding.small
         spacing: Tokens.spacing.small
 
@@ -72,45 +94,23 @@ StackView {
             menu: menu.handle
         }
 
-        property var itemGroups: []
-
-        function updateGroups() {
-            let groups = [];
-            let currentGroup = [];
-            for (let i = 0; i < groupInstantiator.count; ++i) {
-                let obj = groupInstantiator.objectAt(i);
-                if (obj && obj.isSeparator) {
-                    if (currentGroup.length > 0) {
-                        groups.push(currentGroup);
-                        currentGroup = [];
-                    }
-                } else if (obj) {
-                    currentGroup.push(obj.entry);
-                }
-            }
-            if (currentGroup.length > 0) {
-                groups.push(currentGroup);
-            }
-            itemGroups = groups;
-        }
-
         Instantiator {
             id: groupInstantiator
 
             model: menuOpener.children
+
+            onObjectAdded: menu.updateGroups()
+
+            onObjectRemoved: menu.updateGroups()
+
+            // In case the model itself changes completely
+            onModelChanged: menu.updateGroups()
 
             Item {
                 required property QsMenuEntry modelData
                 property bool isSeparator: modelData.isSeparator
                 property var entry: modelData
             }
-
-            onObjectAdded: menu.updateGroups()
-
-            onObjectRemoved: menu.updateGroups()
-            // In case the model itself changes completely
-
-            onModelChanged: menu.updateGroups()
         }
 
         Repeater {
@@ -158,6 +158,8 @@ StackView {
                                 anchors.right: parent.right
 
                                 sourceComponent: Item {
+                                    property int trayMenuWidth: Tokens.sizes.bar.trayMenuWidth
+
                                     implicitHeight: label.implicitHeight
 
                                     StateLayer {
@@ -208,7 +210,6 @@ StackView {
                                         color: item.modelData.enabled ? Colours.palette.m3onSurface : Colours.palette.m3outline
                                     }
 
-                                    property int trayMenuWidth: Tokens.sizes.bar.trayMenuWidth
                                     TextMetrics {
                                         id: labelMetrics
 

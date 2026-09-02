@@ -45,7 +45,7 @@ Item {
         return checkToplevels(monitor.activeWorkspace?.toplevels?.values || []);
     }
 
-    onShouldPauseChanged: applyPauseState()
+    readonly property bool shouldMute: !root.isFirstInstance || !GlobalConfig.background.videoWallpaperSoundEnabled || (GlobalConfig.background.videoWallpaperMuteOnMedia && (Players.active?.isPlaying ?? false))
 
     function applyPauseState(): void {
         if (root.shouldPause) {
@@ -56,7 +56,7 @@ Item {
         }
     }
 
-    readonly property bool shouldMute: !root.isFirstInstance || !GlobalConfig.background.videoWallpaperSoundEnabled || (GlobalConfig.background.videoWallpaperMuteOnMedia && (Players.active?.isPlaying ?? false))
+    onShouldPauseChanged: applyPauseState()
 
     Component.onCompleted: {
         isFirstInstance = (VideoWallpaperPlayer.firstInstance === null);

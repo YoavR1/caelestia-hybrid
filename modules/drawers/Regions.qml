@@ -12,8 +12,6 @@ Region {
     required property Panels panels
     required property var win
 
-    Config.screen: win.screen.name
-
     readonly property real borderThickness: win.contentItem.Config.border.thickness
     readonly property real clampedThickness: win.contentItem.Config.border.clampedThickness
 
@@ -21,6 +19,8 @@ Region {
     readonly property real barRightWidth: Config.bar.position === "right" ? bar.clampedThickness : clampedThickness
     readonly property real barTopHeight: Config.bar.position === "top" ? bar.clampedThickness : clampedThickness
     readonly property real barBottomHeight: Config.bar.position === "bottom" ? bar.clampedThickness : clampedThickness
+
+    Config.screen: win.screen.name
 
     x: barLeftWidth + win.dragMaskPadding
     y: barTopHeight + win.dragMaskPadding

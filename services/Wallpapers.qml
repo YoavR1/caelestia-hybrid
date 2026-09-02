@@ -34,56 +34,10 @@ Searcher {
 
     // Track and restore the last used wallpaper per mode using low-overhead execution
     property string lastStatic: ""
+
     property string lastAnimated: ""
 
     property var _hashCache: ({})
-
-    Timer {
-        id: colorReleaseTimer
-
-        interval: 180
-        repeat: false
-        onTriggered: {
-            // Safety check: only clear the preview if no new lock has been engaged
-            if (!root.previewColourLock && root.pendingPreviewClear) {
-                Colours.showPreview = false;
-                root.pendingPreviewClear = false;
-            }
-        }
-    }
-
-    function djb2_hash(s) {
-        if (!s)
-            return "0";
-        if (_hashCache[s] !== undefined)
-            return _hashCache[s];
-
-        let h = 5381;
-        for (let i = 0; i < s.length; i++) {
-            h = ((h << 5) + h) + s.charCodeAt(i);
-            h |= 0;
-        }
-        const res = (h >>> 0).toString(10);
-        _hashCache[s] = res;
-        return res;
-    }
-
-    function getWallpaperThumb(path, buster) {
-        let clean = String(path || "").split(/[?#]/)[0];
-        if (clean.indexOf("file://") === 0)
-            clean = clean.substring(7);
-        let b = buster !== undefined ? buster : cacheBuster;
-        return Paths.cache + "/videothumbs/" + djb2_hash(clean) + ".jpg" + (b ? "?v=" + b : "");
-    }
-
-    function isVideo(path: string): bool {
-        if (!path)
-            return false;
-        const clean = String(path).split(/[?#]/)[0].toLowerCase();
-        const index = clean.lastIndexOf(".");
-        const ext = index >= 0 ? clean.slice(index + 1) : "";
-        return validVideoExtensions.includes(ext);
-    }
 
     readonly property var categories: {
         let dummy = root.list;
@@ -138,6 +92,49 @@ Searcher {
         return grp;
     }
 
+    property alias weVolume: weSettings.volume
+
+    property alias weSilent: weSettings.silent
+
+    property bool _refreshing: false
+
+    property bool restoreWallpaperMode: false
+
+    property var itemBusters: ({})
+
+    function djb2_hash(s) {
+        if (!s)
+            return "0";
+        if (_hashCache[s] !== undefined)
+            return _hashCache[s];
+
+        let h = 5381;
+        for (let i = 0; i < s.length; i++) {
+            h = ((h << 5) + h) + s.charCodeAt(i);
+            h |= 0;
+        }
+        const res = (h >>> 0).toString(10);
+        _hashCache[s] = res;
+        return res;
+    }
+
+    function getWallpaperThumb(path, buster) {
+        let clean = String(path || "").split(/[?#]/)[0];
+        if (clean.indexOf("file://") === 0)
+            clean = clean.substring(7);
+        let b = buster !== undefined ? buster : cacheBuster;
+        return Paths.cache + "/videothumbs/" + djb2_hash(clean) + ".jpg" + (b ? "?v=" + b : "");
+    }
+
+    function isVideo(path: string): bool {
+        if (!path)
+            return false;
+        const clean = String(path).split(/[?#]/)[0].toLowerCase();
+        const index = clean.lastIndexOf(".");
+        const ext = index >= 0 ? clean.slice(index + 1) : "";
+        return validVideoExtensions.includes(ext);
+    }
+
     function getCategoryFor(w: FileSystemEntry): string {
         if (w.parentDir.includes("steamapps/workshop/content/431960")) {
             return "Wallpaper Engine";
@@ -158,30 +155,6 @@ Searcher {
             rollbackMode = wallpaperMode;
             isTrackingRollback = true;
         }
-    }
-
-    onWallpaperModeChanged: {
-        captureRollbackState();
-
-        const target = wallpaperMode === "animated" ? lastAnimated : lastStatic;
-
-        if (target !== "") {
-            actualCurrent = target;
-            if (showPreview) {
-                previewPath = target;
-                if (String(Colours.scheme).startsWith("dynamic")) {
-                    if (!getPreviewColoursProc.running) {
-                        getPreviewColoursProc.startFor(target);
-                    }
-                }
-            } else {
-                Quickshell.execDetached(["caelestia", "wallpaper", "-f", target, ...smartArg]);
-            }
-        }
-    }
-
-    onEnableAnimationChanged: {
-        Quickshell.execDetached(["sh", "-c", "mkdir -p '" + Paths.state + "/wallpaper' && echo '" + (enableAnimation ? "1" : "0") + "' > '" + Paths.state + "/wallpaper/enable_animation.txt'"]);
     }
 
     function setRandom(): void {
@@ -293,6 +266,49 @@ Searcher {
         return path;
     }
 
+    function updateCombinedList() {
+        let arr = [];
+        for (let i = 0; i < wallpapers.entries.length; i++) {
+            arr.push(wallpapers.entries[i]);
+        }
+        for (let i = 0; i < weWallpapers.entries.length; i++) {
+            arr.push(weWallpapers.entries[i]);
+        }
+        root.list = arr;
+    }
+
+    function refreshAnimatedThumbs() {
+        if (_refreshing)
+            return;
+        itemBusters = {};
+        _refreshing = true;
+        _extractThumbsProc.running = true;
+    }
+
+    onWallpaperModeChanged: {
+        captureRollbackState();
+
+        const target = wallpaperMode === "animated" ? lastAnimated : lastStatic;
+
+        if (target !== "") {
+            actualCurrent = target;
+            if (showPreview) {
+                previewPath = target;
+                if (String(Colours.scheme).startsWith("dynamic")) {
+                    if (!getPreviewColoursProc.running) {
+                        getPreviewColoursProc.startFor(target);
+                    }
+                }
+            } else {
+                Quickshell.execDetached(["caelestia", "wallpaper", "-f", target, ...smartArg]);
+            }
+        }
+    }
+
+    onEnableAnimationChanged: {
+        Quickshell.execDetached(["sh", "-c", "mkdir -p '" + Paths.state + "/wallpaper' && echo '" + (enableAnimation ? "1" : "0") + "' > '" + Paths.state + "/wallpaper/enable_animation.txt'"]);
+    }
+
     onPreviewColourLockChanged: {
         if (!previewColourLock && pendingPreviewClear) {
             colorReleaseTimer.restart();
@@ -308,6 +324,20 @@ Searcher {
     extraOpts: useFuzzy ? ({}) : ({
             forward: false
         })
+
+    Timer {
+        id: colorReleaseTimer
+
+        interval: 180
+        repeat: false
+        onTriggered: {
+            // Safety check: only clear the preview if no new lock has been engaged
+            if (!root.previewColourLock && root.pendingPreviewClear) {
+                Colours.showPreview = false;
+                root.pendingPreviewClear = false;
+            }
+        }
+    }
 
     IpcHandler {
         function get(): string {
@@ -388,21 +418,6 @@ Searcher {
         }
     }
 
-    function updateCombinedList() {
-        let arr = [];
-        for (let i = 0; i < wallpapers.entries.length; i++) {
-            arr.push(wallpapers.entries[i]);
-        }
-        for (let i = 0; i < weWallpapers.entries.length; i++) {
-            arr.push(weWallpapers.entries[i]);
-        }
-        root.list = arr;
-    }
-
-    property alias weVolume: weSettings.volume
-
-    property alias weSilent: weSettings.silent
-
     Settings {
         id: weSettings
 
@@ -435,14 +450,14 @@ Searcher {
 
         property string currentProcessingPath: ""
 
-        command: ["caelestia", "wallpaper", "-p", currentProcessingPath, ...root.smartArg]
-
         function startFor(path) {
             if (!path)
                 return;
             currentProcessingPath = path;
             running = true;
         }
+
+        command: ["caelestia", "wallpaper", "-p", currentProcessingPath, ...root.smartArg]
 
         stdout: StdioCollector {
             onStreamFinished: {
@@ -466,12 +481,6 @@ Searcher {
             }
         }
     }
-
-    property bool _refreshing: false
-
-    property bool restoreWallpaperMode: false
-
-    property var itemBusters: ({})
 
     FileView {
         path: "/tmp/caelestia_thumb_ready.txt"
@@ -501,14 +510,6 @@ Searcher {
                 root.itemBusters = busters;
             }
         }
-    }
-
-    function refreshAnimatedThumbs() {
-        if (_refreshing)
-            return;
-        itemBusters = {};
-        _refreshing = true;
-        _extractThumbsProc.running = true;
     }
 
     Process {

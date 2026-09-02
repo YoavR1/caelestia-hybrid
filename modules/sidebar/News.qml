@@ -16,12 +16,11 @@ Item {
 
     // Bind colors at the root to avoid delegate scope resolution issues
     readonly property color cBgHigh: Colours.tPalette.m3surfaceContainerHigh
+
     readonly property color cBgHighest: Colours.tPalette.m3surfaceContainerHighest
     readonly property color cOnSurface: Colours.palette.m3onSurface
     readonly property color cOnSurfaceVariant: Colours.palette.m3onSurfaceVariant
     readonly property color cError: Colours.palette.m3error
-
-    Component.onCompleted: fetchNews()
 
     function fetchNews() {
         if (isFetching)
@@ -83,6 +82,8 @@ Item {
             errorMessage = qsTr("No news articles found.");
         }
     }
+
+    Component.onCompleted: fetchNews()
 
     ListModel {
         id: newsModel

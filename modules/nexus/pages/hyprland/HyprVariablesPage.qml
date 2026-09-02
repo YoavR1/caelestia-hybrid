@@ -16,14 +16,7 @@ import qs.modules.nexus.common
 PageBase {
     id: root
 
-    title: qsTr("Variables")
-    isSubPage: true
-
     property var vars: ({})
-
-    Component.onCompleted: {
-        loadVars();
-    }
 
     property var defaults: ({})
 
@@ -337,295 +330,13 @@ PageBase {
         root.vars = newVars;
     }
 
-    component StringRow: ConnectedRect {
-        id: sroot
-        property string label
-        property string subtext
-        property string varKey
+    title: qsTr("Variables")
+    isSubPage: true
 
-        Layout.fillWidth: true
-        implicitHeight: contentRow.implicitHeight + Tokens.padding.medium * 2
-
-        RowLayout {
-            id: contentRow
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.leftMargin: Tokens.padding.largeIncreased
-            anchors.rightMargin: Tokens.padding.medium
-            spacing: Tokens.spacing.medium
-
-            Column {
-                Layout.fillWidth: true
-                spacing: 0
-
-                RowLayout {
-                    width: parent.width
-                    spacing: Tokens.spacing.small
-
-                    StyledText {
-                        text: sroot.label
-                        font: Tokens.font.body.small
-                        elide: Text.ElideRight
-                    }
-
-                    IconButton {
-                        icon: "delete"
-                        type: IconButton.Text
-                        font: Tokens.font.icon.small
-                        visible: root.vars[sroot.varKey] !== undefined
-                        onClicked: root.deleteVar(sroot.varKey)
-                    }
-
-                    Item {
-                        Layout.fillWidth: true
-                    }
-                }
-
-                StyledText {
-                    text: sroot.subtext
-                    visible: text !== ""
-                    font: Tokens.font.label.small
-                    color: Colours.palette.m3outline
-                    elide: Text.ElideRight
-                }
-            }
-
-            StyledTextField {
-                Layout.preferredWidth: 350
-                Layout.alignment: Qt.AlignVCenter
-                text: root.vars[sroot.varKey] !== undefined ? String(root.vars[sroot.varKey]) : ""
-                placeholderText: root.defaults[sroot.varKey] !== undefined ? String(root.defaults[sroot.varKey]) : ""
-                onEditingFinished: {
-                    if (text === "")
-                        root.deleteVar(sroot.varKey);
-                    else
-                        root.saveVar(sroot.varKey, text);
-                }
-            }
-        }
+    Component.onCompleted: {
+        loadVars();
     }
 
-    component BoundedSliderRow: SliderRow {
-        id: bsroot
-        property string varKey
-        property real from: 0
-        property real to: 1
-        property real step: 0.1
-
-        showDelete: root.vars[varKey] !== undefined
-        onDeleted: root.deleteVar(varKey)
-
-        value: {
-            let v = root.vars[varKey] !== undefined ? root.vars[varKey] : root.defaults[varKey];
-            if (v === undefined)
-                return 0;
-            return (v - from) / (to - from);
-        }
-        valueLabel: {
-            let v = root.vars[varKey] !== undefined ? root.vars[varKey] : root.defaults[varKey];
-            return v !== undefined ? Number(v).toFixed(step < 1 ? 2 : 0) : "";
-        }
-
-        onMoved: v => {
-            let mapped = from + v * (to - from);
-            mapped = Math.round(mapped / step) * step;
-            if (step >= 1)
-                mapped = Math.round(mapped);
-            // Limit to fixed decimals to avoid precision issues
-            mapped = Number(mapped.toFixed(step < 1 ? 2 : 0));
-            root.saveVar(varKey, mapped);
-        }
-    }
-
-    component FloatRow: ConnectedRect {
-        id: nroot
-        property string label
-        property string subtext
-        property string varKey
-
-        Layout.fillWidth: true
-        implicitHeight: ncontentRow.implicitHeight + Tokens.padding.medium * 2
-
-        RowLayout {
-            id: ncontentRow
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.verticalCenter: parent.verticalCenter
-            anchors.leftMargin: Tokens.padding.largeIncreased
-            anchors.rightMargin: Tokens.padding.medium
-            spacing: Tokens.spacing.medium
-
-            Column {
-                Layout.fillWidth: true
-                spacing: 0
-
-                RowLayout {
-                    width: parent.width
-                    spacing: Tokens.spacing.small
-
-                    StyledText {
-                        text: nroot.label
-                        font: Tokens.font.body.small
-                        elide: Text.ElideRight
-                    }
-
-                    IconButton {
-                        icon: "delete"
-                        type: IconButton.Text
-                        font: Tokens.font.icon.small
-                        visible: root.vars[nroot.varKey] !== undefined
-                        onClicked: root.deleteVar(nroot.varKey)
-                    }
-
-                    Item {
-                        Layout.fillWidth: true
-                    }
-                }
-
-                StyledText {
-                    text: nroot.subtext
-                    visible: text !== ""
-                    font: Tokens.font.label.small
-                    color: Colours.palette.m3outline
-                    elide: Text.ElideRight
-                }
-            }
-
-            StyledTextField {
-                Layout.preferredWidth: 350
-                Layout.alignment: Qt.AlignVCenter
-                text: root.vars[nroot.varKey] !== undefined ? String(root.vars[nroot.varKey]) : ""
-                placeholderText: root.defaults[nroot.varKey] !== undefined ? String(root.defaults[nroot.varKey]) : ""
-                onEditingFinished: {
-                    if (text === "")
-                        root.deleteVar(nroot.varKey);
-                    else if (!isNaN(parseFloat(text)))
-                        root.saveVar(nroot.varKey, parseFloat(text));
-                }
-            }
-        }
-    }
-
-    component IntRow: StepperRow {
-        property string varKey
-        showDelete: root.vars[varKey] !== undefined
-        onDeleted: root.deleteVar(varKey)
-        value: root.vars[varKey] !== undefined ? Number(root.vars[varKey]) : (root.defaults[varKey] !== undefined ? Number(root.defaults[varKey]) : 0)
-        onMoved: v => root.saveVar(varKey, Math.round(v))
-    }
-
-    component AppRow: PopupRow {
-        id: aroot
-
-        property string varKey
-        showDelete: root.vars[varKey] !== undefined
-        onDeleted: root.deleteVar(varKey)
-        readonly property int popupHeight: root.flickable.height - y + root.flickable.contentY - Tokens.padding.large - Tokens.padding.extraExtraLarge
-
-        keepPopupAsChild: {
-            if (!aroot.popup.open && aroot.popup.animDriver === 0)
-                return true;
-
-            if (root.nState.animatingContainer || root.opacity < 1)
-                return true;
-
-            let p = root.parent;
-            while (p && p.objectName !== "PageContainer")
-                p = p.parent;
-            return p ? (p.opacity < 1) : false;
-        }
-        popup.topMovement: Math.max(Tokens.sizes.nexus.minPopupHeight - popupHeight, Tokens.padding.large)
-
-        status: root.vars[aroot.varKey] !== undefined ? String(root.vars[aroot.varKey]) : (root.defaults[aroot.varKey] !== undefined ? String(root.defaults[aroot.varKey]) : "")
-
-        Loader {
-            anchors.centerIn: parent
-            active: aroot.popup.animDriver > 0
-
-            sourceComponent: VerticalFadeListView {
-                id: list
-
-                implicitWidth: Tokens.sizes.nexus.popupWidth
-                implicitHeight: CUtils.clamp(aroot.popupHeight, Tokens.sizes.nexus.minPopupHeight, Tokens.sizes.nexus.maxPopupHeight)
-
-                model: {
-                    const apps = [...DesktopEntries.applications.values];
-                    const favourited = new Set(apps.filter(a => Strings.testRegexList(GlobalConfig.launcher.favouriteApps, a.id)));
-                    return apps.sort((a, b) => (favourited.has(b) - favourited.has(a)) || a.name.localeCompare(b.name));
-                }
-
-                delegate: StateLayer {
-                    id: appItem
-
-                    required property DesktopEntry modelData
-                    required property int index
-
-                    anchors.fill: undefined
-                    anchors.left: list.contentItem.left
-                    anchors.right: list.contentItem.right
-                    implicitHeight: itemLayout.implicitHeight + itemLayout.anchors.margins * 2
-                    radius: Tokens.rounding.small
-
-                    onClicked: {
-                        aroot.popup.open = false;
-                        root.saveVar(aroot.varKey, modelData.command);
-                    }
-
-                    RowLayout {
-                        id: itemLayout
-
-                        anchors.fill: parent
-                        anchors.margins: Tokens.padding.medium
-                        spacing: Tokens.spacing.medium
-
-                        IconImage {
-                            asynchronous: true
-                            implicitSize: Math.round(Tokens.font.icon.large.pointSize * 1.8)
-                            source: Quickshell.iconPath(appItem.modelData.icon, "image-missing")
-                        }
-
-                        ColumnLayout {
-                            Layout.fillWidth: true
-                            spacing: 0
-
-                            StyledText {
-                                Layout.fillWidth: true
-                                text: appItem.modelData.name
-                                font: Tokens.font.body.small
-                                elide: Text.ElideRight
-                            }
-
-                            StyledText {
-                                Layout.fillWidth: true
-                                visible: text
-                                text: (appItem.modelData.comment || appItem.modelData.genericName) ?? ""
-                                color: Colours.palette.m3outline
-                                font: Tokens.font.label.small
-                                elide: Text.ElideRight
-                            }
-                        }
-
-                        MaterialIcon {
-                            visible: Strings.testRegexList(GlobalConfig.launcher.favouriteApps, appItem.modelData.id)
-                            text: "favorite"
-                            fill: 1
-                            color: Colours.palette.m3primary
-                            fontStyle: Tokens.font.icon.small
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    component BoolRow: ToggleRow {
-        property string varKey
-        showDelete: root.vars[varKey] !== undefined
-        onDeleted: root.deleteVar(varKey)
-        checked: root.vars[varKey] === true
-        onToggled: root.saveVar(varKey, checked)
-    }
     ColumnLayout {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
@@ -861,5 +572,297 @@ PageBase {
             Layout.preferredHeight: Tokens.padding.large
             Layout.fillWidth: true
         }
+    }
+
+    component StringRow: ConnectedRect {
+        id: sroot
+        property string label
+        property string subtext
+        property string varKey
+
+        Layout.fillWidth: true
+        implicitHeight: contentRow.implicitHeight + Tokens.padding.medium * 2
+
+        RowLayout {
+            id: contentRow
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.leftMargin: Tokens.padding.largeIncreased
+            anchors.rightMargin: Tokens.padding.medium
+            spacing: Tokens.spacing.medium
+
+            Column {
+                Layout.fillWidth: true
+                spacing: 0
+
+                RowLayout {
+                    width: parent.width
+                    spacing: Tokens.spacing.small
+
+                    StyledText {
+                        text: sroot.label
+                        font: Tokens.font.body.small
+                        elide: Text.ElideRight
+                    }
+
+                    IconButton {
+                        icon: "delete"
+                        type: IconButton.Text
+                        font: Tokens.font.icon.small
+                        visible: root.vars[sroot.varKey] !== undefined
+                        onClicked: root.deleteVar(sroot.varKey)
+                    }
+
+                    Item {
+                        Layout.fillWidth: true
+                    }
+                }
+
+                StyledText {
+                    text: sroot.subtext
+                    visible: text !== ""
+                    font: Tokens.font.label.small
+                    color: Colours.palette.m3outline
+                    elide: Text.ElideRight
+                }
+            }
+
+            StyledTextField {
+                Layout.preferredWidth: 350
+                Layout.alignment: Qt.AlignVCenter
+                text: root.vars[sroot.varKey] !== undefined ? String(root.vars[sroot.varKey]) : ""
+                placeholderText: root.defaults[sroot.varKey] !== undefined ? String(root.defaults[sroot.varKey]) : ""
+                onEditingFinished: {
+                    if (text === "")
+                        root.deleteVar(sroot.varKey);
+                    else
+                        root.saveVar(sroot.varKey, text);
+                }
+            }
+        }
+    }
+
+    component BoundedSliderRow: SliderRow {
+        id: bsroot
+        property string varKey
+        property real from: 0
+        property real to: 1
+        property real step: 0.1
+
+        showDelete: root.vars[varKey] !== undefined
+        onDeleted: root.deleteVar(varKey)
+
+        value: {
+            let v = root.vars[varKey] !== undefined ? root.vars[varKey] : root.defaults[varKey];
+            if (v === undefined)
+                return 0;
+            return (v - from) / (to - from);
+        }
+        valueLabel: {
+            let v = root.vars[varKey] !== undefined ? root.vars[varKey] : root.defaults[varKey];
+            return v !== undefined ? Number(v).toFixed(step < 1 ? 2 : 0) : "";
+        }
+
+        onMoved: v => {
+            let mapped = from + v * (to - from);
+            mapped = Math.round(mapped / step) * step;
+            if (step >= 1)
+                mapped = Math.round(mapped);
+            // Limit to fixed decimals to avoid precision issues
+            mapped = Number(mapped.toFixed(step < 1 ? 2 : 0));
+            root.saveVar(varKey, mapped);
+        }
+    }
+
+    component FloatRow: ConnectedRect {
+        id: nroot
+        property string label
+        property string subtext
+        property string varKey
+
+        Layout.fillWidth: true
+        implicitHeight: ncontentRow.implicitHeight + Tokens.padding.medium * 2
+
+        RowLayout {
+            id: ncontentRow
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.leftMargin: Tokens.padding.largeIncreased
+            anchors.rightMargin: Tokens.padding.medium
+            spacing: Tokens.spacing.medium
+
+            Column {
+                Layout.fillWidth: true
+                spacing: 0
+
+                RowLayout {
+                    width: parent.width
+                    spacing: Tokens.spacing.small
+
+                    StyledText {
+                        text: nroot.label
+                        font: Tokens.font.body.small
+                        elide: Text.ElideRight
+                    }
+
+                    IconButton {
+                        icon: "delete"
+                        type: IconButton.Text
+                        font: Tokens.font.icon.small
+                        visible: root.vars[nroot.varKey] !== undefined
+                        onClicked: root.deleteVar(nroot.varKey)
+                    }
+
+                    Item {
+                        Layout.fillWidth: true
+                    }
+                }
+
+                StyledText {
+                    text: nroot.subtext
+                    visible: text !== ""
+                    font: Tokens.font.label.small
+                    color: Colours.palette.m3outline
+                    elide: Text.ElideRight
+                }
+            }
+
+            StyledTextField {
+                Layout.preferredWidth: 350
+                Layout.alignment: Qt.AlignVCenter
+                text: root.vars[nroot.varKey] !== undefined ? String(root.vars[nroot.varKey]) : ""
+                placeholderText: root.defaults[nroot.varKey] !== undefined ? String(root.defaults[nroot.varKey]) : ""
+                onEditingFinished: {
+                    if (text === "")
+                        root.deleteVar(nroot.varKey);
+                    else if (!isNaN(parseFloat(text)))
+                        root.saveVar(nroot.varKey, parseFloat(text));
+                }
+            }
+        }
+    }
+
+    component IntRow: StepperRow {
+        property string varKey
+        showDelete: root.vars[varKey] !== undefined
+        onDeleted: root.deleteVar(varKey)
+        value: root.vars[varKey] !== undefined ? Number(root.vars[varKey]) : (root.defaults[varKey] !== undefined ? Number(root.defaults[varKey]) : 0)
+        onMoved: v => root.saveVar(varKey, Math.round(v))
+    }
+
+    component AppRow: PopupRow {
+        id: aroot
+
+        property string varKey
+        readonly property int popupHeight: root.flickable.height - y + root.flickable.contentY - Tokens.padding.large - Tokens.padding.extraExtraLarge
+
+        showDelete: root.vars[varKey] !== undefined
+        onDeleted: root.deleteVar(varKey)
+
+        keepPopupAsChild: {
+            if (!aroot.popup.open && aroot.popup.animDriver === 0)
+                return true;
+
+            if (root.nState.animatingContainer || root.opacity < 1)
+                return true;
+
+            let p = root.parent;
+            while (p && p.objectName !== "PageContainer")
+                p = p.parent;
+            return p ? (p.opacity < 1) : false;
+        }
+
+        popup.topMovement: Math.max(Tokens.sizes.nexus.minPopupHeight - popupHeight, Tokens.padding.large)
+
+        status: root.vars[aroot.varKey] !== undefined ? String(root.vars[aroot.varKey]) : (root.defaults[aroot.varKey] !== undefined ? String(root.defaults[aroot.varKey]) : "")
+
+        Loader {
+            anchors.centerIn: parent
+            active: aroot.popup.animDriver > 0
+
+            sourceComponent: VerticalFadeListView {
+                id: list
+
+                implicitWidth: Tokens.sizes.nexus.popupWidth
+                implicitHeight: CUtils.clamp(aroot.popupHeight, Tokens.sizes.nexus.minPopupHeight, Tokens.sizes.nexus.maxPopupHeight)
+
+                model: {
+                    const apps = [...DesktopEntries.applications.values];
+                    const favourited = new Set(apps.filter(a => Strings.testRegexList(GlobalConfig.launcher.favouriteApps, a.id)));
+                    return apps.sort((a, b) => (favourited.has(b) - favourited.has(a)) || a.name.localeCompare(b.name));
+                }
+
+                delegate: StateLayer {
+                    id: appItem
+
+                    required property DesktopEntry modelData
+                    required property int index
+
+                    anchors.fill: undefined
+                    anchors.left: list.contentItem.left
+                    anchors.right: list.contentItem.right
+                    implicitHeight: itemLayout.implicitHeight + itemLayout.anchors.margins * 2
+                    radius: Tokens.rounding.small
+
+                    onClicked: {
+                        aroot.popup.open = false;
+                        root.saveVar(aroot.varKey, modelData.command);
+                    }
+
+                    RowLayout {
+                        id: itemLayout
+
+                        anchors.fill: parent
+                        anchors.margins: Tokens.padding.medium
+                        spacing: Tokens.spacing.medium
+
+                        IconImage {
+                            asynchronous: true
+                            implicitSize: Math.round(Tokens.font.icon.large.pointSize * 1.8)
+                            source: Quickshell.iconPath(appItem.modelData.icon, "image-missing")
+                        }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 0
+
+                            StyledText {
+                                Layout.fillWidth: true
+                                text: appItem.modelData.name
+                                font: Tokens.font.body.small
+                                elide: Text.ElideRight
+                            }
+
+                            StyledText {
+                                Layout.fillWidth: true
+                                visible: text
+                                text: (appItem.modelData.comment || appItem.modelData.genericName) ?? ""
+                                color: Colours.palette.m3outline
+                                font: Tokens.font.label.small
+                                elide: Text.ElideRight
+                            }
+                        }
+
+                        MaterialIcon {
+                            visible: Strings.testRegexList(GlobalConfig.launcher.favouriteApps, appItem.modelData.id)
+                            text: "favorite"
+                            fill: 1
+                            color: Colours.palette.m3primary
+                            fontStyle: Tokens.font.icon.small
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    component BoolRow: ToggleRow {
+        property string varKey
+        showDelete: root.vars[varKey] !== undefined
+        onDeleted: root.deleteVar(varKey)
+        checked: root.vars[varKey] === true
+        onToggled: root.saveVar(varKey, checked)
     }
 }

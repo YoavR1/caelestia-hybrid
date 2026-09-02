@@ -15,8 +15,6 @@ Item {
     required property BarPopouts.Wrapper popouts
     required property bool fullscreen
 
-    Config.screen: screen.name
-
     readonly property bool disabled: Strings.testRegexList(Config.bar.excludedScreens, screen.name)
     readonly property string position: Config.bar.position
 
@@ -42,6 +40,8 @@ Item {
     function handleWheel(pos: real, angleDelta: point): void {
         (content.item as Bar)?.handleWheel(pos, angleDelta);
     }
+
+    Config.screen: screen.name
 
     clip: true
     visible: isHorizontal ? height > Config.border.thickness : width > Config.border.thickness

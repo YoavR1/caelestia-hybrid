@@ -17,17 +17,6 @@ import qs.modules.nexus.common
 PageBase {
     id: root
 
-    title: qsTr("Discord Rich Presence")
-    isSubPage: true
-
-    function saveToken(token) {
-        if (!token) {
-            Quickshell.execDetached(["secret-tool", "clear", "service", "caelestia-shell", "account", "steamgriddb"]);
-        } else {
-            Quickshell.execDetached(["bash", "-c", "secret-tool store --label=\"Caelestia SteamGridDB Key\" service caelestia-shell account steamgriddb <<< \"$1\"", "--", token]);
-        }
-    }
-
     property Process readTokenProc: Process {
         id: readTokenProc
 
@@ -38,6 +27,17 @@ PageBase {
             }
         }
     }
+
+    function saveToken(token) {
+        if (!token) {
+            Quickshell.execDetached(["secret-tool", "clear", "service", "caelestia-shell", "account", "steamgriddb"]);
+        } else {
+            Quickshell.execDetached(["bash", "-c", "secret-tool store --label=\"Caelestia SteamGridDB Key\" service caelestia-shell account steamgriddb <<< \"$1\"", "--", token]);
+        }
+    }
+
+    title: qsTr("Discord Rich Presence")
+    isSubPage: true
 
     Component.onCompleted: readTokenProc.running = true
 
@@ -488,6 +488,7 @@ PageBase {
                 p = p.parent;
             return p?.opacity < 1;
         }
+
         popup.topMovement: Math.max(Tokens.sizes.nexus.minPopupHeight - popupHeight, Tokens.padding.large)
 
         Loader {
@@ -504,16 +505,6 @@ PageBase {
 
                     VerticalFadeListView {
                         id: list
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-
-                        Connections {
-                            target: Hyprland.toplevels
-
-                            function onValuesChanged() {
-                                list.updateModel();
-                            }
-                        }
 
                         function updateModel() {
                             let toplevels = [];
@@ -524,6 +515,9 @@ PageBase {
                             }
                             list.model = toplevels.sort((a, b) => (a.lastIpcObject?.title ?? "").localeCompare(b.lastIpcObject?.title ?? ""));
                         }
+
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
 
                         Component.onCompleted: updateModel()
 
@@ -578,6 +572,14 @@ PageBase {
                                     }
                                 }
                             }
+                        }
+
+                        Connections {
+                            function onValuesChanged() {
+                                list.updateModel();
+                            }
+
+                            target: Hyprland.toplevels
                         }
                     }
                 }

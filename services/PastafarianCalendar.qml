@@ -40,13 +40,13 @@ Singleton {
     }
 
     Connections {
-        target: Nmcli
-
         function onIsConnectedChanged() {
             if (Nmcli.isConnected && !root.loaded) {
                 root.reload();
             }
         }
+
+        target: Nmcli
     }
 
     Timer {

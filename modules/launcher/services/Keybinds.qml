@@ -11,8 +11,6 @@ QtObject {
     property var keybinds: []
     property bool initialized: false
 
-    signal loaded
-
     property Process luaReader: Process {
         running: false
         command: ["lua", Quickshell.shellDir + "/assets/scripts/parse_keybinds.lua"]
@@ -91,6 +89,8 @@ QtObject {
             }
         }
     }
+
+    signal loaded
 
     function loadKeybinds() {
         if (initialized && keybinds.length > 0) {

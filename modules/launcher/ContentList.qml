@@ -21,18 +21,6 @@ Item {
 
     readonly property bool showWallpapers: search.text.startsWith(`${GlobalConfig.launcher.actionPrefix}wallpaper `) || search.text === `${GlobalConfig.launcher.actionPrefix}wallpaper`
 
-    onShowWallpapersChanged: {
-        if (showWallpapers) {
-            for (let category of Wallpapers.categories) {
-                let walls = Wallpapers.grouped[category] || [];
-                if (walls.some(w => w.path === Wallpapers.actualCurrent)) {
-                    currentWallpaperTab = category;
-                    break;
-                }
-            }
-        }
-    }
-
     readonly property bool showWindowSwitcher: search.text.startsWith(`${GlobalConfig.launcher.actionPrefix}windows `) || search.text === `${GlobalConfig.launcher.actionPrefix}windows`
 
     readonly property bool showKeybinds: search.text.startsWith(`${GlobalConfig.launcher.actionPrefix}keybinds `) || search.text === `${GlobalConfig.launcher.actionPrefix}keybinds`
@@ -56,6 +44,18 @@ Item {
 
     property string animState: showAnimations ? "animations" : (showWindowSwitcher ? "windowSwitcher" : (showKeybinds ? "keybinds" : (showWallpapers ? "wallpapers" : "apps")))
 
+    onShowWallpapersChanged: {
+        if (showWallpapers) {
+            for (let category of Wallpapers.categories) {
+                let walls = Wallpapers.grouped[category] || [];
+                if (walls.some(w => w.path === Wallpapers.actualCurrent)) {
+                    currentWallpaperTab = category;
+                    break;
+                }
+            }
+        }
+    }
+
     anchors.horizontalCenter: parent.horizontalCenter
     anchors.bottom: parent.bottom
 
@@ -64,26 +64,6 @@ Item {
 
     clip: true
     state: animState
-
-    Behavior on animState {
-        SequentialAnimation {
-            Anim {
-                target: root
-                property: "opacity"
-                from: 1
-                to: 0
-                type: Anim.DefaultEffects
-            }
-            PropertyAction {}
-            Anim {
-                target: root
-                property: "opacity"
-                from: 0
-                to: 1
-                type: Anim.DefaultEffects
-            }
-        }
-    }
 
     onStateChanged: {
         if (state === "keybinds") {
@@ -165,6 +145,26 @@ Item {
             }
         }
     ]
+
+    Behavior on animState {
+        SequentialAnimation {
+            Anim {
+                target: root
+                property: "opacity"
+                from: 1
+                to: 0
+                type: Anim.DefaultEffects
+            }
+            PropertyAction {}
+            Anim {
+                target: root
+                property: "opacity"
+                from: 0
+                to: 1
+                type: Anim.DefaultEffects
+            }
+        }
+    }
 
     Timer {
         id: keybindsTimer
@@ -262,10 +262,6 @@ Item {
                         implicitHeight: label.implicitHeight + Tokens.padding.small * 2
 
                         CustomMouseArea {
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-
                             function onWheel(event: WheelEvent): void {
                                 let idx = root.wallpaperTabs.findIndex(t => t.id === root.currentWallpaperTab);
                                 if (event.angleDelta.y < 0 || event.angleDelta.x < 0)
@@ -275,6 +271,10 @@ Item {
 
                                 root.currentWallpaperTab = root.wallpaperTabs[idx].id;
                             }
+
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
 
                             StateLayer {
                                 anchors.fill: parent
@@ -299,12 +299,12 @@ Item {
             Item {
                 id: indicator
 
-                anchors.top: tabsRow.bottom
-                anchors.topMargin: 5
-
                 property int currentIndex: Math.max(0, root.wallpaperTabs.findIndex(t => t.id === root.currentWallpaperTab))
 
                 property Item currentTab: tabsRepeater.itemAt(currentIndex)
+
+                anchors.top: tabsRow.bottom
+                anchors.topMargin: 5
 
                 implicitWidth: currentTab ? currentTab.implicitWidth : 0
                 implicitHeight: 3
@@ -335,6 +335,7 @@ Item {
                 Behavior on x {
                     Anim {}
                 }
+
                 Behavior on implicitWidth {
                     Anim {}
                 }

@@ -95,6 +95,18 @@ StyledRect {
 
                         property real animHeight: 3
 
+                        x: index * 5
+
+                        width: 3
+
+                        height: Math.round(animHeight)
+
+                        y: Math.round((20 - height) / 2)
+
+                        radius: 1.5
+
+                        color: Colours.palette.m3primary
+
                         Behavior on animHeight {
                             NumberAnimation {
                                 duration: 50
@@ -107,18 +119,6 @@ StyledRect {
                             property: "animHeight"
                             value: barItem.rawHeight
                         }
-
-                        x: index * 5
-
-                        width: 3
-
-                        height: Math.round(animHeight)
-
-                        y: Math.round((20 - height) / 2)
-
-                        radius: 1.5
-
-                        color: Colours.palette.m3primary
                     }
                 }
             }

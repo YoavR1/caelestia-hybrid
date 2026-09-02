@@ -24,7 +24,23 @@ import qs.utils
 ShellRoot {
     id: root
 
+    // Force service initialization
+    property var _arpcInit: DiscordRPC
+
+    property var _gameModeInit: GameMode
+
+    property var _pipInit: PipManager
+
+    property var _systemTrayInit: SystemTray
+
     settings.watchFiles: true
+
+    Component.onCompleted: {
+        Qt.callLater(() => {
+            Weather.reload();
+            PastafarianCalendar.reload();
+        });
+    }
 
     Binding {
         target: ShellState
@@ -41,9 +57,11 @@ ShellRoot {
 
     Drawers {}
     AreaPicker {}
+
     Lock {
         id: lock
     }
+
     PolkitModule {}
 
     Variants {
@@ -56,25 +74,11 @@ ShellRoot {
 
     ConfigToasts {}
     Shortcuts {}
-
-    Component.onCompleted: {
-        Qt.callLater(() => {
-            Weather.reload();
-            PastafarianCalendar.reload();
-        });
-    }
     BatteryMonitor {}
+
     IdleMonitors {
         lock: lock
     }
+
     BluetoothReconnect {}
-
-    // Force service initialization
-    property var _arpcInit: DiscordRPC
-
-    property var _gameModeInit: GameMode
-
-    property var _pipInit: PipManager
-
-    property var _systemTrayInit: SystemTray
 }

@@ -10,9 +10,6 @@ import qs.modules.nexus.common
 PageBase {
     id: root
 
-    title: qsTr("Dashboard")
-    isSubPage: true
-
     readonly property list<MenuItem> dashboardShapeItems: [
         MenuItem {
             property int value: MaterialShape.Circle
@@ -138,6 +135,9 @@ PageBase {
             text: qsTr("Cookie 12-Sided")
         }
     ]
+
+    title: qsTr("Dashboard")
+    isSubPage: true
 
     ColumnLayout {
         anchors.horizontalCenter: parent.horizontalCenter

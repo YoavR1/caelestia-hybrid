@@ -17,9 +17,6 @@ import qs.modules.nexus.common
 PageBase {
     id: root
 
-    title: qsTr("Select wallpaper")
-    isSubPage: true
-
     property color sortColor: "transparent"
 
     property var colorDistances: ({})
@@ -66,6 +63,9 @@ PageBase {
         root.colorDistances = newDistances;
         root.sortVersion++;
     }
+
+    title: qsTr("Select wallpaper")
+    isSubPage: true
 
     onSortColorChanged: {
         if (sortColor === "transparent") {

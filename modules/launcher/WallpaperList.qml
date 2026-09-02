@@ -125,16 +125,6 @@ PathView {
     Component.onCompleted: currentIndex = Wallpapers.list.findIndex(w => w.path === Wallpapers.actualCurrent)
     Component.onDestruction: Wallpapers.stopPreview()
 
-    Timer {
-        id: previewTimer
-
-        interval: 100
-        onTriggered: {
-            if (root.currentItem)
-                Wallpapers.preview((root.currentItem as WallpaperItem).modelData.path);
-        }
-    }
-
     onCurrentItemChanged: {
         if (currentItem)
             previewTimer.restart();
@@ -179,16 +169,26 @@ PathView {
         }
     }
 
-    CustomMouseArea {
-        anchors.fill: parent
-        preventStealing: false
-        acceptedButtons: Qt.NoButton
+    Timer {
+        id: previewTimer
 
+        interval: 100
+        onTriggered: {
+            if (root.currentItem)
+                Wallpapers.preview((root.currentItem as WallpaperItem).modelData.path);
+        }
+    }
+
+    CustomMouseArea {
         function onWheel(event: WheelEvent): void {
             if (event.angleDelta.y > 0 || event.angleDelta.x > 0)
                 root.decrementCurrentIndex();
             else if (event.angleDelta.y < 0 || event.angleDelta.x < 0)
                 root.incrementCurrentIndex();
         }
+
+        anchors.fill: parent
+        preventStealing: false
+        acceptedButtons: Qt.NoButton
     }
 }

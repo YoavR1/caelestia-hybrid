@@ -10,8 +10,6 @@ StyledSwitch {
 
     property bool showDelete: false
 
-    signal deleted
-
     property var configNode
 
     property string propertyName: ""
@@ -23,6 +21,8 @@ StyledSwitch {
     property alias last: bg.last
 
     readonly property alias bg: bg
+
+    signal deleted
 
     Layout.fillWidth: true
 

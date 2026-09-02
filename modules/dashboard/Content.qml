@@ -87,30 +87,35 @@ Item {
             id: view
 
             readonly property int currentIndex: root.screenState.dashboardTab
+
             readonly property Item currentItem: {
                 repeater.count; // Trigger update on count change
                 return repeater.itemAt(currentIndex);
             }
 
+            property real lastValidImplicitWidth: 0
+
+            property real lastValidImplicitHeight: 0
+
+            property real lastValidContentX: 0
+
             anchors.fill: parent
 
             flickableDirection: Flickable.HorizontalFlick
-
-            property real lastValidImplicitWidth: 0
             implicitWidth: currentItem ? currentItem.implicitWidth : lastValidImplicitWidth
+
             onImplicitWidthChanged: {
                 if (currentItem)
                     lastValidImplicitWidth = currentItem.implicitWidth;
             }
 
-            property real lastValidImplicitHeight: 0
             implicitHeight: currentItem ? currentItem.implicitHeight : lastValidImplicitHeight
+
             onImplicitHeightChanged: {
                 if (currentItem)
                     lastValidImplicitHeight = currentItem.implicitHeight;
             }
 
-            property real lastValidContentX: 0
             contentX: currentItem ? currentItem.x : lastValidContentX
             contentWidth: row.implicitWidth
             contentHeight: row.implicitHeight

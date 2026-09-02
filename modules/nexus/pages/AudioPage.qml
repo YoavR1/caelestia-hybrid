@@ -12,8 +12,6 @@ import qs.modules.nexus.common
 PageBase {
     id: root
 
-    title: qsTr("Audio")
-
     function addApp() {
         let appName = silenceAppInput.text.trim();
         if (appName !== "") {
@@ -26,6 +24,8 @@ PageBase {
             silenceAppInput.text = "";
         }
     }
+
+    title: qsTr("Audio")
 
     ColumnLayout {
         anchors.horizontalCenter: parent.horizontalCenter

@@ -14,7 +14,6 @@ Item {
     id: root
 
     required property ShellScreen screen
-    Config.screen: screen.name
     required property ScreenState screenState
     required property BarPopouts.Wrapper popouts
     required property bool fullscreen
@@ -197,23 +196,7 @@ Item {
         }
     }
 
-    EntrySection {
-        id: startSection
-
-        values: root.Config.bar.entries.start.values
-    }
-
-    EntrySection {
-        id: centerSection
-
-        values: root.Config.bar.entries.center.values
-    }
-
-    EntrySection {
-        id: endSection
-
-        values: root.Config.bar.entries.end.values
-    }
+    Config.screen: screen.name
 
     states: [
         State {
@@ -277,6 +260,24 @@ Item {
             }
         }
     ]
+
+    EntrySection {
+        id: startSection
+
+        values: root.Config.bar.entries.start.values
+    }
+
+    EntrySection {
+        id: centerSection
+
+        values: root.Config.bar.entries.center.values
+    }
+
+    EntrySection {
+        id: endSection
+
+        values: root.Config.bar.entries.end.values
+    }
 
     component EntrySection: GridLayout {
         id: section

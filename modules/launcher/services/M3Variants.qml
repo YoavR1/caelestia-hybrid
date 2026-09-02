@@ -21,17 +21,6 @@ Searcher {
         getPreviewColoursProc.running = true;
     }
 
-    Process {
-        id: getPreviewColoursProc
-
-        stdout: StdioCollector {
-            onStreamFinished: {
-                Colours.load(text, true);
-                Colours.showPreview = true;
-            }
-        }
-    }
-
     list: [
         Variant {
             variant: "vibrant"
@@ -90,6 +79,17 @@ Searcher {
     ]
 
     useFuzzy: GlobalConfig.launcher.useFuzzy.variants
+
+    Process {
+        id: getPreviewColoursProc
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                Colours.load(text, true);
+                Colours.showPreview = true;
+            }
+        }
+    }
 
     component Variant: QtObject {
         required property string variant

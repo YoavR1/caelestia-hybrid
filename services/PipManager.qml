@@ -19,77 +19,6 @@ Singleton {
     property string lastPipMonitor: ""
     property string currentPipAddress: ""
 
-    Timer {
-        id: updateDebouncer
-
-        interval: 100 // Wait for Wayland exclusive zone & QML bindings to settle
-        running: false
-        repeat: false
-        onTriggered: root.checkPip()
-    }
-
-    Connections {
-        target: Hyprland
-
-        function onRawEvent(event: HyprlandEvent): void {
-            const n = event.name;
-            if (n === "closewindow" || n === "openwindow" || n === "windowtitle" || n === "changefloatingmode" || n === "activewindow" || n === "configreloaded" || n === "workspace" || n === "focusedmon") {
-                updateDebouncer.restart();
-            }
-        }
-    }
-
-    Instantiator {
-        model: Hyprland.monitors.values
-
-        Connections {
-            required property HyprlandMonitor modelData
-
-            target: modelData
-
-            function onLastIpcObjectChanged(): void {
-                updateDebouncer.restart();
-            }
-        }
-    }
-
-    Connections {
-        target: GlobalConfig.services
-
-        function onPipPositionChanged(): void {
-            root.tempPipPosition = ""; // Reset temporary override on explicit setting change
-            root.lastPipMoveTime = Date.now(); // Block drag-detection from falsely re-triggering
-            root.checkPip();
-        }
-
-        function onPipFollowFocusChanged(): void {
-            root.lastPipMoveTime = Date.now();
-            root.checkPip();
-        }
-
-        function onPipPausedChanged(): void {
-            if (!GlobalConfig.services.pipPaused) {
-                root.checkPip();
-            }
-        }
-    }
-
-    Connections {
-        target: GlobalConfig.bar
-
-        function onPositionChanged(): void {
-            updateDebouncer.restart();
-        }
-    }
-
-    Connections {
-        target: GlobalConfig.border
-
-        function onThicknessChanged(): void {
-            updateDebouncer.restart();
-        }
-    }
-
     function checkPip(): void {
         if (GlobalConfig.services.pipPaused)
             return;
@@ -263,5 +192,76 @@ Singleton {
             Hypr.dispatch(`movewindowpixel exact ${move_x} ${move_y},${addr}`);
             Hypr.dispatch(`setprop ${addr} keep_aspect_ratio true`);
         }
+    }
+
+    Timer {
+        id: updateDebouncer
+
+        interval: 100 // Wait for Wayland exclusive zone & QML bindings to settle
+        running: false
+        repeat: false
+        onTriggered: root.checkPip()
+    }
+
+    Connections {
+        function onRawEvent(event: HyprlandEvent): void {
+            const n = event.name;
+            if (n === "closewindow" || n === "openwindow" || n === "windowtitle" || n === "changefloatingmode" || n === "activewindow" || n === "configreloaded" || n === "workspace" || n === "focusedmon") {
+                updateDebouncer.restart();
+            }
+        }
+
+        target: Hyprland
+    }
+
+    Instantiator {
+        model: Hyprland.monitors.values
+
+        Connections {
+            required property HyprlandMonitor modelData
+
+            function onLastIpcObjectChanged(): void {
+                updateDebouncer.restart();
+            }
+
+            target: modelData
+        }
+    }
+
+    Connections {
+        function onPipPositionChanged(): void {
+            root.tempPipPosition = ""; // Reset temporary override on explicit setting change
+            root.lastPipMoveTime = Date.now(); // Block drag-detection from falsely re-triggering
+            root.checkPip();
+        }
+
+        function onPipFollowFocusChanged(): void {
+            root.lastPipMoveTime = Date.now();
+            root.checkPip();
+        }
+
+        function onPipPausedChanged(): void {
+            if (!GlobalConfig.services.pipPaused) {
+                root.checkPip();
+            }
+        }
+
+        target: GlobalConfig.services
+    }
+
+    Connections {
+        function onPositionChanged(): void {
+            updateDebouncer.restart();
+        }
+
+        target: GlobalConfig.bar
+    }
+
+    Connections {
+        function onThicknessChanged(): void {
+            updateDebouncer.restart();
+        }
+
+        target: GlobalConfig.border
     }
 }

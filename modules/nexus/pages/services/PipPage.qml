@@ -7,8 +7,6 @@ import qs.modules.nexus.common
 PageBase {
     id: root
 
-    title: qsTr("Picture in Picture")
-
     readonly property list<MenuItem> positionItems: [
         MenuItem {
             text: qsTr("Top left")
@@ -61,6 +59,8 @@ PageBase {
             return 8;
         }
     }
+
+    title: qsTr("Picture in Picture")
 
     ColumnLayout {
         anchors.horizontalCenter: parent.horizontalCenter

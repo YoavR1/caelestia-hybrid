@@ -40,25 +40,6 @@ Singleton {
         }
     }
 
-    Timer {
-        interval: 500
-        repeat: true
-        running: true
-        onTriggered: root.evaluateAutoEnable()
-    }
-
-    Connections {
-        target: GlobalConfig.utilities.gameMode
-
-        function onAutoEnableChanged(): void {
-            root.evaluateAutoEnable();
-        }
-
-        function onAutoEnableRegexesChanged(): void {
-            root.evaluateAutoEnable();
-        }
-    }
-
     function setDynamicConfs(): void {
         const gameModeConfig = GlobalConfig.utilities.gameMode;
         let options = {};
@@ -103,6 +84,25 @@ Singleton {
             if (GlobalConfig.utilities.toasts.gameModeChanged)
                 Toaster.toast(qsTr("Game mode disabled"), qsTr("Hyprland settings restored"), "gamepad");
         }
+    }
+
+    Timer {
+        interval: 500
+        repeat: true
+        running: true
+        onTriggered: root.evaluateAutoEnable()
+    }
+
+    Connections {
+        function onAutoEnableChanged(): void {
+            root.evaluateAutoEnable();
+        }
+
+        function onAutoEnableRegexesChanged(): void {
+            root.evaluateAutoEnable();
+        }
+
+        target: GlobalConfig.utilities.gameMode
     }
 
     PersistentProperties {

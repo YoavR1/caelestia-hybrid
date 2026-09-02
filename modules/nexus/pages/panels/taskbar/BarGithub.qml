@@ -13,17 +13,6 @@ import qs.modules.nexus.common
 PageBase {
     id: root
 
-    title: qsTr("GitHub")
-    isSubPage: true
-
-    function saveToken(token) {
-        if (!token) {
-            Quickshell.execDetached(["secret-tool", "clear", "service", "caelestia-shell", "account", "github"]);
-        } else {
-            Quickshell.execDetached(["bash", "-c", "secret-tool store --label=\"Caelestia GitHub Token\" service caelestia-shell account github <<< \"$1\"", "--", token]);
-        }
-    }
-
     property Process readTokenProc: Process {
         id: readTokenProc
 
@@ -34,6 +23,17 @@ PageBase {
             }
         }
     }
+
+    function saveToken(token) {
+        if (!token) {
+            Quickshell.execDetached(["secret-tool", "clear", "service", "caelestia-shell", "account", "github"]);
+        } else {
+            Quickshell.execDetached(["bash", "-c", "secret-tool store --label=\"Caelestia GitHub Token\" service caelestia-shell account github <<< \"$1\"", "--", token]);
+        }
+    }
+
+    title: qsTr("GitHub")
+    isSubPage: true
 
     Component.onCompleted: readTokenProc.running = true
 

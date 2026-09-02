@@ -17,30 +17,11 @@ Singleton {
     property bool pauseOnWindowOverlap: true
     property string hwDecoder: "none"
 
-    Settings {
-        id: pauserSettings
-
-        location: `${Paths.state}/wallpaper/pauser.ini`
-        category: "WallpaperPauser"
-
-        property alias manualPause: root.manualPause
-
-        property alias pauseOnBattery: root.pauseOnBattery
-
-        property alias pauseOnWindowOverlap: root.pauseOnWindowOverlap
-
-        property alias hwDecoder: root.hwDecoder
-    }
-
     property bool paused: false
 
     property bool _loaded: false
 
     property string pauseReason: "None"
-
-    Process {
-        id: saveHwDecoderProcess
-    }
 
     function recalculate() {
         let newPaused = false;
@@ -92,58 +73,6 @@ Singleton {
         root.pauseReason = reason;
     }
 
-    Connections {
-        target: Hyprland
-
-        function onFocusedWorkspaceChanged() {
-            root.recalculate();
-        }
-
-        function onFocusedMonitorChanged() {
-            root.recalculate();
-        }
-
-        function onRawEvent(event) {
-            const n = event.name;
-            if (n.startsWith("workspace") || n.startsWith("activewindow") || n.startsWith("createworkspace") || n.startsWith("destroyworkspace") || ["fullscreen", "changefloatingmode", "minimize", "movewindow", "openwindow", "closewindow", "moveworkspace", "focusedmon"].includes(n)) {
-                recalcTimer.restart();
-            }
-        }
-    }
-
-    Connections {
-        target: UPower
-
-        function onOnBatteryChanged() {
-            recalcTimer.restart();
-        }
-    }
-
-    Timer {
-        id: recalcTimer
-
-        interval: 50
-        onTriggered: root.recalculate()
-    }
-
-    // Startup timer to ensure we catch the asynchronously loaded Hyprland and Quickshell state
-    Timer {
-        id: startupTimer
-
-        interval: 1000
-        repeat: true
-        running: true
-
-        property int attempts: 0
-        onTriggered: {
-            root.recalculate();
-            attempts++;
-            if (attempts >= 5) {
-                running = false;
-            }
-        }
-    }
-
     onManualPauseChanged: {
         recalculate();
     }
@@ -168,5 +97,77 @@ Singleton {
     Component.onCompleted: {
         root._loaded = true;
         recalculate();
+    }
+
+    Settings {
+        id: pauserSettings
+
+        property alias manualPause: root.manualPause
+
+        property alias pauseOnBattery: root.pauseOnBattery
+
+        property alias pauseOnWindowOverlap: root.pauseOnWindowOverlap
+
+        property alias hwDecoder: root.hwDecoder
+
+        location: `${Paths.state}/wallpaper/pauser.ini`
+        category: "WallpaperPauser"
+    }
+
+    Process {
+        id: saveHwDecoderProcess
+    }
+
+    Connections {
+        function onFocusedWorkspaceChanged() {
+            root.recalculate();
+        }
+
+        function onFocusedMonitorChanged() {
+            root.recalculate();
+        }
+
+        function onRawEvent(event) {
+            const n = event.name;
+            if (n.startsWith("workspace") || n.startsWith("activewindow") || n.startsWith("createworkspace") || n.startsWith("destroyworkspace") || ["fullscreen", "changefloatingmode", "minimize", "movewindow", "openwindow", "closewindow", "moveworkspace", "focusedmon"].includes(n)) {
+                recalcTimer.restart();
+            }
+        }
+
+        target: Hyprland
+    }
+
+    Connections {
+        function onOnBatteryChanged() {
+            recalcTimer.restart();
+        }
+
+        target: UPower
+    }
+
+    Timer {
+        id: recalcTimer
+
+        interval: 50
+        onTriggered: root.recalculate()
+    }
+
+    // Startup timer to ensure we catch the asynchronously loaded Hyprland and Quickshell state
+    Timer {
+        id: startupTimer
+
+        property int attempts: 0
+
+        interval: 1000
+        repeat: true
+        running: true
+
+        onTriggered: {
+            root.recalculate();
+            attempts++;
+            if (attempts >= 5) {
+                running = false;
+            }
+        }
     }
 }

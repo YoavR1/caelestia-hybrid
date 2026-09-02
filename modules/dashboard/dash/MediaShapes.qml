@@ -20,17 +20,7 @@ Item {
     MaterialShape {
         id: materialShape
 
-        anchors.centerIn: parent
-        implicitSize: Math.min(parent.width, parent.height) * 0.8
-
-        shape: root.shapeTiers[0]
-        color: Colours.palette.m3primary
-
-        Behavior on color {
-            ColorAnimation {
-                duration: 150
-            }
-        }
+        property real speedMultiplier: Config.dashboard.syncMediaShapesToBeat ? (Config.general.mediaGifSpeedAdjustment / 300) : 1.0
 
         function morph() {
             if (Config.dashboard.useMediaShapes && root.visible) {
@@ -60,7 +50,17 @@ Item {
             }
         }
 
-        property real speedMultiplier: Config.dashboard.syncMediaShapesToBeat ? (Config.general.mediaGifSpeedAdjustment / 300) : 1.0
+        anchors.centerIn: parent
+        implicitSize: Math.min(parent.width, parent.height) * 0.8
+
+        shape: root.shapeTiers[0]
+        color: Colours.palette.m3primary
+
+        Behavior on color {
+            ColorAnimation {
+                duration: 150
+            }
+        }
 
         Timer {
             running: root.visible && Config.dashboard.useMediaShapes && (Players.active?.isPlaying ?? false)
@@ -70,11 +70,11 @@ Item {
         }
 
         Connections {
-            target: Audio.beatTracker
-
             function onBeat(bpm) {
                 materialShape.morph();
             }
+
+            target: Audio.beatTracker
         }
 
         Behavior on rotation {

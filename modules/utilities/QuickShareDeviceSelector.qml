@@ -20,26 +20,6 @@ Loader {
     asynchronous: true
     anchors.fill: parent
 
-    FileDialog {
-        id: fileDialog
-
-        title: qsTr("Select a file to send")
-
-        property string targetDeviceId: ""
-
-        onAccepted: path => {
-            if (targetDeviceId !== "" && path) {
-                QuickShare.sendFile(targetDeviceId, path.toString().replace("file://", ""));
-            }
-            root.props.quickShareDeviceSelectorOpen = false;
-            root.props.quickShareFileDialogOpen = false;
-        }
-        onRejected: {
-            root.props.quickShareDeviceSelectorOpen = false;
-            root.props.quickShareFileDialogOpen = false;
-        }
-    }
-
     opacity: root.props.quickShareDeviceSelectorOpen ? 1 : 0
 
     active: opacity > 0
@@ -131,15 +111,6 @@ Loader {
 
                     model: QuickShare.nearbyDevices
 
-                    Connections {
-                        target: QuickShare
-
-                        function onNearbyDevicesChanged() {
-                            deviceList.model = null;
-                            deviceList.model = QuickShare.nearbyDevices;
-                        }
-                    }
-
                     delegate: WrapperMouseArea {
                         required property var modelData
 
@@ -173,6 +144,15 @@ Loader {
                         }
                     }
 
+                    Connections {
+                        function onNearbyDevicesChanged() {
+                            deviceList.model = null;
+                            deviceList.model = QuickShare.nearbyDevices;
+                        }
+
+                        target: QuickShare
+                    }
+
                     StyledText {
                         anchors.centerIn: parent
                         text: qsTr("No devices found")
@@ -197,6 +177,27 @@ Loader {
             Behavior on scale {
                 Anim {}
             }
+        }
+    }
+
+    FileDialog {
+        id: fileDialog
+
+        property string targetDeviceId: ""
+
+        title: qsTr("Select a file to send")
+
+        onAccepted: path => {
+            if (targetDeviceId !== "" && path) {
+                QuickShare.sendFile(targetDeviceId, path.toString().replace("file://", ""));
+            }
+            root.props.quickShareDeviceSelectorOpen = false;
+            root.props.quickShareFileDialogOpen = false;
+        }
+
+        onRejected: {
+            root.props.quickShareDeviceSelectorOpen = false;
+            root.props.quickShareFileDialogOpen = false;
         }
     }
 

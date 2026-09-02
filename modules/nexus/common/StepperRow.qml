@@ -13,10 +13,7 @@ ConnectedRect {
 
     property bool showDelete: false
 
-    signal deleted
-
     property bool showReset: false
-    signal reset
 
     property var configNode
 
@@ -33,6 +30,9 @@ ConnectedRect {
     property real to: 99
 
     property real stepSize: 1
+
+    signal deleted
+    signal reset
 
     signal moved(value: real)
 

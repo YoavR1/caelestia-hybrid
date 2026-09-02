@@ -20,6 +20,20 @@ Item {
     property bool weActive: false
     property string weDir: ""
 
+    readonly property string currentSchemeName: (Colours.showPreview ? Colours["previewScheme"] : Colours.scheme) || ""
+
+    readonly property string currentVariantName: (Colours.showPreview ? Colours["previewVariant"] : Colours.variant) || ""
+
+    readonly property string currentFlavourName: (Colours.showPreview ? Colours["previewFlavour"] : Colours.flavour) || ""
+
+    readonly property bool isDynamicScheme: root.currentSchemeName.startsWith("dynamic")
+
+    readonly property bool isDynamicMonochrome: root.isDynamicScheme && root.currentVariantName === "monochrome"
+
+    readonly property bool shouldRecolor: !!(Config.background && Config.background["wallpaperRecolor"]) && (!root.isDynamicScheme || root.isDynamicMonochrome)
+
+    readonly property var shapes: [MaterialShape.Circle, MaterialShape.Square, MaterialShape.Diamond, MaterialShape.ClamShell, MaterialShape.Pentagon, MaterialShape.Gem, MaterialShape.Clover4Leaf, MaterialShape.SoftBurst, MaterialShape.Cookie6Sided]
+
     function checkWE(path: string): void {
         if (!path) {
             weActive = false;
@@ -35,20 +49,6 @@ Item {
         }
     }
 
-    readonly property string currentSchemeName: (Colours.showPreview ? Colours["previewScheme"] : Colours.scheme) || ""
-
-    readonly property string currentVariantName: (Colours.showPreview ? Colours["previewVariant"] : Colours.variant) || ""
-
-    readonly property string currentFlavourName: (Colours.showPreview ? Colours["previewFlavour"] : Colours.flavour) || ""
-
-    readonly property bool isDynamicScheme: root.currentSchemeName.startsWith("dynamic")
-
-    readonly property bool isDynamicMonochrome: root.isDynamicScheme && root.currentVariantName === "monochrome"
-
-    readonly property bool shouldRecolor: !!(Config.background && Config.background["wallpaperRecolor"]) && (!root.isDynamicScheme || root.isDynamicMonochrome)
-
-    readonly property var shapes: [MaterialShape.Circle, MaterialShape.Square, MaterialShape.Diamond, MaterialShape.ClamShell, MaterialShape.Pentagon, MaterialShape.Gem, MaterialShape.Clover4Leaf, MaterialShape.SoftBurst, MaterialShape.Cookie6Sided]
-
     function toFileUrl(path) {
         if (!path)
             return "";
@@ -58,19 +58,6 @@ Item {
         if (clean[0] === "/")
             return "file://" + clean;
         return Qt.resolvedUrl(clean);
-    }
-
-    Timer {
-        id: coalesceTimer
-
-        interval: 80
-        repeat: false
-        onTriggered: root.applySourceChange()
-    }
-
-    onSourceChanged: {
-        checkWE(source);
-        coalesceTimer.restart();
     }
 
     function applySourceChange() {
@@ -114,6 +101,11 @@ Item {
         root.current = nextLayer;
     }
 
+    onSourceChanged: {
+        checkWE(source);
+        coalesceTimer.restart();
+    }
+
     Component.onCompleted: {
         if (source) {
             checkWE(source);
@@ -125,6 +117,14 @@ Item {
         } else {
             completed = true;
         }
+    }
+
+    Timer {
+        id: coalesceTimer
+
+        interval: 80
+        repeat: false
+        onTriggered: root.applySourceChange()
     }
 
     Loader {
@@ -139,6 +139,7 @@ Item {
     Img {
         id: one
     }
+
     Img {
         id: two
     }
@@ -147,8 +148,6 @@ Item {
         id: img
 
         property string path: ""
-
-        state: "inactive"
 
         readonly property bool isGif: img.verifiedPath.toLowerCase().endsWith(".gif")
 
@@ -164,16 +163,20 @@ Item {
 
         readonly property bool isPlayerPlaying: !!(videoChannelLoader.item && videoChannelLoader.item["playing"])
 
+        readonly property real maxRadius: Math.sqrt(width * width + height * height)
+
+        property real maskRadius: 0
+
+        property int currentShape: MaterialShape.Circle
+
+        readonly property bool hasReadyContent: thumbImg.status === Image.Ready || isPlayerPlaying || gifImg.status === Image.Ready
+
+        readonly property bool needsMask: animsEnabled && img.z === 1 && hasReadyContent && img.maskRadius < (img.maxRadius - 1.5) && !!maskLoader.item
+
+        state: "inactive"
+
         anchors.fill: parent
         opacity: 0
-
-        Timer {
-            id: cleanupTimer
-
-            interval: (img.animsEnabled && root.completed) ? 2600 : (img.fadeMs + 20)
-            repeat: false
-            onTriggered: img.state = "inactive"
-        }
 
         states: [
             State {
@@ -239,6 +242,22 @@ Item {
             }
         }
 
+        onMaxRadiusChanged: {
+            if (!root.completed || (!maskAnim.running && (state === "active" || state === "background"))) {
+                maskRadius = maxRadius;
+            }
+        }
+
+        Component.onCompleted: maskRadius = maxRadius
+
+        Timer {
+            id: cleanupTimer
+
+            interval: (img.animsEnabled && root.completed) ? 2600 : (img.fadeMs + 20)
+            repeat: false
+            onTriggered: img.state = "inactive"
+        }
+
         Loader {
             id: maskLoader
 
@@ -248,9 +267,9 @@ Item {
             sourceComponent: Item {
                 id: maskContainer
 
-                anchors.fill: parent
-
                 readonly property Item maskSource: maskSourceItem
+
+                anchors.fill: parent
 
                 Item {
                     id: maskWrapper
@@ -280,24 +299,6 @@ Item {
             }
         }
 
-        readonly property real maxRadius: Math.sqrt(width * width + height * height)
-
-        property real maskRadius: 0
-
-        property int currentShape: MaterialShape.Circle
-
-        onMaxRadiusChanged: {
-            if (!root.completed || (!maskAnim.running && (state === "active" || state === "background"))) {
-                maskRadius = maxRadius;
-            }
-        }
-
-        readonly property bool hasReadyContent: thumbImg.status === Image.Ready || isPlayerPlaying || gifImg.status === Image.Ready
-
-        readonly property bool needsMask: animsEnabled && img.z === 1 && hasReadyContent && img.maskRadius < (img.maxRadius - 1.5) && !!maskLoader.item
-
-        Component.onCompleted: maskRadius = maxRadius
-
         Item {
             id: contentItem
 
@@ -305,6 +306,7 @@ Item {
             opacity: root.weActive ? 0 : 1
 
             layer.enabled: img.needsMask || (root.shouldRecolor && img.renderActive)
+
             layer.effect: MultiEffect {
                 maskEnabled: img.needsMask
 
@@ -399,6 +401,13 @@ Item {
                 active: img.isVideo && img.verifiedPath !== "" && img.renderActive
                 source: "VideoWallpaper.qml"
 
+                onLoaded: {
+                    if (item && img.verifiedPath !== "") {
+                        item.videoSource = root.toFileUrl(img.verifiedPath);
+                        item.autoStart = !WallpaperPauser.paused;
+                    }
+                }
+
                 Timer {
                     id: resumeTimer
 
@@ -413,10 +422,6 @@ Item {
                 }
 
                 Connections {
-                    target: WallpaperPauser
-                    ignoreUnknownSignals: true
-                    enabled: img.isVideo && videoChannelLoader.active
-
                     function onPausedChanged() {
                         if (videoChannelLoader.item && img.isVideo) {
                             if (WallpaperPauser.paused) {
@@ -429,13 +434,10 @@ Item {
                             }
                         }
                     }
-                }
 
-                onLoaded: {
-                    if (item && img.verifiedPath !== "") {
-                        item.videoSource = root.toFileUrl(img.verifiedPath);
-                        item.autoStart = !WallpaperPauser.paused;
-                    }
+                    target: WallpaperPauser
+                    ignoreUnknownSignals: true
+                    enabled: img.isVideo && videoChannelLoader.active
                 }
             }
         }

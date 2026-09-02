@@ -10,9 +10,6 @@ Item {
     property size constraintSize: Qt.size(-1, -1)
     property bool _isStable: false
 
-    implicitWidth: view.implicitWidth
-    implicitHeight: view.implicitHeight
-
     readonly property bool _isValidSource: {
         const src = root.captureSource;
         if (!src)
@@ -44,13 +41,8 @@ Item {
 
     readonly property var _effectiveSource: (root._isStable && root._isValidSource) ? root.captureSource : null
 
-    Timer {
-        id: stableTimer
-
-        interval: 150
-        repeat: false
-        onTriggered: root._isStable = true
-    }
+    implicitWidth: view.implicitWidth
+    implicitHeight: view.implicitHeight
 
     onCaptureSourceChanged: {
         root._isStable = false;
@@ -68,6 +60,14 @@ Item {
         } else if (root.captureSource && !root._isStable) {
             stableTimer.restart();
         }
+    }
+
+    Timer {
+        id: stableTimer
+
+        interval: 150
+        repeat: false
+        onTriggered: root._isStable = true
     }
 
     ScreencopyView {

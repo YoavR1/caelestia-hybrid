@@ -32,6 +32,7 @@ ColumnLayout {
         const streamNames = [streamName, binary, appName].filter(n => n);
         return streamNames.some(sn => playerNames.some(pn => sn.includes(pn) || pn.includes(sn)));
     }) || null
+
     readonly property real currentVolume: (Players.supportsAppVolume(root.player) && typeof root.player?.volume !== "undefined" && root.player?.volume !== null) ? root.player.volume : (root.playerStream ? Audio.getStreamVolume(root.playerStream) : Audio.volume)
 
     readonly property bool isHorizontalVolume: Config.bar.spotify.horizontalVolume
@@ -134,10 +135,6 @@ ColumnLayout {
             Item {
                 id: verticalSlider
 
-                width: 24
-                height: parent.height
-                anchors.centerIn: parent
-
                 readonly property color fgColour: Colours.palette.m3primary
 
                 readonly property color bgColour: Colours.palette.m3secondaryContainer
@@ -145,6 +142,10 @@ ColumnLayout {
                 readonly property real pos: Math.max(0, Math.min(1, root.currentVolume))
 
                 readonly property real filledHeight: Math.max(0, (height - handle.implicitHeight - handle.anchors.bottomMargin) * pos)
+
+                width: 24
+                height: parent.height
+                anchors.centerIn: parent
 
                 StyledRect {
                     id: remaining

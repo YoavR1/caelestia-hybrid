@@ -13,8 +13,6 @@ ConnectedRect {
 
     property bool showDelete: false
 
-    signal deleted
-
     property alias icon: icon.text
 
     property alias label: label.text
@@ -26,6 +24,8 @@ ConnectedRect {
     readonly property alias popup: popup
 
     default required property Item content
+
+    signal deleted
 
     Layout.fillWidth: true
     implicitHeight: navLayout.implicitHeight + navLayout.anchors.margins * 2

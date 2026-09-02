@@ -21,33 +21,6 @@ Item {
 
     property string activeTab: "notifications"
 
-    Connections {
-        target: GlobalConfig.ai
-
-        function onEnableOllamaChanged() {
-            checkTabs();
-        }
-    }
-
-    Connections {
-        target: GlobalConfig.sidebar
-
-        function onShowNewsChanged() {
-            checkTabs();
-        }
-    }
-
-    Connections {
-        target: root.screenState
-
-        function onSidebarChanged() {
-            if (root.screenState.sidebar) {
-                root.activeTab = Visibilities.initialSidebarTab;
-                checkTabs();
-            }
-        }
-    }
-
     function checkTabs() {
         if (!GlobalConfig.ai.enableOllama) {
             if (root.activeTab === "ai") {
@@ -62,6 +35,33 @@ Item {
     }
 
     Component.onCompleted: checkTabs()
+
+    Connections {
+        function onEnableOllamaChanged() {
+            checkTabs();
+        }
+
+        target: GlobalConfig.ai
+    }
+
+    Connections {
+        function onShowNewsChanged() {
+            checkTabs();
+        }
+
+        target: GlobalConfig.sidebar
+    }
+
+    Connections {
+        function onSidebarChanged() {
+            if (root.screenState.sidebar) {
+                root.activeTab = Visibilities.initialSidebarTab;
+                checkTabs();
+            }
+        }
+
+        target: root.screenState
+    }
 
     GridLayout {
         id: layout
@@ -85,6 +85,7 @@ Item {
                 // Tab Switcher Header
                 Item {
                     id: headerContainer
+
                     Layout.fillWidth: true
 
                     implicitHeight: 64
@@ -178,9 +179,6 @@ Item {
                     Item {
                         id: indicator
 
-                        anchors.verticalCenter: parent.bottom
-                        implicitHeight: 6
-
                         property int activeIndex: {
                             var arr = tabRepeater.model;
                             for (var i = 0; i < arr.length; i++) {
@@ -191,6 +189,9 @@ Item {
                         }
 
                         readonly property real tabWidth: (headerContainer.width - Tokens.padding.medium * 2) / tabRepeater.count
+
+                        anchors.verticalCenter: parent.bottom
+                        implicitHeight: 6
                         width: tabWidth - Tokens.padding.medium * 2
                         x: Tokens.padding.medium + activeIndex * tabWidth + (tabWidth - width) / 2
 
@@ -218,11 +219,11 @@ Item {
 
                 // Content Panel Stack
                 Item {
+                    property int activeIndex: indicator.activeIndex
+
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     clip: true
-
-                    property int activeIndex: indicator.activeIndex
 
                     NotifDock {
                         objectName: "sidebarNotifications"
@@ -258,11 +259,11 @@ Item {
                         visible: opacity > 0
 
                         Connections {
-                            target: aiAssistant
-
                             function onIsStreamingChanged() {
                                 root.sidebarStreaming = aiAssistant.isStreaming;
                             }
+
+                            target: aiAssistant
                         }
 
                         Behavior on x {
@@ -270,6 +271,7 @@ Item {
                                 type: Anim.DefaultSpatial
                             }
                         }
+
                         Behavior on opacity {
                             Anim {
                                 type: Anim.DefaultSpatial

@@ -10,9 +10,6 @@ import qs.modules.nexus.common
 PageBase {
     id: root
 
-    title: qsTr("Colours")
-    isSubPage: true
-
     readonly property list<var> variantData: [
         {
             name: "vibrant",
@@ -51,6 +48,9 @@ PageBase {
             label: qsTr("Monochrome")
         }
     ]
+
+    title: qsTr("Colours")
+    isSubPage: true
 
     ColumnLayout {
         anchors.horizontalCenter: parent.horizontalCenter

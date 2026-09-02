@@ -72,6 +72,7 @@ StyledListView {
     highlightRangeMode: ListView.ApplyRange
 
     highlightFollowsCurrentItem: false
+
     highlight: StyledRect {
         radius: Tokens.rounding.large
         color: Colours.palette.m3onSurface
@@ -93,14 +94,14 @@ StyledListView {
 
         required property var modelData
 
-        implicitHeight: Tokens.sizes.launcher.itemHeight
-        width: root.width
-
         function clicked() {
             if (!modelData || !modelData.path)
                 return;
             Animations.applyAnimation(modelData.path, root);
         }
+
+        implicitHeight: Tokens.sizes.launcher.itemHeight
+        width: root.width
 
         StateLayer {
             radius: Tokens.rounding.large

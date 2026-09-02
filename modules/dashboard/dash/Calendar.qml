@@ -338,6 +338,7 @@ CustomMouseArea {
                 easing.type: Easing.OutQuad
             }
         }
+
         Behavior on scale {
             NumberAnimation {
                 duration: 250
@@ -349,17 +350,6 @@ CustomMouseArea {
         Shape {
             id: bgShape
 
-            anchors.fill: parent
-            layer.enabled: true
-            layer.samples: 4
-            layer.effect: MultiEffect {
-                shadowEnabled: true
-                shadowBlur: 1.0
-                shadowOpacity: 0.6
-                shadowColor: "black"
-                autoPaddingEnabled: true
-            }
-
             readonly property real r: Tokens.rounding.large
 
             readonly property real ir: Tokens.rounding.medium
@@ -369,6 +359,18 @@ CustomMouseArea {
             readonly property real nw: customTooltip.pillSize
 
             readonly property real br: customTooltip.br
+
+            anchors.fill: parent
+            layer.enabled: true
+            layer.samples: 4
+
+            layer.effect: MultiEffect {
+                shadowEnabled: true
+                shadowBlur: 1.0
+                shadowOpacity: 0.6
+                shadowColor: "black"
+                autoPaddingEnabled: true
+            }
 
             ShapePath {
                 fillColor: Colours.palette.m3surfaceContainerHighest

@@ -38,6 +38,9 @@ Column {
                     topBtn.forceActiveFocus();
             }
 
+            KeyNavigation.up: index > 0 ? topButtonsRepeater.itemAt(index - 1) : null
+            KeyNavigation.down: index < topButtonsRepeater.count - 1 ? topButtonsRepeater.itemAt(index + 1) : (bottomButtonsRepeater.count > 0 ? bottomButtonsRepeater.itemAt(0) : null)
+
             Connections {
                 function onLauncherChanged(): void {
                     if (topBtn.index === 0 && !root.screenState.launcher)
@@ -46,9 +49,6 @@ Column {
 
                 target: root.screenState
             }
-
-            KeyNavigation.up: index > 0 ? topButtonsRepeater.itemAt(index - 1) : null
-            KeyNavigation.down: index < topButtonsRepeater.count - 1 ? topButtonsRepeater.itemAt(index + 1) : (bottomButtonsRepeater.count > 0 ? bottomButtonsRepeater.itemAt(0) : null)
         }
     }
 

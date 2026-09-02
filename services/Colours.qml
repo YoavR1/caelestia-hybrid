@@ -138,9 +138,6 @@ Singleton {
     }
 
     Connections {
-        target: GlobalConfig.utilities.toasts
-        ignoreUnknownSignals: true
-
         function onTransparencyChanged(): void {
             root.requestReloadHyprRules();
         }
@@ -148,6 +145,9 @@ Singleton {
         function onTransparencyBaseChanged(): void {
             root.requestReloadHyprRules();
         }
+
+        target: GlobalConfig.utilities.toasts
+        ignoreUnknownSignals: true
     }
 
     FileView {

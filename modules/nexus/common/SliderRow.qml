@@ -13,10 +13,7 @@ ConnectedRect {
 
     property bool showDelete: false
 
-    signal deleted
-
     property bool showReset: false
-    signal reset
 
     property var configNode
 
@@ -29,6 +26,9 @@ ConnectedRect {
     property alias valueLabel: valueLabel.text
 
     property real value
+
+    signal deleted
+    signal reset
 
     signal moved(value: real)
     signal interaction(value: real)

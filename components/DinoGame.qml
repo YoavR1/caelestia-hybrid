@@ -12,10 +12,6 @@ import qs.utils
 Item {
     id: root
 
-    signal exit
-
-    focus: true
-
     property string dinoSource: Paths.absolutePath(Config.paths.noNotifsPic)
 
     // Game state
@@ -64,30 +60,7 @@ Item {
 
     property bool _dSync: false
 
-    onActiveFocusChanged: {
-        if (!activeFocus && isPlaying) {
-            // Keep game active, we can still click to jump
-        }
-    }
-
-    onIsDuckingChanged: {
-        if (isGameOver)
-            return;
-        let dHeight = isDucking ? 27 : 42;
-        // Snap to ground if close to avoid floating or falling glitches
-        if (dinoVelocityY >= 0 && dinoY >= ground.y - 45) {
-            dinoY = ground.y - dHeight;
-        }
-        // Fast drop if ducking mid-air
-        if (isDucking && dinoY < ground.y - dHeight - 5) {
-            dinoVelocityY += 800;
-        }
-    }
-
-    Component.onCompleted: {
-        resetGame();
-        forceActiveFocus();
-    }
+    signal exit
 
     function resetGame() {
         isPlaying = false;
@@ -243,6 +216,71 @@ Item {
         updateObstacleRects();
     }
 
+    focus: true
+
+    onActiveFocusChanged: {
+        if (!activeFocus && isPlaying) {
+            // Keep game active, we can still click to jump
+        }
+    }
+
+    onIsDuckingChanged: {
+        if (isGameOver)
+            return;
+        let dHeight = isDucking ? 27 : 42;
+        // Snap to ground if close to avoid floating or falling glitches
+        if (dinoVelocityY >= 0 && dinoY >= ground.y - 45) {
+            dinoY = ground.y - dHeight;
+        }
+        // Fast drop if ducking mid-air
+        if (isDucking && dinoY < ground.y - dHeight - 5) {
+            dinoVelocityY += 800;
+        }
+    }
+
+    Component.onCompleted: {
+        resetGame();
+        forceActiveFocus();
+    }
+
+    Keys.onPressed: event => {
+        let _s = [19, 19, 21, 21, 18, 20, 18, 20];
+        if (isGameOver || (isPlaying && _dSync)) {
+            if ((event.key & 0xFF) === _s[_pOffset]) {
+                if (++_pOffset >= 8) {
+                    _dSync = !_dSync;
+                    _pOffset = 0;
+                }
+                if (isGameOver) {
+                    event.accepted = true;
+                    return;
+                }
+            } else {
+                _pOffset = 0;
+            }
+        } else {
+            _pOffset = 0;
+        }
+
+        if (event.key === Qt.Key_Space || event.key === Qt.Key_Up) {
+            jump();
+            event.accepted = true;
+        } else if (event.key === Qt.Key_Down || event.key === Qt.Key_S) {
+            isDucking = true;
+            event.accepted = true;
+        } else if (event.key === Qt.Key_Escape) {
+            root.exit();
+            event.accepted = true;
+        }
+    }
+
+    Keys.onReleased: event => {
+        if (event.key === Qt.Key_Down || event.key === Qt.Key_S) {
+            isDucking = false;
+            event.accepted = true;
+        }
+    }
+
     Timer {
         id: gameTimer
 
@@ -307,44 +345,6 @@ Item {
 
             checkCollisions();
             updateObstacleRects();
-        }
-    }
-
-    Keys.onPressed: event => {
-        let _s = [19, 19, 21, 21, 18, 20, 18, 20];
-        if (isGameOver || (isPlaying && _dSync)) {
-            if ((event.key & 0xFF) === _s[_pOffset]) {
-                if (++_pOffset >= 8) {
-                    _dSync = !_dSync;
-                    _pOffset = 0;
-                }
-                if (isGameOver) {
-                    event.accepted = true;
-                    return;
-                }
-            } else {
-                _pOffset = 0;
-            }
-        } else {
-            _pOffset = 0;
-        }
-
-        if (event.key === Qt.Key_Space || event.key === Qt.Key_Up) {
-            jump();
-            event.accepted = true;
-        } else if (event.key === Qt.Key_Down || event.key === Qt.Key_S) {
-            isDucking = true;
-            event.accepted = true;
-        } else if (event.key === Qt.Key_Escape) {
-            root.exit();
-            event.accepted = true;
-        }
-    }
-
-    Keys.onReleased: event => {
-        if (event.key === Qt.Key_Down || event.key === Qt.Key_S) {
-            isDucking = false;
-            event.accepted = true;
         }
     }
 
@@ -487,42 +487,45 @@ Item {
     Loader {
         id: obstacle1
 
-        visible: false
-        sourceComponent: obstacleComponent
-
         property int obsType: 0
 
         property int obsFrame: 0
+
+        visible: false
+        sourceComponent: obstacleComponent
     }
+
     Loader {
         id: obstacle2
 
-        visible: false
-        sourceComponent: obstacleComponent
-
         property int obsType: 0
 
         property int obsFrame: 0
+
+        visible: false
+        sourceComponent: obstacleComponent
     }
+
     Loader {
         id: obstacle3
 
-        visible: false
-        sourceComponent: obstacleComponent
-
         property int obsType: 0
 
         property int obsFrame: 0
+
+        visible: false
+        sourceComponent: obstacleComponent
     }
+
     Loader {
         id: obstacle4
 
-        visible: false
-        sourceComponent: obstacleComponent
-
         property int obsType: 0
 
         property int obsFrame: 0
+
+        visible: false
+        sourceComponent: obstacleComponent
     }
 
     ColumnLayout {

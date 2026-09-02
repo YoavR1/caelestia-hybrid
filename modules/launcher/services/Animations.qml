@@ -11,8 +11,6 @@ QtObject {
     property var animations: []
     property bool initialized: false
 
-    signal loaded
-
     property Process reader: Process {
         running: false
         command: ["sh", "-c", `ls -1 "${Paths.config}/animations"/*.lua 2>/dev/null || true`]
@@ -49,6 +47,8 @@ QtObject {
             }
         }
     }
+
+    signal loaded
 
     function loadAnimations() {
         if (initialized && animations.length > 0) {

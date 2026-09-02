@@ -14,19 +14,7 @@ import qs.modules.nexus.common
 PageBase {
     id: root
 
-    title: qsTr("Keybinds")
-    isSubPage: true
-
     property var vars: ({})
-
-    Component.onCompleted: {
-        if (Hypr.usingLua) {
-            Quickshell.execDetached(["hyprctl", "eval", "hl.define_submap('record', function() hl.bind('XF86LaunchA', hl.dsp.submap('reset')) end)"]);
-        } else {
-            Hypr.extras.batchMessage(["keyword submap record", "keyword bind ,XF86LaunchA,submap,reset", "keyword submap reset"]);
-        }
-        loadVars();
-    }
 
     property var defaults: ({})
 
@@ -339,238 +327,19 @@ PageBase {
         }
         root.vars = newVars;
     }
-    component KeybindRow: ConnectedRect {
-        id: kroot
-        property string label
-        property string varKey
-        property bool recording: false
 
-        Layout.fillWidth: true
-        implicitHeight: contentRow.implicitHeight + contentRow.anchors.margins * 2
+    title: qsTr("Keybinds")
+    isSubPage: true
 
-        StateLayer {
-            id: stateLayer
-            anchors.fill: parent
-            onClicked: {
-                kroot.recording = !kroot.recording;
-                if (kroot.recording) {
-                    focusItem.forceActiveFocus();
-                    if (Hypr.usingLua) {
-                        Quickshell.execDetached(["hyprctl", "eval", "hl.define_submap('record', function() hl.bind('XF86LaunchA', hl.dsp.submap('reset')) end); hl.dispatch(hl.dsp.submap('record'))"]);
-                    } else {
-                        Hypr.extras.batchMessage(["keyword submap record", "keyword bind ,XF86LaunchA,submap,reset", "keyword submap reset"]);
-                        Hypr.dispatch("submap record");
-                    }
-                } else {
-                    Hypr.dispatch(Hypr.usingLua ? 'hl.dsp.submap("reset")' : "submap reset");
-                }
-            }
+    Component.onCompleted: {
+        if (Hypr.usingLua) {
+            Quickshell.execDetached(["hyprctl", "eval", "hl.define_submap('record', function() hl.bind('XF86LaunchA', hl.dsp.submap('reset')) end)"]);
+        } else {
+            Hypr.extras.batchMessage(["keyword submap record", "keyword bind ,XF86LaunchA,submap,reset", "keyword submap reset"]);
         }
-
-        RowLayout {
-            id: contentRow
-            anchors.fill: parent
-            anchors.margins: Tokens.padding.medium
-            anchors.leftMargin: Tokens.padding.largeIncreased
-            anchors.rightMargin: Tokens.padding.largeIncreased
-            spacing: Tokens.spacing.medium
-
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 0
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: Tokens.spacing.small
-
-                    StyledText {
-                        text: kroot.label
-                        font: Tokens.font.body.small
-                        elide: Text.ElideRight
-                    }
-
-                    IconButton {
-                        icon: "delete"
-                        type: IconButton.Text
-                        font: Tokens.font.icon.small
-                        visible: root.vars[kroot.varKey] !== undefined
-                        onClicked: root.deleteVar(kroot.varKey)
-                    }
-
-                    Item {
-                        Layout.fillWidth: true
-                    }
-                }
-
-                StyledText {
-                    text: kroot.recording ? "Recording..." : (root.vars[kroot.varKey] !== undefined ? String(root.vars[kroot.varKey]) : (root.defaults[kroot.varKey] !== undefined ? String(root.defaults[kroot.varKey]) : "Unbound"))
-                    color: Colours.palette.m3outline
-                    font: Tokens.font.label.small
-                    Layout.fillWidth: true
-                    elide: Text.ElideRight
-                }
-            }
-
-            Item {
-                id: recordBtn
-
-                implicitWidth: btn.implicitWidth * 0.9
-                implicitHeight: btn.implicitHeight * 0.9
-
-                BlobGroup {
-                    id: blobGroup
-                    color: kroot.recording || stateLayer.containsMouse ? Colours.palette.m3secondaryContainer : Colours.palette.m3surfaceContainerHighest
-                    smoothing: kroot.Tokens.rounding.medium
-                    cornerFill: false
-
-                    Behavior on color {
-                        CAnim {}
-                    }
-                }
-
-                BlobRect {
-                    id: btnRect
-                    anchors.fill: parent
-                    anchors.margins: (stateLayer.containsMouse ? -Tokens.padding.extraSmall : 0) + (kroot.recording ? -Tokens.padding.extraSmall : 0)
-                    group: blobGroup
-                    radius: kroot.recording ? Tokens.rounding.large : Tokens.rounding.medium
-
-                    Behavior on anchors.margins {
-                        Anim {}
-                    }
-
-                    Behavior on radius {
-                        Anim {
-                            type: Anim.DefaultEffects
-                        }
-                    }
-                }
-
-                Item {
-                    id: btn
-                    anchors.centerIn: parent
-                    implicitWidth: implicitHeight
-                    implicitHeight: icon.implicitHeight + Tokens.padding.extraSmall * 2
-
-                    MaterialIcon {
-                        id: icon
-                        anchors.centerIn: parent
-                        text: kroot.recording ? "stop_circle" : "screen_record"
-                        color: kroot.recording || stateLayer.containsMouse ? Colours.palette.m3onSecondaryContainer : Colours.palette.m3onSurfaceVariant
-                        fontStyle: Tokens.font.icon.medium
-                    }
-                }
-            }
-        }
-
-        Item {
-            id: focusItem
-            focus: kroot.recording
-            property bool modifierOnly: false
-            property var lastMods: []
-
-            Keys.onPressed: event => {
-                if (!kroot.recording)
-                    return;
-                let k = event.key;
-                if (k === Qt.Key_Escape) {
-                    kroot.recording = false;
-                    Hypr.dispatch(Hypr.usingLua ? 'hl.dsp.submap("reset")' : "submap reset");
-                    event.accepted = true;
-                    return;
-                }
-
-                let mods = [];
-                if (event.modifiers & Qt.ControlModifier)
-                    mods.push("CTRL");
-                if (event.modifiers & Qt.ShiftModifier)
-                    mods.push("SHIFT");
-                if (event.modifiers & Qt.AltModifier)
-                    mods.push("ALT");
-                if (event.modifiers & Qt.MetaModifier)
-                    mods.push("SUPER");
-
-                let keyStr = "";
-                if (k >= Qt.Key_A && k <= Qt.Key_Z) {
-                    keyStr = String.fromCharCode(k);
-                } else if (k >= Qt.Key_0 && k <= Qt.Key_9) {
-                    keyStr = String.fromCharCode(k);
-                } else {
-                    let map = {
-                        [Qt.Key_Return]: "Return",
-                        [Qt.Key_Enter]: "Return",
-                        [Qt.Key_Space]: "Space",
-                        [Qt.Key_Tab]: "Tab",
-                        [Qt.Key_Backtab]: "Tab",
-                        [Qt.Key_Backspace]: "Backspace",
-                        [Qt.Key_Minus]: "minus",
-                        [Qt.Key_Equal]: "equal",
-                        [Qt.Key_BracketLeft]: "bracketleft",
-                        [Qt.Key_BracketRight]: "bracketright",
-                        [Qt.Key_Semicolon]: "semicolon",
-                        [Qt.Key_Apostrophe]: "apostrophe",
-                        [Qt.Key_Grave]: "grave",
-                        [Qt.Key_Slash]: "slash",
-                        [Qt.Key_Period]: "period",
-                        [Qt.Key_Backslash]: "backslash",
-                        [Qt.Key_Comma]: "comma",
-                        [Qt.Key_Right]: "Right",
-                        [Qt.Key_Left]: "Left",
-                        [Qt.Key_Up]: "Up",
-                        [Qt.Key_Down]: "Down",
-                        [Qt.Key_Delete]: "Delete"
-                    };
-                    if (map[k] !== undefined)
-                        keyStr = map[k];
-                    else
-                        keyStr = event.text.toUpperCase();
-                }
-
-                let isModKey = (k === Qt.Key_Control || k === Qt.Key_Shift || k === Qt.Key_Alt || k === Qt.Key_Meta || k === Qt.Key_Super_L || k === Qt.Key_Super_R);
-
-                if (keyStr !== "" && !isModKey) {
-                    modifierOnly = false;
-                    mods.push(keyStr);
-                    let finalBind = mods.join(" + ");
-                    root.saveVar(kroot.varKey, finalBind);
-                    kroot.recording = false;
-                    Hypr.dispatch(Hypr.usingLua ? 'hl.dsp.submap("reset")' : "submap reset");
-                    event.accepted = true;
-                } else if (isModKey) {
-                    modifierOnly = true;
-                    let modStr = "";
-                    if (k === Qt.Key_Control)
-                        modStr = "CTRL";
-                    else if (k === Qt.Key_Shift)
-                        modStr = "SHIFT";
-                    else if (k === Qt.Key_Alt)
-                        modStr = "ALT";
-                    else if (k === Qt.Key_Meta || k === Qt.Key_Super_L || k === Qt.Key_Super_R)
-                        modStr = "SUPER";
-
-                    if (!mods.includes(modStr) && modStr !== "")
-                        mods.push(modStr);
-                    lastMods = mods;
-                    event.accepted = true;
-                }
-            }
-
-            Keys.onReleased: event => {
-                if (!kroot.recording)
-                    return;
-                let k = event.key;
-                let isModKey = (k === Qt.Key_Control || k === Qt.Key_Shift || k === Qt.Key_Alt || k === Qt.Key_Meta || k === Qt.Key_Super_L || k === Qt.Key_Super_R);
-
-                if (isModKey && modifierOnly && lastMods.length > 0) {
-                    let finalBind = lastMods.join(" + ");
-                    root.saveVar(kroot.varKey, finalBind);
-                    kroot.recording = false;
-                    Hypr.dispatch(Hypr.usingLua ? 'hl.dsp.submap("reset")' : "submap reset");
-                    event.accepted = true;
-                }
-            }
-        }
+        loadVars();
     }
+
     ColumnLayout {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
@@ -755,6 +524,242 @@ PageBase {
         Item {
             Layout.preferredHeight: Tokens.padding.large
             Layout.fillWidth: true
+        }
+    }
+
+    component KeybindRow: ConnectedRect {
+        id: kroot
+
+        property string label
+        property string varKey
+        property bool recording: false
+
+        Layout.fillWidth: true
+        implicitHeight: contentRow.implicitHeight + contentRow.anchors.margins * 2
+
+        StateLayer {
+            id: stateLayer
+            anchors.fill: parent
+            onClicked: {
+                kroot.recording = !kroot.recording;
+                if (kroot.recording) {
+                    focusItem.forceActiveFocus();
+                    if (Hypr.usingLua) {
+                        Quickshell.execDetached(["hyprctl", "eval", "hl.define_submap('record', function() hl.bind('XF86LaunchA', hl.dsp.submap('reset')) end); hl.dispatch(hl.dsp.submap('record'))"]);
+                    } else {
+                        Hypr.extras.batchMessage(["keyword submap record", "keyword bind ,XF86LaunchA,submap,reset", "keyword submap reset"]);
+                        Hypr.dispatch("submap record");
+                    }
+                } else {
+                    Hypr.dispatch(Hypr.usingLua ? 'hl.dsp.submap("reset")' : "submap reset");
+                }
+            }
+        }
+
+        RowLayout {
+            id: contentRow
+            anchors.fill: parent
+            anchors.margins: Tokens.padding.medium
+            anchors.leftMargin: Tokens.padding.largeIncreased
+            anchors.rightMargin: Tokens.padding.largeIncreased
+            spacing: Tokens.spacing.medium
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 0
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: Tokens.spacing.small
+
+                    StyledText {
+                        text: kroot.label
+                        font: Tokens.font.body.small
+                        elide: Text.ElideRight
+                    }
+
+                    IconButton {
+                        icon: "delete"
+                        type: IconButton.Text
+                        font: Tokens.font.icon.small
+                        visible: root.vars[kroot.varKey] !== undefined
+                        onClicked: root.deleteVar(kroot.varKey)
+                    }
+
+                    Item {
+                        Layout.fillWidth: true
+                    }
+                }
+
+                StyledText {
+                    text: kroot.recording ? "Recording..." : (root.vars[kroot.varKey] !== undefined ? String(root.vars[kroot.varKey]) : (root.defaults[kroot.varKey] !== undefined ? String(root.defaults[kroot.varKey]) : "Unbound"))
+                    color: Colours.palette.m3outline
+                    font: Tokens.font.label.small
+                    Layout.fillWidth: true
+                    elide: Text.ElideRight
+                }
+            }
+
+            Item {
+                id: recordBtn
+
+                implicitWidth: btn.implicitWidth * 0.9
+                implicitHeight: btn.implicitHeight * 0.9
+
+                BlobGroup {
+                    id: blobGroup
+                    color: kroot.recording || stateLayer.containsMouse ? Colours.palette.m3secondaryContainer : Colours.palette.m3surfaceContainerHighest
+                    smoothing: kroot.Tokens.rounding.medium
+                    cornerFill: false
+
+                    Behavior on color {
+                        CAnim {}
+                    }
+                }
+
+                BlobRect {
+                    id: btnRect
+                    anchors.fill: parent
+                    anchors.margins: (stateLayer.containsMouse ? -Tokens.padding.extraSmall : 0) + (kroot.recording ? -Tokens.padding.extraSmall : 0)
+                    group: blobGroup
+                    radius: kroot.recording ? Tokens.rounding.large : Tokens.rounding.medium
+
+                    Behavior on anchors.margins {
+                        Anim {}
+                    }
+
+                    Behavior on radius {
+                        Anim {
+                            type: Anim.DefaultEffects
+                        }
+                    }
+                }
+
+                Item {
+                    id: btn
+                    anchors.centerIn: parent
+                    implicitWidth: implicitHeight
+                    implicitHeight: icon.implicitHeight + Tokens.padding.extraSmall * 2
+
+                    MaterialIcon {
+                        id: icon
+                        anchors.centerIn: parent
+                        text: kroot.recording ? "stop_circle" : "screen_record"
+                        color: kroot.recording || stateLayer.containsMouse ? Colours.palette.m3onSecondaryContainer : Colours.palette.m3onSurfaceVariant
+                        fontStyle: Tokens.font.icon.medium
+                    }
+                }
+            }
+        }
+
+        Item {
+            id: focusItem
+
+            property bool modifierOnly: false
+            property var lastMods: []
+
+            focus: kroot.recording
+
+            Keys.onPressed: event => {
+                if (!kroot.recording)
+                    return;
+                let k = event.key;
+                if (k === Qt.Key_Escape) {
+                    kroot.recording = false;
+                    Hypr.dispatch(Hypr.usingLua ? 'hl.dsp.submap("reset")' : "submap reset");
+                    event.accepted = true;
+                    return;
+                }
+
+                let mods = [];
+                if (event.modifiers & Qt.ControlModifier)
+                    mods.push("CTRL");
+                if (event.modifiers & Qt.ShiftModifier)
+                    mods.push("SHIFT");
+                if (event.modifiers & Qt.AltModifier)
+                    mods.push("ALT");
+                if (event.modifiers & Qt.MetaModifier)
+                    mods.push("SUPER");
+
+                let keyStr = "";
+                if (k >= Qt.Key_A && k <= Qt.Key_Z) {
+                    keyStr = String.fromCharCode(k);
+                } else if (k >= Qt.Key_0 && k <= Qt.Key_9) {
+                    keyStr = String.fromCharCode(k);
+                } else {
+                    let map = {
+                        [Qt.Key_Return]: "Return",
+                        [Qt.Key_Enter]: "Return",
+                        [Qt.Key_Space]: "Space",
+                        [Qt.Key_Tab]: "Tab",
+                        [Qt.Key_Backtab]: "Tab",
+                        [Qt.Key_Backspace]: "Backspace",
+                        [Qt.Key_Minus]: "minus",
+                        [Qt.Key_Equal]: "equal",
+                        [Qt.Key_BracketLeft]: "bracketleft",
+                        [Qt.Key_BracketRight]: "bracketright",
+                        [Qt.Key_Semicolon]: "semicolon",
+                        [Qt.Key_Apostrophe]: "apostrophe",
+                        [Qt.Key_Grave]: "grave",
+                        [Qt.Key_Slash]: "slash",
+                        [Qt.Key_Period]: "period",
+                        [Qt.Key_Backslash]: "backslash",
+                        [Qt.Key_Comma]: "comma",
+                        [Qt.Key_Right]: "Right",
+                        [Qt.Key_Left]: "Left",
+                        [Qt.Key_Up]: "Up",
+                        [Qt.Key_Down]: "Down",
+                        [Qt.Key_Delete]: "Delete"
+                    };
+                    if (map[k] !== undefined)
+                        keyStr = map[k];
+                    else
+                        keyStr = event.text.toUpperCase();
+                }
+
+                let isModKey = (k === Qt.Key_Control || k === Qt.Key_Shift || k === Qt.Key_Alt || k === Qt.Key_Meta || k === Qt.Key_Super_L || k === Qt.Key_Super_R);
+
+                if (keyStr !== "" && !isModKey) {
+                    modifierOnly = false;
+                    mods.push(keyStr);
+                    let finalBind = mods.join(" + ");
+                    root.saveVar(kroot.varKey, finalBind);
+                    kroot.recording = false;
+                    Hypr.dispatch(Hypr.usingLua ? 'hl.dsp.submap("reset")' : "submap reset");
+                    event.accepted = true;
+                } else if (isModKey) {
+                    modifierOnly = true;
+                    let modStr = "";
+                    if (k === Qt.Key_Control)
+                        modStr = "CTRL";
+                    else if (k === Qt.Key_Shift)
+                        modStr = "SHIFT";
+                    else if (k === Qt.Key_Alt)
+                        modStr = "ALT";
+                    else if (k === Qt.Key_Meta || k === Qt.Key_Super_L || k === Qt.Key_Super_R)
+                        modStr = "SUPER";
+
+                    if (!mods.includes(modStr) && modStr !== "")
+                        mods.push(modStr);
+                    lastMods = mods;
+                    event.accepted = true;
+                }
+            }
+
+            Keys.onReleased: event => {
+                if (!kroot.recording)
+                    return;
+                let k = event.key;
+                let isModKey = (k === Qt.Key_Control || k === Qt.Key_Shift || k === Qt.Key_Alt || k === Qt.Key_Meta || k === Qt.Key_Super_L || k === Qt.Key_Super_R);
+
+                if (isModKey && modifierOnly && lastMods.length > 0) {
+                    let finalBind = lastMods.join(" + ");
+                    root.saveVar(kroot.varKey, finalBind);
+                    kroot.recording = false;
+                    Hypr.dispatch(Hypr.usingLua ? 'hl.dsp.submap("reset")' : "submap reset");
+                    event.accepted = true;
+                }
+            }
         }
     }
 }

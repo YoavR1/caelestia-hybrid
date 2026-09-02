@@ -15,13 +15,6 @@ import qs.services
 Item {
     id: root
 
-    ListModel {
-        id: chatHistory
-    }
-    ListModel {
-        id: historySessionsModel
-    }
-
     property bool isHistoryTab: false
 
     property string currentChatId: ""
@@ -29,67 +22,6 @@ Item {
     property var currentRequest: null
 
     property bool isStreaming: false
-
-    Timer {
-        id: typingTimer
-
-        interval: 16
-        repeat: true
-
-        property string fullText: ""
-
-        property string currentText: ""
-
-        property int charIndex: 0
-
-        property int targetIdx: -1
-
-        onTriggered: {
-            if (targetIdx < 0 || targetIdx >= chatHistory.count) {
-                stop();
-                root.isTyping = false;
-                root.isThinking = false;
-                root.inAgentLoop = false;
-                return;
-            }
-            if (charIndex >= fullText.length) {
-                stop();
-                chatHistory.setProperty(targetIdx, "text", fullText);
-                chatHistory.setProperty(targetIdx, "isFinished", true);
-                saveHistory();
-                root.isTyping = false;
-                root.isThinking = false;
-                root.inAgentLoop = false;
-                return;
-            }
-            var chunkSize = Math.max(1, Math.ceil(fullText.length / 30));
-            currentText += fullText.substr(charIndex, chunkSize);
-            charIndex += chunkSize;
-            chatHistory.setProperty(targetIdx, "text", currentText);
-            listView.positionViewAtEnd();
-        }
-    }
-
-    onVisibleChanged: {
-        if (visible) {
-            fetchOllamaModels();
-        }
-    }
-
-    function startTypingAnimation(text) {
-        isThinking = false;
-        typingTimer.targetIdx = chatHistory.count - 1;
-        typingTimer.fullText = text;
-        typingTimer.currentText = "";
-        typingTimer.charIndex = 0;
-        typingTimer.start();
-        listView.positionViewAtEnd();
-    }
-
-    Component.onCompleted: {
-        fetchOllamaModels();
-        loadHistory();
-    }
 
     property var ollamaModelsList: []
 
@@ -101,24 +33,33 @@ Item {
 
     property bool isThoughtExpanded: false
 
-    onIsTypingChanged: {
-        if (isTyping)
-            listView.positionViewAtEnd();
-    }
-
     property bool inAgentLoop: false
-
-    function runAgentCommand(cmd, type) {
-        var processQml = "import QtQuick\n" + "import Quickshell.Io\n" + "Process {\n" + "    id: proc\n" + "    command: [\"sh\", \"-c\", " + JSON.stringify(cmd) + "]\n" + "    property string outStr: \"\"\n" + "    property string errStr: \"\"\n" + "    property bool hasExited: false\n" + "    property bool outFinished: false\n" + "    property bool errFinished: false\n" + "    function checkDone() {\n" + "        if (hasExited && outFinished && errFinished) {\n" + "            root.handleAgentProcessResult(" + JSON.stringify(type) + ", proc.outStr, proc.errStr, " + JSON.stringify(cmd) + ");\n" + "            proc.destroy();\n" + "        }\n" + "    }\n" + "    stdout: StdioCollector { onStreamFinished: { proc.outStr = text || \"\"; proc.outFinished = true; proc.checkDone(); } }\n" + "    stderr: StdioCollector { onStreamFinished: { proc.errStr = text || \"\"; proc.errFinished = true; proc.checkDone(); } }\n" + "    onExited: code => { proc.hasExited = true; proc.checkDone(); }\n" + "}";
-        var obj = Qt.createQmlObject(processQml, root, "agentProcess");
-        obj.running = true;
-    }
 
     property int runningToolsCount: 0
 
     property string accumulatedToolResults: ""
 
     property string accumulatedToolImage: ""
+
+    property string currentActionText: "Thinking..."
+
+    property var allChatSessions: []
+
+    function startTypingAnimation(text) {
+        isThinking = false;
+        typingTimer.targetIdx = chatHistory.count - 1;
+        typingTimer.fullText = text;
+        typingTimer.currentText = "";
+        typingTimer.charIndex = 0;
+        typingTimer.start();
+        listView.positionViewAtEnd();
+    }
+
+    function runAgentCommand(cmd, type) {
+        var processQml = "import QtQuick\n" + "import Quickshell.Io\n" + "Process {\n" + "    id: proc\n" + "    command: [\"sh\", \"-c\", " + JSON.stringify(cmd) + "]\n" + "    property string outStr: \"\"\n" + "    property string errStr: \"\"\n" + "    property bool hasExited: false\n" + "    property bool outFinished: false\n" + "    property bool errFinished: false\n" + "    function checkDone() {\n" + "        if (hasExited && outFinished && errFinished) {\n" + "            root.handleAgentProcessResult(" + JSON.stringify(type) + ", proc.outStr, proc.errStr, " + JSON.stringify(cmd) + ");\n" + "            proc.destroy();\n" + "        }\n" + "    }\n" + "    stdout: StdioCollector { onStreamFinished: { proc.outStr = text || \"\"; proc.outFinished = true; proc.checkDone(); } }\n" + "    stderr: StdioCollector { onStreamFinished: { proc.errStr = text || \"\"; proc.errFinished = true; proc.checkDone(); } }\n" + "    onExited: code => { proc.hasExited = true; proc.checkDone(); }\n" + "}";
+        var obj = Qt.createQmlObject(processQml, root, "agentProcess");
+        obj.running = true;
+    }
 
     function handleAgentProcessResult(type, stdout, stderr, cmd) {
         if (type === "screenshot_take") {
@@ -149,8 +90,6 @@ Item {
             sendPrompt(accumulatedToolResults.trim(), true, b64, "multi_tool");
         }
     }
-
-    property string currentActionText: "Thinking..."
 
     function fetchOllamaModels() {
         var ollamaUrl = GlobalConfig.ai.ollamaUrl || "http://localhost:11434";
@@ -187,8 +126,6 @@ Item {
         };
         xhr.send();
     }
-
-    property var allChatSessions: []
 
     function createNewChat() {
         typingTimer.stop();
@@ -851,6 +788,70 @@ Item {
         xhr.send(JSON.stringify(requestBody));
     }
 
+    onVisibleChanged: {
+        if (visible) {
+            fetchOllamaModels();
+        }
+    }
+
+    Component.onCompleted: {
+        fetchOllamaModels();
+        loadHistory();
+    }
+
+    onIsTypingChanged: {
+        if (isTyping)
+            listView.positionViewAtEnd();
+    }
+
+    ListModel {
+        id: chatHistory
+    }
+
+    ListModel {
+        id: historySessionsModel
+    }
+
+    Timer {
+        id: typingTimer
+
+        property string fullText: ""
+
+        property string currentText: ""
+
+        property int charIndex: 0
+
+        property int targetIdx: -1
+
+        interval: 16
+        repeat: true
+
+        onTriggered: {
+            if (targetIdx < 0 || targetIdx >= chatHistory.count) {
+                stop();
+                root.isTyping = false;
+                root.isThinking = false;
+                root.inAgentLoop = false;
+                return;
+            }
+            if (charIndex >= fullText.length) {
+                stop();
+                chatHistory.setProperty(targetIdx, "text", fullText);
+                chatHistory.setProperty(targetIdx, "isFinished", true);
+                saveHistory();
+                root.isTyping = false;
+                root.isThinking = false;
+                root.inAgentLoop = false;
+                return;
+            }
+            var chunkSize = Math.max(1, Math.ceil(fullText.length / 30));
+            currentText += fullText.substr(charIndex, chunkSize);
+            charIndex += chunkSize;
+            chatHistory.setProperty(targetIdx, "text", currentText);
+            listView.positionViewAtEnd();
+        }
+    }
+
     Item {
         id: mainWrapper
 
@@ -1079,61 +1080,6 @@ Item {
                     model: chatHistory
                     boundsBehavior: Flickable.StopAtBounds
 
-                    ColumnLayout {
-                        anchors.centerIn: parent
-                        opacity: chatHistory.count === 0 && !root.isTyping && !root.isThinking ? 1.0 : 0.0
-                        visible: opacity > 0
-
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: 250
-                                easing.type: Easing.InOutQuad
-                            }
-                        }
-
-                        spacing: Tokens.spacing.large
-
-                        Item {
-                            Layout.alignment: Qt.AlignHCenter
-                            implicitWidth: 72
-                            implicitHeight: 72
-
-                            Logo {
-                                id: emptyStateLogo
-
-                                anchors.fill: parent
-                                visible: false // hide original for MultiEffect to take over
-                            }
-
-                            MultiEffect {
-                                anchors.fill: parent
-                                source: emptyStateLogo
-                                colorization: 1.0
-                                colorizationColor: Colours.palette.m3primary
-                            }
-                        }
-
-                        StyledText {
-                            id: greetingText
-                            Layout.alignment: Qt.AlignHCenter
-                            Layout.maximumWidth: listView.width - (Tokens.padding.large * 2)
-
-                            horizontalAlignment: Text.AlignHCenter
-                            wrapMode: Text.Wrap
-                            font: Tokens.font.title.medium
-                            color: Colours.palette.m3onSurfaceVariant
-
-                            property var phrases: ["Ask away, %1!", "How can I help you today, %1?", "What's on your mind, %1?", "Ready when you are, %1!", "Let's get started, %1.", "What shall we explore today, %1?", "I'm all ears, %1!"]
-
-                            Component.onCompleted: {
-                                var user = Quickshell.env("USER") || "user";
-                                var userCapitalized = user.charAt(0).toUpperCase() + user.slice(1);
-                                var phrase = phrases[Math.floor(Math.random() * phrases.length)];
-                                text = phrase.replace("%1", userCapitalized);
-                            }
-                        }
-                    }
-
                     ScrollBar.vertical: StyledScrollBar {
                         flickable: listView
                     }
@@ -1149,6 +1095,7 @@ Item {
                                 type: Anim.DefaultSpatial
                             }
                         }
+
                         Behavior on opacity {
                             Anim {
                                 type: Anim.DefaultSpatial
@@ -1166,6 +1113,7 @@ Item {
 
                             // Asymmetric corners
                             topLeftRadius: Tokens.rounding.large
+
                             topRightRadius: Tokens.rounding.large
                             bottomLeftRadius: 4
                             bottomRightRadius: Tokens.rounding.large
@@ -1190,8 +1138,8 @@ Item {
                                     Item {
                                         width: mainText.implicitWidth
                                         height: mainText.implicitHeight
-                                        // The bubble smoothly expands/shrinks as the text width changes
 
+                                        // The bubble smoothly expands/shrinks as the text width changes
                                         Behavior on width {
                                             NumberAnimation {
                                                 duration: 300
@@ -1202,30 +1150,31 @@ Item {
                                         StyledText {
                                             id: mainText
 
-                                            text: displayedText
-                                            color: Colours.palette.m3onSurfaceVariant
-                                            font: Tokens.font.body.small
-
                                             property string displayedText: root.currentActionText
 
                                             property string nextText: ""
+
+                                            text: displayedText
+                                            color: Colours.palette.m3onSurfaceVariant
+                                            font: Tokens.font.body.small
 
                                             transform: Translate {
                                                 id: textTrans
 
                                                 y: 0
                                             }
+
                                             opacity: 1.0
 
                                             Connections {
-                                                target: root
-
                                                 function onCurrentActionTextChanged() {
                                                     if (root.currentActionText !== mainText.displayedText) {
                                                         mainText.nextText = root.currentActionText;
                                                         switchAnim.restart();
                                                     }
                                                 }
+
+                                                target: root
                                             }
 
                                             SequentialAnimation {
@@ -1338,6 +1287,7 @@ Item {
                                         }
                                     }
                                 }
+
                                 Item {
                                     id: footerThoughtContentWrapper
 
@@ -1403,6 +1353,11 @@ Item {
                             popInAnim.start();
                         }
 
+                        onIsFinishedChanged: {
+                            if (isFinished)
+                                popDoneAnim.start();
+                        }
+
                         ParallelAnimation {
                             id: popInAnim
 
@@ -1445,11 +1400,6 @@ Item {
                             }
                         }
 
-                        onIsFinishedChanged: {
-                            if (isFinished)
-                                popDoneAnim.start();
-                        }
-
                         StyledRect {
                             id: bubbleRect
 
@@ -1460,12 +1410,14 @@ Item {
 
                             // Let implicitWidth dictate width (with +8 buffer for layout engine) to stop short words from splitting line breaks
                             width: Math.min(maxBubbleWidth, bubbleLayout.implicitWidth + Tokens.padding.medium * 2 + 8)
+
                             height: bubbleLayout.implicitHeight + Tokens.padding.medium * 2
                             radius: Tokens.rounding.large
                             color: delegateItem.isUser ? Colours.palette.m3primary : Colours.tPalette.m3surfaceContainer
 
                             // Asymmetric corners
                             topLeftRadius: Tokens.rounding.large
+
                             topRightRadius: Tokens.rounding.large
                             bottomLeftRadius: delegateItem.isUser ? Tokens.rounding.large : 4
                             bottomRightRadius: delegateItem.isUser ? 4 : Tokens.rounding.large
@@ -1473,14 +1425,14 @@ Item {
                             Column {
                                 id: bubbleLayout
 
+                                property string delegateThought: delegateItem.thoughtText
+
+                                property bool isExpanded: false
+
                                 anchors.top: parent.top
                                 anchors.left: parent.left
                                 anchors.margins: Tokens.padding.medium
                                 spacing: Tokens.spacing.small
-
-                                property string delegateThought: delegateItem.thoughtText
-
-                                property bool isExpanded: false
 
                                 Item {
                                     visible: bubbleLayout.delegateThought !== ""
@@ -1538,19 +1490,12 @@ Item {
                                     TextEdit {
                                         id: thoughtContent
 
-                                        width: Math.min(implicitWidth, bubbleRect.maxBubbleWidth - Tokens.padding.medium * 2)
-                                        textFormat: Text.MarkdownText
-
                                         property string fullThought: bubbleLayout.delegateThought
 
                                         property bool cursorVisible: true
 
-                                        Timer {
-                                            running: !delegateItem.isFinished
-                                            repeat: true
-                                            interval: 400
-                                            onTriggered: thoughtContent.cursorVisible = !thoughtContent.cursorVisible
-                                        }
+                                        width: Math.min(implicitWidth, bubbleRect.maxBubbleWidth - Tokens.padding.medium * 2)
+                                        textFormat: Text.MarkdownText
 
                                         text: delegateItem.isFinished ? fullThought : fullThought + (cursorVisible ? "▌" : "")
 
@@ -1570,6 +1515,13 @@ Item {
 
                                         opacity: bubbleLayout.isExpanded ? 1.0 : 0.0
 
+                                        Timer {
+                                            running: !delegateItem.isFinished
+                                            repeat: true
+                                            interval: 400
+                                            onTriggered: thoughtContent.cursorVisible = !thoughtContent.cursorVisible
+                                        }
+
                                         Behavior on opacity {
                                             SequentialAnimation {
                                                 PauseAnimation {
@@ -1587,19 +1539,12 @@ Item {
                                 TextEdit {
                                     id: messageText
 
-                                    textFormat: Text.MarkdownText
-                                    width: Math.min(implicitWidth, bubbleRect.maxBubbleWidth - Tokens.padding.medium * 2)
-
                                     property string fullText: delegateItem.text !== undefined ? delegateItem.text : ""
 
                                     property bool cursorVisible: true
 
-                                    Timer {
-                                        running: !delegateItem.isFinished
-                                        repeat: true
-                                        interval: 400
-                                        onTriggered: messageText.cursorVisible = !messageText.cursorVisible
-                                    }
+                                    textFormat: Text.MarkdownText
+                                    width: Math.min(implicitWidth, bubbleRect.maxBubbleWidth - Tokens.padding.medium * 2)
 
                                     text: delegateItem.isFinished ? fullText : fullText + (cursorVisible ? "▌" : "")
 
@@ -1617,6 +1562,13 @@ Item {
 
                                     selectedTextColor: Colours.palette.m3onPrimary
 
+                                    Timer {
+                                        running: !delegateItem.isFinished
+                                        repeat: true
+                                        interval: 400
+                                        onTriggered: messageText.cursorVisible = !messageText.cursorVisible
+                                    }
+
                                     MouseArea {
                                         anchors.fill: parent
                                         hoverEnabled: true
@@ -1625,6 +1577,62 @@ Item {
                                         onPressed: mouse => mouse.accepted = false
                                     }
                                 }
+                            }
+                        }
+                    }
+
+                    ColumnLayout {
+                        anchors.centerIn: parent
+                        opacity: chatHistory.count === 0 && !root.isTyping && !root.isThinking ? 1.0 : 0.0
+                        visible: opacity > 0
+
+                        spacing: Tokens.spacing.large
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: 250
+                                easing.type: Easing.InOutQuad
+                            }
+                        }
+
+                        Item {
+                            Layout.alignment: Qt.AlignHCenter
+                            implicitWidth: 72
+                            implicitHeight: 72
+
+                            Logo {
+                                id: emptyStateLogo
+
+                                anchors.fill: parent
+                                visible: false // hide original for MultiEffect to take over
+                            }
+
+                            MultiEffect {
+                                anchors.fill: parent
+                                source: emptyStateLogo
+                                colorization: 1.0
+                                colorizationColor: Colours.palette.m3primary
+                            }
+                        }
+
+                        StyledText {
+                            id: greetingText
+
+                            property var phrases: ["Ask away, %1!", "How can I help you today, %1?", "What's on your mind, %1?", "Ready when you are, %1!", "Let's get started, %1.", "What shall we explore today, %1?", "I'm all ears, %1!"]
+
+                            Layout.alignment: Qt.AlignHCenter
+                            Layout.maximumWidth: listView.width - (Tokens.padding.large * 2)
+
+                            horizontalAlignment: Text.AlignHCenter
+                            wrapMode: Text.Wrap
+                            font: Tokens.font.title.medium
+                            color: Colours.palette.m3onSurfaceVariant
+
+                            Component.onCompleted: {
+                                var user = Quickshell.env("USER") || "user";
+                                var userCapitalized = user.charAt(0).toUpperCase() + user.slice(1);
+                                var phrase = phrases[Math.floor(Math.random() * phrases.length)];
+                                text = phrase.replace("%1", userCapitalized);
                             }
                         }
                     }
@@ -1682,6 +1690,7 @@ Item {
 
                         ScrollView {
                             id: inputScroll
+
                             Layout.fillWidth: true
                             Layout.fillHeight: true
 
@@ -1697,6 +1706,14 @@ Item {
                                 selectByMouse: true
                                 background: null
 
+                                Keys.onPressed: event => {
+                                    if (event.key === Qt.Key_Return && !(event.modifiers & Qt.ShiftModifier)) {
+                                        event.accepted = true;
+                                        root.sendPrompt(inputArea.text);
+                                        inputArea.clear();
+                                    }
+                                }
+
                                 MouseArea {
                                     anchors.fill: parent
                                     hoverEnabled: true
@@ -1706,14 +1723,6 @@ Item {
                                         var mapped = mapToItem(inputStateLayer, mouse.x, mouse.y);
                                         inputStateLayer.press(mapped.x, mapped.y);
                                         mouse.accepted = false;
-                                    }
-                                }
-
-                                Keys.onPressed: event => {
-                                    if (event.key === Qt.Key_Return && !(event.modifiers & Qt.ShiftModifier)) {
-                                        event.accepted = true;
-                                        root.sendPrompt(inputArea.text);
-                                        inputArea.clear();
                                     }
                                 }
                             }

@@ -16,8 +16,6 @@ import qs.modules.bar
 StyledWindow {
     id: root
 
-    Config.screen: screen.name
-
     readonly property alias bar: bar
     readonly property alias interactionWrapper: interactions
 
@@ -26,6 +24,7 @@ StyledWindow {
     readonly property HyprlandMonitor monitor: Hypr.monitorFor(screen)
     readonly property bool hasSpecialWorkspace: (monitor?.lastIpcObject.specialWorkspace?.name.length ?? 0) > 0
     readonly property bool hasFullscreenOnNormalWs: monitor?.activeWorkspace?.toplevels.values.some(t => t.lastIpcObject.fullscreen > 1) ?? false
+
     readonly property bool hasFullscreen: {
         if (hasSpecialWorkspace) {
             const specialName = monitor?.lastIpcObject.specialWorkspace?.name;
@@ -59,6 +58,8 @@ StyledWindow {
                 thresholds.push(contentItem.Config[panel].dragThreshold);
         return Math.max(...thresholds);
     }
+
+    Config.screen: screen.name
 
     onHasFullscreenChanged: {
         screenState.launcher = false;
@@ -158,6 +159,7 @@ StyledWindow {
         anchors.fill: parent
         opacity: GlobalConfig.appearance.pitchBlack ? 1 : (Colours.transparency.enabled ? Colours.transparency.base : root.surfaceColour.a)
         layer.enabled: true
+
         layer.effect: MultiEffect {
             shadowEnabled: true
             blurMax: 15
@@ -221,11 +223,11 @@ StyledWindow {
         PanelBg {
             id: sidebarBg
 
+            property bool connectedToPopout: (Config.bar.position === "top" || Config.bar.position === "bottom") && panels.popouts.sidebarOpen && panels.popouts.currentSection === "end" && panels.popouts.implicitWidth <= Tokens.sizes.sidebar.width + 1 && !panels.popouts.isDockPopout
+
             panel: panels.sidebar
             deformAmount: 0.03
             implicitHeight: panel.height * (1 / rawDeformMatrix.m22) + 2
-
-            property bool connectedToPopout: (Config.bar.position === "top" || Config.bar.position === "bottom") && panels.popouts.sidebarOpen && panels.popouts.currentSection === "end" && panels.popouts.implicitWidth <= Tokens.sizes.sidebar.width + 1 && !panels.popouts.isDockPopout
 
             exclude: {
                 let arr = [];
@@ -254,12 +256,12 @@ StyledWindow {
         PanelBg {
             id: workspaceOverviewBg
 
+            property bool isAnchoredRight: Config.bar.position === "right"
+
             panel: panels.workspaceOverview
             deformAmount: 0.03
 
             exclude: []
-
-            property bool isAnchoredRight: Config.bar.position === "right"
             topRightRadius: GlobalConfig.appearance.islands ? radius : (!isAnchoredRight ? radius : Math.max(0, Math.min(1, panels.workspaceOverview.offsetScale / 0.3)) * radius)
             bottomRightRadius: GlobalConfig.appearance.islands ? radius : (!isAnchoredRight ? radius : Math.max(0, Math.min(1, panels.workspaceOverview.offsetScale / 0.3)) * radius)
             topLeftRadius: GlobalConfig.appearance.islands ? radius : (isAnchoredRight ? radius : Math.max(0, Math.min(1, panels.workspaceOverview.offsetScale / 0.3)) * radius)

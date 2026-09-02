@@ -31,14 +31,14 @@ Item {
 
         // Speaker volume
         CustomMouseArea {
-            Layout.alignment: Qt.AlignHCenter
-
             function onWheel(event: WheelEvent) {
                 if (event.angleDelta.y > 0)
                     Audio.incrementVolume();
                 else if (event.angleDelta.y < 0)
                     Audio.decrementVolume();
             }
+
+            Layout.alignment: Qt.AlignHCenter
 
             implicitWidth: Tokens.sizes.osd.sliderWidth
             implicitHeight: Tokens.sizes.osd.sliderHeight

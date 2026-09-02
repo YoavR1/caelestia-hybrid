@@ -26,16 +26,6 @@ Singleton {
     property string firmware
     property string hyprlandSplashText: ""
 
-    Process {
-        running: true
-        command: ["hyprctl", "splash"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                root.hyprlandSplashText = text.trim();
-            }
-        }
-    }
-
     // DMI vendor/model, combined into a single human-readable device name
     property string boardVendor
 
@@ -54,6 +44,16 @@ Singleton {
         const t = s.trim();
         const junk = ["to be filled by o.e.m.", "system product name", "system manufacturer", "system version", "default string", "o.e.m.", "not specified", "not applicable", "unknown", "none", ""];
         return junk.includes(t.toLowerCase()) ? "" : t;
+    }
+
+    Process {
+        running: true
+        command: ["hyprctl", "splash"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.hyprlandSplashText = text.trim();
+            }
+        }
     }
 
     FileView {

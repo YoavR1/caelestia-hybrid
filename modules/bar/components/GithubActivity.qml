@@ -46,6 +46,8 @@ StyledRect {
         }
     ]
 
+    readonly property bool isHorizontal: Config.bar.position === "top" || Config.bar.position === "bottom"
+
     function redact(value: string): string {
         return (value || "").replace(/bearer\s+[A-Za-z0-9_\-.]+/gi, "bearer [redacted]");
     }
@@ -57,8 +59,6 @@ StyledRect {
         BarComponents.GithubStore.available = false;
         console.error("[GitHubWidget] " + msg);
     }
-
-    readonly property bool isHorizontal: Config.bar.position === "top" || Config.bar.position === "bottom"
 
     implicitWidth: isHorizontal ? (cells.implicitWidth + root.padding * 2) : Tokens.sizes.bar.innerWidth
     implicitHeight: isHorizontal ? Tokens.sizes.bar.innerWidth : (cells.implicitHeight + root.padding * 2)

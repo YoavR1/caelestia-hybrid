@@ -180,6 +180,11 @@ Item {
     implicitWidth: 840
     implicitHeight: 500
 
+    Component.onCompleted: {
+        startShell();
+        initTimer.start();
+    }
+
     Timer {
         id: initTimer
 
@@ -191,11 +196,6 @@ Item {
                 running: true
             });
         }
-    }
-
-    Component.onCompleted: {
-        startShell();
-        initTimer.start();
     }
 
     Component {

@@ -20,10 +20,10 @@ Item {
     readonly property ScreenState screenState: ShellState.forScreen(screen)
     property real offsetScale: screenState.workspaceDrawer ? 0 : 1
 
+    property real slideAmount: (-implicitWidth - Config.border.thickness - Tokens.spacing.medium) * offsetScale
+
     anchors.top: parent.top
     anchors.bottom: parent.bottom
-
-    property real slideAmount: (-implicitWidth - Config.border.thickness - Tokens.spacing.medium) * offsetScale
     anchors.leftMargin: slideAmount
     anchors.rightMargin: slideAmount
 
@@ -52,6 +52,7 @@ Item {
 
             VerticalFadeListView {
                 id: wsList
+
                 Layout.fillWidth: true
                 Layout.fillHeight: true
 
@@ -65,13 +66,13 @@ Item {
 
                     required property int index
                     readonly property int workspaceId: index + 1
+
                     // Fallback to Hyprland.activeWorkspace if monitor activeWorkspace is not ready yet
                     readonly property int activeWsId: Hypr.monitorFor(root.screen)?.activeWorkspace?.id ?? Hyprland.activeWorkspace?.id ?? 1
+
                     readonly property bool isActive: activeWsId === workspaceId
 
                     property int activeDrags: 0
-
-                    z: activeDrags > 0 ? 100 : 0
 
                     property list<var> windows: Hyprland.toplevels.values.filter(t => {
                         if (!t.workspace || t.workspace.id !== workspaceId)
@@ -214,34 +215,39 @@ Item {
 
                     property real effectiveMinY: targetMinY
 
+                    z: activeDrags > 0 ? 100 : 0
+
+                    width: ListView.view.width
+
+                    implicitHeight: width * (effectiveMh / effectiveMw)
+
                     Behavior on effectiveMw {
                         NumberAnimation {
                             duration: 300
                             easing.type: Easing.OutCubic
                         }
                     }
+
                     Behavior on effectiveMh {
                         NumberAnimation {
                             duration: 300
                             easing.type: Easing.OutCubic
                         }
                     }
+
                     Behavior on effectiveMinX {
                         NumberAnimation {
                             duration: 300
                             easing.type: Easing.OutCubic
                         }
                     }
+
                     Behavior on effectiveMinY {
                         NumberAnimation {
                             duration: 300
                             easing.type: Easing.OutCubic
                         }
                     }
-
-                    width: ListView.view.width
-
-                    implicitHeight: width * (effectiveMh / effectiveMw)
 
                     Item {
                         id: bgContainer
@@ -327,12 +333,13 @@ Item {
                     Item {
                         anchors.fill: parent
                         anchors.margins: Tokens.spacing.small
-                        // Do not clip here so the drag target can float out
 
+                        // Do not clip here so the drag target can float out
                         Repeater {
                             id: windowRepeater
 
                             model: wsDelegate.windows
+
                             delegate: Item {
                                 id: windowContainer
 
@@ -353,32 +360,8 @@ Item {
                                     else
                                         wsDelegate.activeDrags--;
                                 }
-                                z: dragArea.drag.active ? 100 : 0
 
-                                Behavior on rawLogicalX {
-                                    NumberAnimation {
-                                        duration: 300
-                                        easing.type: Easing.OutCubic
-                                    }
-                                }
-                                Behavior on rawLogicalY {
-                                    NumberAnimation {
-                                        duration: 300
-                                        easing.type: Easing.OutCubic
-                                    }
-                                }
-                                Behavior on rawLogicalW {
-                                    NumberAnimation {
-                                        duration: 300
-                                        easing.type: Easing.OutCubic
-                                    }
-                                }
-                                Behavior on rawLogicalH {
-                                    NumberAnimation {
-                                        duration: 300
-                                        easing.type: Easing.OutCubic
-                                    }
-                                }
+                                z: dragArea.drag.active ? 100 : 0
 
                                 x: ((rawLogicalX - wsDelegate.effectiveMinX) / wsDelegate.effectiveMw * parent.width)
 
@@ -387,6 +370,34 @@ Item {
                                 width: (rawLogicalW / wsDelegate.effectiveMw * parent.width)
 
                                 height: (rawLogicalH / wsDelegate.effectiveMh * parent.height)
+
+                                Behavior on rawLogicalX {
+                                    NumberAnimation {
+                                        duration: 300
+                                        easing.type: Easing.OutCubic
+                                    }
+                                }
+
+                                Behavior on rawLogicalY {
+                                    NumberAnimation {
+                                        duration: 300
+                                        easing.type: Easing.OutCubic
+                                    }
+                                }
+
+                                Behavior on rawLogicalW {
+                                    NumberAnimation {
+                                        duration: 300
+                                        easing.type: Easing.OutCubic
+                                    }
+                                }
+
+                                Behavior on rawLogicalH {
+                                    NumberAnimation {
+                                        duration: 300
+                                        easing.type: Easing.OutCubic
+                                    }
+                                }
 
                                 Item {
                                     id: windowVisualProxy
@@ -397,23 +408,24 @@ Item {
                                     opacity: dragArea.drag.active ? 0.8 : 1
                                     scale: dragArea.drag.active ? 1.05 : 1
 
+                                    Drag.active: dragArea.drag.active
+                                    Drag.keys: ["window"]
+                                    Drag.hotSpot.x: width / 2
+                                    Drag.hotSpot.y: height / 2
+                                    Drag.source: windowContainer.modelData
+
                                     Behavior on scale {
                                         NumberAnimation {
                                             duration: 150
                                             easing.type: Easing.OutBack
                                         }
                                     }
+
                                     Behavior on opacity {
                                         NumberAnimation {
                                             duration: 150
                                         }
                                     }
-
-                                    Drag.active: dragArea.drag.active
-                                    Drag.keys: ["window"]
-                                    Drag.hotSpot.x: width / 2
-                                    Drag.hotSpot.y: height / 2
-                                    Drag.source: windowContainer.modelData
 
                                     StyledRect {
                                         id: windowBg
@@ -505,17 +517,17 @@ Item {
                                 MouseArea {
                                     id: dragArea
 
-                                    anchors.fill: parent
-                                    hoverEnabled: true
-                                    drag.target: windowVisualProxy
-                                    drag.axis: Drag.XAndYAxis
-                                    cursorShape: Qt.PointingHandCursor
-
                                     property bool wasDragged: false
 
                                     property real pressX: 0
 
                                     property real pressY: 0
+
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    drag.target: windowVisualProxy
+                                    drag.axis: Drag.XAndYAxis
+                                    cursorShape: Qt.PointingHandCursor
 
                                     onPressed: mouse => {
                                         wasDragged = false;
