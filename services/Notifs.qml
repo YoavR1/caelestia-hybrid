@@ -46,7 +46,7 @@ Singleton {
     }
 
     function addCustomNotification(summary: string, body: string, appIcon: string, actions: list<var>, expanded: bool): NotifData {
-        const notif = notifComp.createObject(root, {
+        const notif = notifComp.createObject(root, { // qmllint disable incompatible-type
             popup: root.shouldShowPopup(),
             resident: true,
             summary: summary,

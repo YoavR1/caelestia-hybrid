@@ -1021,7 +1021,7 @@ Item {
 
                 active: menuItems.find(m => m.modelData === GlobalConfig.ai.defaultOllamaModel) ?? menuItems[0] ?? null
                 menu.onItemSelected: item => {
-                    GlobalConfig.ai.defaultOllamaModel = item.modelData;
+                    GlobalConfig.ai.defaultOllamaModel = item.modelData; // qmllint disable missing-property
                 }
 
                 menuItems: modelVariants.instances

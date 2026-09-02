@@ -28,7 +28,7 @@ Item {
         if (toggles.active)
             h += (toggles.item as Toggles)?.implicitHeight ?? 0;
         if (mediaActive && mediaLoader.item) {
-            h += mediaLoader.item.nonAnimHeight;
+            h += mediaLoader.item.nonAnimHeight; // qmllint disable missing-property
         }
         h += layout.spacing * Math.max(0, enabledCards - 1);
         return h;
@@ -74,7 +74,7 @@ Item {
                 property real lastValidItemHeight: 0
 
                 property real nonAnimHeight: {
-                    const swipeItem = mediaFlickable.currentItem ? mediaFlickable.currentItem.item : null;
+                    const swipeItem = mediaFlickable.currentItem ? mediaFlickable.currentItem.item : null; // qmllint disable missing-property
                     const itemHeight = swipeItem ? (swipeItem.nonAnimHeight ?? swipeItem.implicitHeight) : lastValidItemHeight;
                     return itemHeight + (mediaRepeater.count > 1 ? bgRow.implicitHeight + spacing : 0);
                 }
@@ -87,7 +87,7 @@ Item {
                 }
 
                 onNonAnimHeightChanged: {
-                    const swipeItem = mediaFlickable.currentItem ? mediaFlickable.currentItem.item : null;
+                    const swipeItem = mediaFlickable.currentItem ? mediaFlickable.currentItem.item : null; // qmllint disable missing-property
                     if (swipeItem) {
                         lastValidItemHeight = (swipeItem.nonAnimHeight ?? swipeItem.implicitHeight);
                     }

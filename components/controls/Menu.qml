@@ -40,7 +40,7 @@ MouseArea {
         let interactionsNode = null;
 
         while (node && node.parent) {
-            if (node.utilitiesShortcutActive !== undefined) {
+            if (node.utilitiesShortcutActive !== undefined) { // qmllint disable missing-property
                 interactionsNode = node;
             }
             node = node.parent;

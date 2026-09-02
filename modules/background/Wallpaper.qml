@@ -161,7 +161,7 @@ Item {
 
         property bool renderActive: false
 
-        readonly property bool isPlayerPlaying: !!(videoChannelLoader.item && videoChannelLoader.item["playing"])
+        readonly property bool isPlayerPlaying: !!(videoChannelLoader.item && videoChannelLoader.item["playing"]) // qmllint disable missing-property
 
         readonly property real maxRadius: Math.sqrt(width * width + height * height)
 
@@ -310,7 +310,7 @@ Item {
             layer.effect: MultiEffect {
                 maskEnabled: img.needsMask
 
-                maskSource: maskLoader.item ? maskLoader.item.maskSource : null
+                maskSource: maskLoader.item ? maskLoader.item.maskSource : null // qmllint disable missing-property
 
                 shadowEnabled: img.needsMask && !img.isVideo
                 shadowColor: "black"
@@ -415,8 +415,8 @@ Item {
                     repeat: false
                     onTriggered: {
                         if (videoChannelLoader.item && img.isVideo && !WallpaperPauser.paused && img.state === "active") {
-                            videoChannelLoader.item["stop"]();
-                            videoChannelLoader.item["play"]();
+                            videoChannelLoader.item["stop"](); // qmllint disable missing-property
+                            videoChannelLoader.item["play"](); // qmllint disable missing-property
                         }
                     }
                 }
@@ -426,7 +426,7 @@ Item {
                         if (videoChannelLoader.item && img.isVideo) {
                             if (WallpaperPauser.paused) {
                                 resumeTimer.stop();
-                                videoChannelLoader.item["pause"]();
+                                videoChannelLoader.item["pause"](); // qmllint disable missing-property
                             } else {
                                 if (img.state === "active") {
                                     resumeTimer.restart();

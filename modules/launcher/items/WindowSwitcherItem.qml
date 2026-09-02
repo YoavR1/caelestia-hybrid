@@ -22,7 +22,7 @@ Item {
 
     scale: 0.5
     opacity: 0
-    z: PathView.z ?? 0
+    z: PathView.z ?? 0 // qmllint disable missing-property
 
     implicitWidth: previewBox.width + Tokens.padding.largeIncreased * 2
     implicitHeight: previewBox.height + label.height + Tokens.spacing.small / 2 + Tokens.padding.large + Tokens.padding.medium

@@ -66,13 +66,13 @@ Item {
         if (Lyrics.hasLyrics) {
             currentLyricIndex = Lyrics.indexForTime(Players.active?.position ?? 0);
             if (currentLyricIndex >= 0) {
-                displayedLyric = (Lyrics.lyrics[currentLyricIndex] ?? "").replace(/\u00A0/g, " ");
-                previousLyricText = currentLyricIndex > 0 ? (Lyrics.lyrics[currentLyricIndex - 1] ?? "").replace(/\u00A0/g, " ") : "";
-                nextLyricText = currentLyricIndex < Lyrics.lyrics.length - 1 ? (Lyrics.lyrics[currentLyricIndex + 1] ?? "").replace(/\u00A0/g, " ") : "";
+                displayedLyric = String(Lyrics.lyrics[currentLyricIndex] ?? "").replace(/\u00A0/g, " ");
+                previousLyricText = currentLyricIndex > 0 ? String(Lyrics.lyrics[currentLyricIndex - 1] ?? "").replace(/\u00A0/g, " ") : "";
+                nextLyricText = currentLyricIndex < Lyrics.lyrics.length - 1 ? String(Lyrics.lyrics[currentLyricIndex + 1] ?? "").replace(/\u00A0/g, " ") : "";
             } else {
                 displayedLyric = "";
                 previousLyricText = "";
-                nextLyricText = (Lyrics.lyrics[0] ?? "").replace(/\u00A0/g, " ");
+                nextLyricText = String(Lyrics.lyrics[0] ?? "").replace(/\u00A0/g, " ");
             }
             lyricSlide.running = true;
         } else {
@@ -86,13 +86,13 @@ Item {
     onCurrentLyricIndexChanged: {
         if (Lyrics.hasLyrics) {
             if (currentLyricIndex >= 0) {
-                displayedLyric = (Lyrics.lyrics[currentLyricIndex] ?? "").replace(/\u00A0/g, " ");
-                previousLyricText = currentLyricIndex > 0 ? (Lyrics.lyrics[currentLyricIndex - 1] ?? "").replace(/\u00A0/g, " ") : "";
-                nextLyricText = currentLyricIndex < Lyrics.lyrics.length - 1 ? (Lyrics.lyrics[currentLyricIndex + 1] ?? "").replace(/\u00A0/g, " ") : "";
+                displayedLyric = String(Lyrics.lyrics[currentLyricIndex] ?? "").replace(/\u00A0/g, " ");
+                previousLyricText = currentLyricIndex > 0 ? String(Lyrics.lyrics[currentLyricIndex - 1] ?? "").replace(/\u00A0/g, " ") : "";
+                nextLyricText = currentLyricIndex < Lyrics.lyrics.length - 1 ? String(Lyrics.lyrics[currentLyricIndex + 1] ?? "").replace(/\u00A0/g, " ") : "";
             } else {
                 displayedLyric = "";
                 previousLyricText = "";
-                nextLyricText = (Lyrics.lyrics[0] ?? "").replace(/\u00A0/g, " ");
+                nextLyricText = String(Lyrics.lyrics[0] ?? "").replace(/\u00A0/g, " ");
             }
             lyricSlide.running = true;
         } else {

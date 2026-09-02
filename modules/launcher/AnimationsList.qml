@@ -1,6 +1,5 @@
 pragma ComponentBehavior: Bound
 
-import "services"
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
@@ -9,6 +8,7 @@ import qs.components
 import qs.components.containers
 import qs.components.controls
 import qs.services
+import qs.modules.launcher.services
 
 StyledListView {
     id: root

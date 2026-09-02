@@ -39,19 +39,19 @@ CustomMouseArea {
 
     function withinPanelHeight(panel: Item, x: real, y: real): bool {
         const panelY = panels.topMargin + panel.y;
-        const panelHeight = panel.content ? panel.content.nonAnimHeight : panel.height;
+        const panelHeight = panel.content ? panel.content.nonAnimHeight : panel.height; // qmllint disable missing-property
         return y >= panelY - Config.border.rounding && y <= panelY + panelHeight + Config.border.rounding;
     }
 
     function withinPanelWidth(panel: Item, x: real, y: real): bool {
         const panelX = panels.leftMargin + panel.x;
-        const panelWidth = panel.content ? panel.content.nonAnimWidth : panel.width;
+        const panelWidth = panel.content ? panel.content.nonAnimWidth : panel.width; // qmllint disable missing-property
         return x >= panelX - Config.border.rounding && x <= panelX + panelWidth + Config.border.rounding;
     }
 
     function inLeftPanel(panel: Item, x: real, y: real): bool {
-        const panelWidth = panel.content ? panel.content.nonAnimWidth : panel.width;
-        const panelHeight = panel.content ? panel.content.nonAnimHeight : panel.height;
+        const panelWidth = panel.content ? panel.content.nonAnimWidth : panel.width; // qmllint disable missing-property
+        const panelHeight = panel.content ? panel.content.nonAnimHeight : panel.height; // qmllint disable missing-property
 
         if (Config.bar.position === "left")
             return x < panels.leftMargin + panel.x + panelWidth && withinPanelHeight(panel, x, y);

@@ -33,7 +33,7 @@ Item {
             if (content.sidebarOpen && !content.isDockPopout && content.currentSection === "end")
                 return parent.width - content.nonAnimWidth;
 
-            const off = content.currentCenter - parent.leftMargin - content.nonAnimWidth / 2;
+            const off = content.currentCenter - parent.leftMargin - content.nonAnimWidth / 2; // qmllint disable missing-property
             const diff = parent.width - Math.floor(off + content.nonAnimWidth);
             if (diff < 0)
                 return off + diff;
@@ -53,7 +53,7 @@ Item {
             return 0;
         }
 
-        const off = content.currentCenter - parent.topMargin - content.nonAnimHeight / 2;
+        const off = content.currentCenter - parent.topMargin - content.nonAnimHeight / 2; // qmllint disable missing-property
         const diff = parent.height - Math.floor(off + content.nonAnimHeight);
         if (diff < 0)
             return off + diff;

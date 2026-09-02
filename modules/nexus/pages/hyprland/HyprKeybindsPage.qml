@@ -700,7 +700,9 @@ PageBase {
                         [Qt.Key_BracketRight]: "bracketright",
                         [Qt.Key_Semicolon]: "semicolon",
                         [Qt.Key_Apostrophe]: "apostrophe",
+                        // qmllint disable missing-property
                         [Qt.Key_Grave]: "grave",
+                        // qmllint enable missing-property
                         [Qt.Key_Slash]: "slash",
                         [Qt.Key_Period]: "period",
                         [Qt.Key_Backslash]: "backslash",

@@ -6,6 +6,7 @@ import Quickshell.Wayland
 import Caelestia.Config
 import qs.components.containers
 import qs.services
+import qs.modules.background
 
 Variants {
     model: Quickshell.screens

@@ -172,7 +172,7 @@ Item {
         interval: 50
         onTriggered: {
             if (root.state === "keybinds" && keybindsList.item) {
-                keybindsList.item.refreshModel();
+                keybindsList.item.refreshModel(); // qmllint disable missing-property
             }
         }
     }

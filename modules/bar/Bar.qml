@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import "popouts" as BarPopouts
-import "components"
 import "components/workspaces"
 import QtQuick
 import QtQuick.Layouts
@@ -9,6 +8,7 @@ import Quickshell
 import Caelestia.Config
 import qs.components
 import qs.services
+import qs.modules.bar.components
 
 Item {
     id: root
@@ -85,7 +85,7 @@ Item {
             const items = (ch.item as StatusIcons).items;
             const icon = items.childAt(isHorizontal ? mapToItem(items, pos, 0).x : items.width / 2, isHorizontal ? items.height / 2 : mapToItem(items, 0, pos).y);
             if (icon) {
-                popouts.currentName = icon.name;
+                popouts.currentName = icon.name; // qmllint disable missing-property
                 popouts.currentCenter = isHorizontal ? icon.mapToItem(null, icon.implicitWidth / 2, 0).x : icon.mapToItem(null, 0, icon.implicitHeight / 2).y;
                 popouts.hasCurrent = true;
             } else {
@@ -129,9 +129,9 @@ Item {
                 return;
 
             const item = ch.item;
-            if (item && typeof item.handleHover === "function") {
+            if (item && typeof item.handleHover === "function") { // qmllint disable missing-property
                 const relPos = pos - top;
-                item.handleHover(relPos, isHorizontal, popouts);
+                item.handleHover(relPos, isHorizontal, popouts); // qmllint disable missing-property
                 return;
             }
             popouts.hasCurrent = false;

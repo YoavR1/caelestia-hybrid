@@ -21,8 +21,8 @@ Variants {
         screen: modelData
         name: "background"
         WlrLayershell.exclusionMode: ExclusionMode.Ignore
-        WlrLayershell.layer: (contentItem.Config.background.wallpaperEnabled && !(wallpaper.item && wallpaper.item.weActive)) ? WlrLayer.Background : WlrLayer.Bottom
-        color: contentItem.Config.background.wallpaperEnabled && !(wallpaper.item && wallpaper.item.weActive) ? "black" : "transparent"
+        WlrLayershell.layer: (contentItem.Config.background.wallpaperEnabled && !(wallpaper.item && wallpaper.item.weActive)) ? WlrLayer.Background : WlrLayer.Bottom // qmllint disable missing-property
+        color: contentItem.Config.background.wallpaperEnabled && !(wallpaper.item && wallpaper.item.weActive) ? "black" : "transparent" // qmllint disable missing-property
         surfaceFormat.opaque: false
 
         anchors.top: true
@@ -48,7 +48,7 @@ Variants {
 
                 anchors.fill: parent
                 active: Config.background.wallpaperEnabled
-                opacity: (item && item.weActive) ? 0 : 1
+                opacity: (item && item.weActive) ? 0 : 1 // qmllint disable missing-property
 
                 sourceComponent: Wallpaper {
                     screen: win.modelData
@@ -58,8 +58,8 @@ Variants {
             Process {
                 id: weProc
 
-                property string weDir: wallpaper.item ? wallpaper.item.weDir : ""
-                property bool weActive: wallpaper.item ? wallpaper.item.weActive : false
+                property string weDir: wallpaper.item ? wallpaper.item.weDir : "" // qmllint disable missing-property
+                property bool weActive: wallpaper.item ? wallpaper.item.weActive : false // qmllint disable missing-property
 
                 command: {
                     let cmd = ["linux-wallpaperengine", "--screen-root", win.modelData.name, "--layer", "background"];

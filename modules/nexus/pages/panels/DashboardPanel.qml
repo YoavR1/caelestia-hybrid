@@ -193,7 +193,7 @@ PageBase {
             }
             menuItems: root.dashboardShapeItems
             onSelected: item => {
-                root.targetConfig.dashboard.profilePicShape = item.value;
+                root.targetConfig.dashboard.profilePicShape = item.value; // qmllint disable missing-property
                 root.targetConfig.save();
             }
         }
@@ -216,7 +216,7 @@ PageBase {
             }
             menuItems: root.lockShapeItems
             onSelected: item => {
-                root.targetConfig.lock.profilePicShape = item.value;
+                root.targetConfig.lock.profilePicShape = item.value; // qmllint disable missing-property
                 root.targetConfig.save();
             }
         }

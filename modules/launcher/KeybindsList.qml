@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import "items"
-import "services"
 import QtQuick
 import Quickshell
 import Caelestia.Config
@@ -9,6 +8,7 @@ import qs.components
 import qs.components.containers
 import qs.components.controls
 import qs.services
+import qs.modules.launcher.services
 
 StyledListView {
     id: root

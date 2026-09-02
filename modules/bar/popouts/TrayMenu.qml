@@ -52,13 +52,13 @@ StackView {
             let currentGroup = [];
             for (let i = 0; i < groupInstantiator.count; ++i) {
                 let obj = groupInstantiator.objectAt(i);
-                if (obj && obj.isSeparator) {
+                if (obj && obj.isSeparator) { // qmllint disable missing-property
                     if (currentGroup.length > 0) {
                         groups.push(currentGroup);
                         currentGroup = [];
                     }
                 } else if (obj) {
-                    currentGroup.push(obj.entry);
+                    currentGroup.push(obj.entry); // qmllint disable missing-property
                 }
             }
             if (currentGroup.length > 0) {
@@ -158,6 +158,8 @@ StackView {
                                 anchors.right: parent.right
 
                                 sourceComponent: Item {
+                                    id: entryRow
+
                                     property int trayMenuWidth: Tokens.sizes.bar.trayMenuWidth
 
                                     implicitHeight: label.implicitHeight
@@ -217,7 +219,7 @@ StackView {
                                         font: label.font
 
                                         elide: Text.ElideRight
-                                        elideWidth: root.popouts.isHorizontal ? item.trayMenuWidth - (icon.active ? icon.implicitWidth + label.anchors.leftMargin : 0) - (expand.active ? expand.implicitWidth + Tokens.spacing.medium : 0) : 200
+                                        elideWidth: root.popouts.isHorizontal ? entryRow.trayMenuWidth - (icon.active ? icon.implicitWidth + label.anchors.leftMargin : 0) - (expand.active ? expand.implicitWidth + Tokens.spacing.medium : 0) : 200
                                     }
 
                                     Loader {

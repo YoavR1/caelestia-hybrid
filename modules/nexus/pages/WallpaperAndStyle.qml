@@ -206,7 +206,7 @@ PageBase {
                     if (bgWin && bgWin.wallpaperLoader && bgWin.wallpaperLoader.item && bgWin.wallpaperLoader.item.current) {
                         const path = Paths.home + "/Downloads/recolored_wallpaper.png";
                         CUtils.saveItem(bgWin.wallpaperLoader.item.current, "file://" + path, function () {
-                            Notifs.sendToast("Wallpaper Saved", "Saved to ~/Downloads/recolored_wallpaper.png", "image", null, null);
+                            Notifs.addCustomNotification("Wallpaper Saved", "Saved to ~/Downloads/recolored_wallpaper.png", "image", [], false);
                         });
                     }
                 }

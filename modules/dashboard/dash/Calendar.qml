@@ -29,8 +29,8 @@ CustomMouseArea {
 
     property Item hoveredDayItem: null
     property Item lastHoveredDayItem: null
-    property var lastHoveredModel: lastHoveredDayItem ? lastHoveredDayItem.model : null
-    property var lastHoveredHoliday: lastHoveredDayItem ? lastHoveredDayItem.holiday : null
+    property var lastHoveredModel: lastHoveredDayItem ? lastHoveredDayItem.model : null // qmllint disable missing-property
+    property var lastHoveredHoliday: lastHoveredDayItem ? lastHoveredDayItem.holiday : null // qmllint disable missing-property
 
     function onWheel(event: WheelEvent): void {
         if (event.angleDelta.y > 0)
@@ -311,7 +311,7 @@ CustomMouseArea {
     Item {
         id: customTooltip
 
-        readonly property bool isActive: !!root.hoveredDayItem && !!root.hoveredDayItem.holiday
+        readonly property bool isActive: !!root.hoveredDayItem && !!root.hoveredDayItem.holiday // qmllint disable missing-property
 
         readonly property real pillSize: root.lastHoveredDayItem ? Math.max(root.lastHoveredDayItem.implicitWidth, root.lastHoveredDayItem.implicitHeight) + Tokens.padding.extraSmall * 2 : 30
         readonly property real br: pillSize / 2

@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtMultimedia
 import Quickshell
+import qs.modules.background
 
 Item {
     id: root
@@ -12,7 +13,7 @@ Item {
 
     readonly property bool playing: BadApplePlayer.shouldPlay
 
-    property Item videoOutput: loader.item ? loader.item.videoOutput : null
+    property VideoOutput videoOutput: loader.item ? loader.item.videoOutput : null // qmllint disable missing-property
 
     function play() {
         BadApplePlayer.play();

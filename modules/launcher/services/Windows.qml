@@ -61,6 +61,6 @@ QtObject {
 
     Component.onCompleted: {
         updateItems();
-        Hyprland.toplevels.onValuesChanged.connect(updateItems);
+        Hyprland.toplevels.onValuesChanged.connect(updateItems); // qmllint disable missing-property
     }
 }

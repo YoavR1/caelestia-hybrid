@@ -123,7 +123,7 @@ StyledListView {
 
     onCurrentItemChanged: {
         if (state === "scheme" || state === "variant") {
-            if (currentItem && currentItem.modelData)
+            if (currentItem && currentItem.modelData) // qmllint disable missing-property
                 previewTimer.restart();
         }
     }
@@ -316,10 +316,10 @@ StyledListView {
 
         interval: 100
         onTriggered: {
-            if (!root.currentItem || !root.currentItem.modelData)
+            if (!root.currentItem || !root.currentItem.modelData) // qmllint disable missing-property
                 return;
             if (root.state === "scheme") {
-                const schemeData = root.currentItem.modelData;
+                const schemeData = root.currentItem.modelData; // qmllint disable missing-property
                 Colours.load(JSON.stringify({
                     name: schemeData.name,
                     flavour: schemeData.flavour,
@@ -329,7 +329,7 @@ StyledListView {
                 }), true);
                 Colours.showPreview = true;
             } else if (root.state === "variant") {
-                const variantData = root.currentItem.modelData;
+                const variantData = root.currentItem.modelData; // qmllint disable missing-property
                 M3Variants.previewVariant(variantData.variant);
             }
         }

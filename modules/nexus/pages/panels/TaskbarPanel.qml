@@ -74,7 +74,7 @@ PageBase {
             }
             menuItems: root.positionItems
             onSelected: item => {
-                root.targetConfig.bar.position = item.value;
+                root.targetConfig.bar.position = item.value; // qmllint disable missing-property
                 root.targetConfig.save();
             }
         }
