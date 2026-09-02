@@ -1,29 +1,5 @@
 {
   "hybrid": {
-    "preset": "midnight",
-    "features": {
-      "dock": false,
-      "overview": false,
-      "hotspot": false,
-      "gpuDetection": false,
-      "themeManager": false,
-      "clipboard": true,
-      "emojiPicker": true,
-      "windowSwitcher": true,
-      "keybindViewer": true,
-      "videoWallpaper": true,
-      "wallhaven": true,
-      "floatingLyrics": true,
-      "shimeji": true,
-      "badApple": true,
-      "dino": true,
-      "patternLock": false
-    },
-    "variants": {
-      "lockCentre": "midnight",
-      "audioPopout": "midnight",
-      "desktopClock": "midnight",
-      "colours": "midnight"
-    }
+    "preset": "midnight"
   }
 }

@@ -11,6 +11,7 @@ qml_module(caelestia-config
         fontbuilder.cpp
         tokensattached.cpp
         anim.cpp
+        hybridconfig.cpp
         sessionconfig.cpp
         audioconfig.hpp
         aiconfig.hpp
@@ -19,7 +20,6 @@ qml_module(caelestia-config
         barconfig.hpp
         dashboardconfig.hpp
         generalconfig.hpp
-        hybridconfig.hpp
         launcherconfig.hpp
         lockconfig.hpp
         nexusconfig.hpp
