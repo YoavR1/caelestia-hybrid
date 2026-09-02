@@ -389,3 +389,44 @@ whole tree, and diff the diagnostics by `(file, message, category)` rather than 
 numbers shift under you. A removal that introduces *any* new `unqualified` or `unresolved-type`
 was wrong. Cross-check the pre-existing `unqualified` list too: if a symbol was already unresolved
 before the removal, breaking it further produces no new diagnostic and the diff will not see it.
+
+---
+
+## T17 — `Hyprland.usingLua` is false for the first moments after startup
+
+Hyprland 0.56 reads a Lua config when it finds one and calls the ini format **legacy** in
+its own logs. The two are not interchangeable at the IPC layer. Measured on 0.56.2 against
+a nested instance:
+
+| command | conf config | lua config |
+|---|---|---|
+| `dispatch workspace 2` | ok | **error** — "dispatch in lua is a shorthand for `hl.dispatch(...)`" |
+| `keyword general:gaps_in 7` | ok | **error** — "keyword can't work with non-legacy parsers. Use eval." |
+| `dispatch 'hl.dsp.focus({ workspace = "3" })'` | error | ok |
+
+The shell picks a spelling from `Hyprland.usingLua` in **40 places across 17 files**. That
+property works — but it is populated asynchronously, after Quickshell's IPC handshake:
+
+```
+PROBE init  usingLua = false      # Component.onCompleted
+PROBE tick  usingLua = true       # 3s later, lua config
+PROBE tick  usingLua = false      # 3s later, conf config
+```
+
+**Anything that dispatches during startup therefore takes the legacy branch regardless of
+the real config.** `services/Colours.qml:130` does exactly that:
+
+```qml
+Component.onCompleted: root.requestReloadHyprRules()
+```
+
+and the first call is not debounced, so on a Lua setup it sends
+`keyword layerrule blur ..., match:namespace caelestia-drawers` — which Hyprland rejects.
+Blur and `ignore_alpha` for the drawers, polkit and desktop-lyrics layer surfaces are
+silently never applied. Not yet fixed; the fix is to re-run on `usingLuaChanged` rather
+than only at `Component.onCompleted`.
+
+`smoke-matrix.sh` boots under a Lua config by default and takes `--hypr conf` / `--hypr
+both`. Note what that does and does not cover: the axis genuinely flips `usingLua`, but
+nearly every one of the 40 branch sites is inside a click handler, so a boot smoke reaches
+almost none of them.
