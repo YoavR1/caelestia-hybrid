@@ -112,7 +112,7 @@ StyledWindow {
         id: nonAnimPlaceholder
 
         text: "Enter your password"
-        font: Tokens.font.body.builders.medium.scale(centerScale).width(110).build()
+        font: Tokens.font.body.builders.medium.scale(root.centerScale).width(110).build()
     }
 
     SequentialAnimation {
@@ -257,9 +257,9 @@ StyledWindow {
 
                 StyledText {
                     width: parent.width
-                    text: agent.flow && agent.flow.supplementaryMessage ? agent.flow.supplementaryMessage : ""
+                    text: root.agent.flow && root.agent.flow.supplementaryMessage ? root.agent.flow.supplementaryMessage : ""
                     font: Tokens.font.body.small
-                    color: agent.flow && agent.flow.supplementaryIsError ? Colours.palette.m3error : Colours.palette.m3onSurfaceVariant
+                    color: root.agent.flow && root.agent.flow.supplementaryIsError ? Colours.palette.m3error : Colours.palette.m3onSurfaceVariant
                     visible: text.length > 0
                     wrapMode: Text.WordWrap
                     horizontalAlignment: Text.AlignHCenter
@@ -290,8 +290,8 @@ StyledWindow {
                 
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_Enter || event.key === Qt.Key_Return) {
-                        if (agent.flow && root.buffer) {
-                            agent.flow.submit(root.buffer)
+                        if (root.agent.flow && root.buffer) {
+                            root.agent.flow.submit(root.buffer)
                             root.buffer = ""
                         }
                         event.accepted = true;
@@ -305,8 +305,8 @@ StyledWindow {
                         }
                         event.accepted = true;
                     } else if (event.key === Qt.Key_Escape) {
-                        if (agent.flow) {
-                            agent.flow.cancelAuthenticationRequest()
+                        if (root.agent.flow) {
+                            root.agent.flow.cancelAuthenticationRequest()
                         }
                         root.buffer = ""
                         event.accepted = true;
@@ -319,13 +319,13 @@ StyledWindow {
 
                 Connections {
                     function onIsActiveChanged() {
-                        if (agent.isActive) {
+                        if (root.agent.isActive) {
                             root.buffer = ""
                             passwordRect.forceActiveFocus()
                         }
                     }
 
-                    target: agent
+                    target: root.agent
                 }
 
                 RowLayout {
@@ -345,7 +345,7 @@ StyledWindow {
                             anchors.centerIn: parent
                             text: "lock"
                             color: Colours.palette.m3onSurfaceVariant
-                            fontStyle: Tokens.font.icon.builders.medium.scale(centerScale).build()
+                            fontStyle: Tokens.font.icon.builders.medium.scale(root.centerScale).build()
                         }
                     }
                     
@@ -434,8 +434,8 @@ StyledWindow {
                                 hoverEnabled: true
                                 cursorShape: root.buffer ? Qt.PointingHandCursor : Qt.ArrowCursor
                                 onClicked: {
-                                    if (agent.flow && root.buffer) {
-                                        agent.flow.submit(root.buffer)
+                                    if (root.agent.flow && root.buffer) {
+                                        root.agent.flow.submit(root.buffer)
                                         root.buffer = ""
                                     }
                                 }
@@ -448,7 +448,7 @@ StyledWindow {
                             anchors.centerIn: parent
                             text: "arrow_forward"
                             color: Colours.palette.m3onSurfaceVariant
-                            fontStyle: Tokens.font.icon.builders.medium.scale(centerScale * 1.2).build()
+                            fontStyle: Tokens.font.icon.builders.medium.scale(root.centerScale * 1.2).build()
                             opacity: root.buffer ? 0 : 1
 
                             Behavior on opacity { Anim { type: Anim.DefaultEffects } }

@@ -40,7 +40,7 @@ Column {
 
             Connections {
                 function onLauncherChanged(): void {
-                    if (index === 0 && !root.screenState.launcher)
+                    if (topBtn.index === 0 && !root.screenState.launcher)
                         topBtn.forceActiveFocus();
                 }
 

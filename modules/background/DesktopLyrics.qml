@@ -180,7 +180,7 @@ Item {
         onTriggered: {
             if (!Players.active)
                 return;
-            currentLyricIndex = Lyrics.indexForTime(Players.active.position);
+            root.currentLyricIndex = Lyrics.indexForTime(Players.active.position);
             Players.active?.positionChanged();
         }
     }

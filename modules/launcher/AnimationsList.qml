@@ -133,14 +133,14 @@ StyledListView {
                 spacing: 0
 
                 StyledText {
-                    text: modelData ? modelData.name : ""
+                    text: delegateRoot.modelData ? delegateRoot.modelData.name : ""
                     font: Tokens.font.body.medium
                     color: Colours.palette.m3onSurface
                     elide: Text.ElideRight
                 }
 
                 StyledText {
-                    text: modelData ? (modelData.path === "default" ? qsTr("Use default shell animations") : qsTr("Click to apply animation")) : ""
+                    text: delegateRoot.modelData ? (delegateRoot.modelData.path === "default" ? qsTr("Use default shell animations") : qsTr("Click to apply animation")) : ""
                     font: Tokens.font.body.small
                     color: Colours.palette.m3outline
                     elide: Text.ElideRight
@@ -154,7 +154,7 @@ StyledListView {
             handleSearchTextChanged();
         }
 
-        target: search
+        target: root.search
     }
 
     Connections {

@@ -41,9 +41,9 @@ GridLayout {
     Loader {
         id: indicator
 
-        Layout.alignment: isHorizontal ? (Qt.AlignVCenter | Qt.AlignLeft) : (Qt.AlignHCenter | Qt.AlignTop)
-        Layout.preferredWidth: isHorizontal ? (Tokens.sizes.bar.innerWidth - Tokens.padding.small) : -1
-        Layout.preferredHeight: isHorizontal ? -1 : (Tokens.sizes.bar.innerWidth - Tokens.padding.small)
+        Layout.alignment: root.isHorizontal ? (Qt.AlignVCenter | Qt.AlignLeft) : (Qt.AlignHCenter | Qt.AlignTop)
+        Layout.preferredWidth: root.isHorizontal ? (Tokens.sizes.bar.innerWidth - Tokens.padding.small) : -1
+        Layout.preferredHeight: root.isHorizontal ? -1 : (Tokens.sizes.bar.innerWidth - Tokens.padding.small)
 
         asynchronous: true
         sourceComponent: Config.bar.workspaces.useIcon ? iconComponent : textComponent
@@ -217,16 +217,16 @@ GridLayout {
 
         asynchronous: true
 
-        Layout.alignment: isHorizontal ? Qt.AlignVCenter : Qt.AlignHCenter
-        Layout.fillWidth: isHorizontal && enabled
-        Layout.fillHeight: !isHorizontal && enabled
-        Layout.topMargin: isHorizontal ? 0 : -Tokens.sizes.bar.innerWidth / 10
-        Layout.leftMargin: isHorizontal ? -Tokens.sizes.bar.innerWidth / 10 : 0
+        Layout.alignment: root.isHorizontal ? Qt.AlignVCenter : Qt.AlignHCenter
+        Layout.fillWidth: root.isHorizontal && enabled
+        Layout.fillHeight: !root.isHorizontal && enabled
+        Layout.topMargin: root.isHorizontal ? 0 : -Tokens.sizes.bar.innerWidth / 10
+        Layout.leftMargin: root.isHorizontal ? -Tokens.sizes.bar.innerWidth / 10 : 0
 
         visible: active
         active: root.hasWindows
 
-        sourceComponent: isHorizontal ? rowComponent : columnComponent
+        sourceComponent: root.isHorizontal ? rowComponent : columnComponent
     }
 
     Component {
@@ -324,13 +324,13 @@ GridLayout {
     }
 
     Behavior on Layout.preferredHeight {
-        enabled: !isHorizontal
+        enabled: !root.isHorizontal
 
         Anim {}
     }
 
     Behavior on Layout.preferredWidth {
-        enabled: isHorizontal
+        enabled: root.isHorizontal
 
         Anim {}
     }

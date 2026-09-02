@@ -165,36 +165,36 @@ Item {
         height: 128
         hoverEnabled: false
         propagateComposedEvents: true
-        cursorShape: dragging ? Qt.ClosedHandCursor : Qt.OpenHandCursor
+        cursorShape: root.dragging ? Qt.ClosedHandCursor : Qt.OpenHandCursor
         acceptedButtons: Qt.LeftButton
 
         onPressed: mouse => {
-            dragging = true;
-            currentAnim = "idle";
-            walkTarget = -1;
-            dragOffset = Qt.point(mouse.x, mouse.y);
-            lastX = root.x;
-            lastY = root.y;
-            dragVx = 0;
-            dragVy = 0;
-            vx = 0;
-            vy = 0;
+            root.dragging = true;
+            root.currentAnim = "idle";
+            root.walkTarget = -1;
+            root.dragOffset = Qt.point(mouse.x, mouse.y);
+            root.lastX = root.x;
+            root.lastY = root.y;
+            root.dragVx = 0;
+            root.dragVy = 0;
+            root.vx = 0;
+            root.vy = 0;
         }
 
         onPositionChanged: mouse => {
-            if (dragging) {
-                const newX = Math.max(minX, Math.min(maxX, root.x + mouse.x - dragOffset.x));
-                const newY = Math.max(0, Math.min(maxY, root.y + mouse.y - dragOffset.y));
-                dragVx = newX - lastX;
-                dragVy = newY - lastY;
-                lastX = newX;
-                lastY = newY;
+            if (root.dragging) {
+                const newX = Math.max(root.minX, Math.min(root.maxX, root.x + mouse.x - root.dragOffset.x));
+                const newY = Math.max(0, Math.min(root.maxY, root.y + mouse.y - root.dragOffset.y));
+                root.dragVx = newX - root.lastX;
+                root.dragVy = newY - root.lastY;
+                root.lastX = newX;
+                root.lastY = newY;
                 root.x = newX;
                 root.y = newY;
             }
         }
 
-        onReleased: dragging = false
+        onReleased: root.dragging = false
     }
 
     Image {
@@ -202,14 +202,14 @@ Item {
 
         anchors.fill: parent
         source: {
-            const fn = root.animFrame(currentAnim, frameIndex);
-            return fn ? "file://" + imgPath + fn : "";
+            const fn = root.animFrame(root.currentAnim, root.frameIndex);
+            return fn ? "file://" + root.imgPath + fn : "";
         }
         sourceSize.width: 128
         sourceSize.height: 128
         fillMode: Image.PreserveAspectFit
 
-        mirror: facingRight
+        mirror: root.facingRight
     }
 
     FrameAnimation {
@@ -226,8 +226,8 @@ Item {
         repeat: true
         running: true
         onTriggered: {
-            if (!dragging)
-                frameIndex++;
+            if (!root.dragging)
+                root.frameIndex++;
         }
     }
 
@@ -237,19 +237,19 @@ Item {
         running: true
         triggeredOnStart: true
         onTriggered: {
-            if (!dragging && onGround && walkTarget < 0 && currentAnim !== "ground") {
-                if (Math.abs(vx) < 0.5) {
+            if (!root.dragging && root.onGround && root.walkTarget < 0 && root.currentAnim !== "ground") {
+                if (Math.abs(root.vx) < 0.5) {
                     const roll = Math.random();
                     if (roll < 0.3) {
                         pickIdle();
                     } else if (roll < 0.55) {
                         walkRandom();
                     } else if (roll < 0.75) {
-                        currentAnim = "dangle";
-                        frameIndex = 0;
+                        root.currentAnim = "dangle";
+                        root.frameIndex = 0;
                     } else {
-                        currentAnim = "layDown";
-                        frameIndex = 0;
+                        root.currentAnim = "layDown";
+                        root.frameIndex = 0;
                     }
                 }
             }

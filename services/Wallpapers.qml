@@ -45,9 +45,9 @@ Searcher {
         repeat: false
         onTriggered: {
             // Safety check: only clear the preview if no new lock has been engaged
-            if (!previewColourLock && pendingPreviewClear) {
+            if (!root.previewColourLock && root.pendingPreviewClear) {
                 Colours.showPreview = false;
-                pendingPreviewClear = false;
+                root.pendingPreviewClear = false;
             }
         }
     }
@@ -333,10 +333,10 @@ Searcher {
             root.previewColourLock = false;
 
             if (root.isVideo(root.actualCurrent)) {
-                wallpaperMode = "animated";
+                root.wallpaperMode = "animated";
                 if (!root.lastAnimated) root.lastAnimated = wall;
             } else {
-                wallpaperMode = "static";
+                root.wallpaperMode = "static";
                 if (!root.lastStatic) root.lastStatic = wall;
             }
         }

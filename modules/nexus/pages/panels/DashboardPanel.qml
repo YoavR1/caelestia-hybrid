@@ -186,13 +186,13 @@ PageBase {
             fallbackIcon: "person"
             fallbackText: qsTr("Pill")
             active: {
-                for (let i = 0; i < dashboardShapeItems.length; i++) {
-                    if (dashboardShapeItems[i].value === root.targetConfig.dashboard.profilePicShape)
-                        return dashboardShapeItems[i];
+                for (let i = 0; i < root.dashboardShapeItems.length; i++) {
+                    if (root.dashboardShapeItems[i].value === root.targetConfig.dashboard.profilePicShape)
+                        return root.dashboardShapeItems[i];
                 }
-                return dashboardShapeItems[0];
+                return root.dashboardShapeItems[0];
             }
-            menuItems: dashboardShapeItems
+            menuItems: root.dashboardShapeItems
             onSelected: item => {
                 root.targetConfig.dashboard.profilePicShape = item.value;
                 root.targetConfig.save();
@@ -209,13 +209,13 @@ PageBase {
             fallbackIcon: "lock"
             fallbackText: qsTr("Clam Shell")
             active: {
-                for (let i = 0; i < lockShapeItems.length; i++) {
-                    if (lockShapeItems[i].value === root.targetConfig.lock.profilePicShape)
-                        return lockShapeItems[i];
+                for (let i = 0; i < root.lockShapeItems.length; i++) {
+                    if (root.lockShapeItems[i].value === root.targetConfig.lock.profilePicShape)
+                        return root.lockShapeItems[i];
                 }
-                return lockShapeItems[0];
+                return root.lockShapeItems[0];
             }
-            menuItems: lockShapeItems
+            menuItems: root.lockShapeItems
             onSelected: item => {
                 root.targetConfig.lock.profilePicShape = item.value;
                 root.targetConfig.save();

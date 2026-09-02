@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Caelestia.Config
@@ -68,7 +69,7 @@ Item {
         StyledRect {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.row: isBarHorizontal ? 1 : 0
+            Layout.row: root.isBarHorizontal ? 1 : 0
 
             radius: Tokens.rounding.large
             color: Colours.tPalette.m3surfaceContainerLow
@@ -256,7 +257,7 @@ Item {
 
         // Utilities Separator
         StyledRect {
-            visible: utilities && utilities.offsetScale < 1
+            visible: root.utilities && root.utilities.offsetScale < 1
             Layout.row: Config.bar.position === "bottom" ? 0 : (Config.bar.position === "top" ? 2 : 1)
             Layout.topMargin: Config.bar.position === "bottom" ? 0 : (visible ? 18 : 0)
             Layout.bottomMargin: Config.bar.position === "bottom" ? (visible ? 18 : 0) : 0
@@ -268,7 +269,7 @@ Item {
 
         // Popout Separator
         StyledRect {
-            visible: showPopoutSeparator
+            visible: root.showPopoutSeparator
             Layout.row: Config.bar.position === "bottom" ? 2 : 0
             Layout.topMargin: Config.bar.position === "top" ? 0 : 12
             Layout.bottomMargin: Config.bar.position === "top" ? 12 : 0

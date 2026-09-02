@@ -71,7 +71,7 @@ Variants {
                     cmd.push(weDir);
                     return cmd;
                 }
-                running: weActive && weDir !== "" && contentItem.Config.background.wallpaperEnabled
+                running: weActive && weDir !== "" && win.contentItem.Config.background.wallpaperEnabled
             }
 
 
@@ -321,7 +321,7 @@ Variants {
             }
 
             sourceComponent: DesktopLyrics {
-                screen: modelData
+                screen: win.modelData
                 wallpaper: behindClock
                 absX: lyricsLoader.x
                 absY: lyricsLoader.y

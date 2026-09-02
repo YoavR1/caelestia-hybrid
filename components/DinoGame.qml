@@ -248,57 +248,57 @@ Item {
         running: false
         onTriggered: {
             let now = Date.now()
-            let dt = (now - lastTime) / 1000.0
+            let dt = (now - root.lastTime) / 1000.0
             if (dt > 0.1) dt = 0.1
-            lastTime = now
+            root.lastTime = now
 
             // Animations
-            animAccumulator += dt
-            if (animAccumulator >= 0.1) {
-                animationFrame = animationFrame === 0 ? 1 : 0
-                animAccumulator = 0
+            root.animAccumulator += dt
+            if (root.animAccumulator >= 0.1) {
+                root.animationFrame = root.animationFrame === 0 ? 1 : 0
+                root.animAccumulator = 0
             }
 
             // Physics
-            let dHeight = isDucking ? 27 : 42;
+            let dHeight = root.isDucking ? 27 : 42;
             let groundLevel = ground.y - dHeight
-            if (dinoY < groundLevel || dinoVelocityY < 0) {
-                dinoVelocityY += gravity * dt
-                dinoY += dinoVelocityY * dt
-                if (dinoY >= groundLevel) {
-                    dinoY = groundLevel
-                    dinoVelocityY = 0
+            if (root.dinoY < groundLevel || root.dinoVelocityY < 0) {
+                root.dinoVelocityY += root.gravity * dt
+                root.dinoY += root.dinoVelocityY * dt
+                if (root.dinoY >= groundLevel) {
+                    root.dinoY = groundLevel
+                    root.dinoVelocityY = 0
                 }
             } else {
-                dinoY = groundLevel
-                dinoVelocityY = 0
+                root.dinoY = groundLevel
+                root.dinoVelocityY = 0
             }
 
-            for (let i = 0; i < activeObstacles.length; i++) {
-                activeObstacles[i].x -= gameSpeed * dt
+            for (let i = 0; i < root.activeObstacles.length; i++) {
+                root.activeObstacles[i].x -= root.gameSpeed * dt
             }
 
-            while (activeObstacles.length > 0 && activeObstacles[0].x + activeObstacles[0].width < 0) {
-                activeObstacles.shift()
+            while (root.activeObstacles.length > 0 && root.activeObstacles[0].x + root.activeObstacles[0].width < 0) {
+                root.activeObstacles.shift()
             }
 
-            spawnTimer += dt
-            if (spawnTimer >= nextSpawnTime) {
+            root.spawnTimer += dt
+            if (root.spawnTimer >= root.nextSpawnTime) {
                 spawnObstacle()
-                spawnTimer = 0
+                root.spawnTimer = 0
                 // Match real dino game gaps by ensuring a minimum time to jump (0.6s jump duration)
-                let speedRatio = initialSpeed / gameSpeed
-                nextSpawnTime = Math.max(0.7, (0.9 + Math.random() * 1.5) * speedRatio)
+                let speedRatio = root.initialSpeed / root.gameSpeed
+                root.nextSpawnTime = Math.max(0.7, (0.9 + Math.random() * 1.5) * speedRatio)
             }
 
-            if (gameSpeed < maxSpeed) {
-                gameSpeed += 5 * dt
+            if (root.gameSpeed < root.maxSpeed) {
+                root.gameSpeed += 5 * dt
             }
 
-            scoreTimer += dt
-            if (scoreTimer >= 0.1) {
-                score += 1
-                scoreTimer = 0
+            root.scoreTimer += dt
+            if (root.scoreTimer >= 0.1) {
+                root.score += 1
+                root.scoreTimer = 0
             }
 
             checkCollisions()
@@ -349,14 +349,14 @@ Item {
         onPressed: (mouse) => {
             root.forceActiveFocus()
             if (mouse.button === Qt.RightButton) {
-                isDucking = true
+                root.isDucking = true
             } else {
                 jump()
             }
         }
         onReleased: (mouse) => {
             if (mouse.button === Qt.RightButton) {
-                isDucking = false
+                root.isDucking = false
             }
         }
     }
@@ -383,16 +383,16 @@ Item {
         z: 10
 
         StyledText {
-            text: "HI " + String(highScore).padStart(5, '0')
+            text: "HI " + String(root.highScore).padStart(5, '0')
             color: Colours.palette.m3outline
             font: Tokens.font.mono.builders.small.weight(Font.Medium).build()
-            opacity: highScore > 0 ? 0.7 : 0
+            opacity: root.highScore > 0 ? 0.7 : 0
 
             Behavior on opacity { Anim { type: Anim.DefaultEffects } }
         }
 
         StyledText {
-            text: String(score).padStart(5, '0')
+            text: String(root.score).padStart(5, '0')
             color: Colours.palette.m3outline
             font: Tokens.font.mono.builders.small.weight(Font.Bold).build()
         }
@@ -413,18 +413,18 @@ Item {
         id: dino
 
         x: 40
-        y: dinoY
-        width: isDucking ? 59 : 44
-        height: isDucking ? 27 : 42
+        y: root.dinoY
+        width: root.isDucking ? 59 : 44
+        height: root.isDucking ? 27 : 42
 
         Image {
             anchors.fill: parent
             source: {
-                if (isGameOver) return Paths.absolutePath("root:/assets/dino/Dead_Chrome_T-Rex.png")
+                if (root.isGameOver) return Paths.absolutePath("root:/assets/dino/Dead_Chrome_T-Rex.png")
                 let groundLevel = ground.y - dino.height
-                if (dinoY < groundLevel - 1) return Paths.absolutePath("root:/assets/dino/Chrome_T-Rex_Left_Run.png") // Jump frame
-                if (isDucking) return animationFrame === 0 ? Paths.absolutePath("root:/assets/dino/Chrome_T-Rex_Left_Duck.png") : Paths.absolutePath("root:/assets/dino/Chrome_T-Rex_Right_Duck.png")
-                return animationFrame === 0 ? Paths.absolutePath("root:/assets/dino/Chrome_T-Rex_Left_Run.png") : Paths.absolutePath("root:/assets/dino/Chrome_T-Rex_Right_Run.png")
+                if (root.dinoY < groundLevel - 1) return Paths.absolutePath("root:/assets/dino/Chrome_T-Rex_Left_Run.png") // Jump frame
+                if (root.isDucking) return root.animationFrame === 0 ? Paths.absolutePath("root:/assets/dino/Chrome_T-Rex_Left_Duck.png") : Paths.absolutePath("root:/assets/dino/Chrome_T-Rex_Right_Duck.png")
+                return root.animationFrame === 0 ? Paths.absolutePath("root:/assets/dino/Chrome_T-Rex_Left_Run.png") : Paths.absolutePath("root:/assets/dino/Chrome_T-Rex_Right_Run.png")
             }
             fillMode: Image.PreserveAspectFit
 
@@ -472,7 +472,7 @@ Item {
         anchors.centerIn: parent
         anchors.verticalCenterOffset: -20
         spacing: Tokens.spacing.medium
-        visible: !isPlaying && !isGameOver
+        visible: !root.isPlaying && !root.isGameOver
         z: 5
 
         StyledText {
@@ -494,7 +494,7 @@ Item {
         anchors.centerIn: parent
         anchors.verticalCenterOffset: -20
         spacing: Tokens.spacing.medium
-        visible: isGameOver
+        visible: root.isGameOver
         z: 5
 
         StyledText {
@@ -506,7 +506,7 @@ Item {
 
         StyledText {
             Layout.alignment: Qt.AlignHCenter
-            text: qsTr("Score: %1").arg(score)
+            text: qsTr("Score: %1").arg(root.score)
             color: Colours.palette.m3outline
             font: Tokens.font.body.medium
         }

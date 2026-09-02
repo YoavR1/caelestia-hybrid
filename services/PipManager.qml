@@ -1,3 +1,4 @@
+pragma ComponentBehavior: Bound
 pragma Singleton
 
 import QtQuick
@@ -42,6 +43,8 @@ Singleton {
         model: Hyprland.monitors.values
 
         Connections {
+            required property HyprlandMonitor modelData
+
             target: modelData
 
             function onLastIpcObjectChanged(): void {

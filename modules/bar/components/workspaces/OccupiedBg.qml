@@ -84,25 +84,25 @@ Item {
             }
 
             Behavior on x {
-                enabled: isHorizontal
+                enabled: rect.isHorizontal
 
                 Anim {}
             }
 
             Behavior on y {
-                enabled: !isHorizontal
+                enabled: !rect.isHorizontal
 
                 Anim {}
             }
 
             Behavior on implicitWidth {
-                enabled: isHorizontal
+                enabled: rect.isHorizontal
 
                 Anim {}
             }
 
             Behavior on implicitHeight {
-                enabled: !isHorizontal
+                enabled: !rect.isHorizontal
 
                 Anim {}
             }

@@ -47,9 +47,9 @@ Item {
         onTriggered: {
             if (targetIdx < 0 || targetIdx >= chatHistory.count) {
                 stop();
-                isTyping = false;
-                isThinking = false;
-                inAgentLoop = false;
+                root.isTyping = false;
+                root.isThinking = false;
+                root.inAgentLoop = false;
                 return;
             }
             if (charIndex >= fullText.length) {
@@ -57,9 +57,9 @@ Item {
                 chatHistory.setProperty(targetIdx, "text", fullText);
                 chatHistory.setProperty(targetIdx, "isFinished", true);
                 saveHistory();
-                isTyping = false;
-                isThinking = false;
-                inAgentLoop = false;
+                root.isTyping = false;
+                root.isThinking = false;
+                root.inAgentLoop = false;
                 return;
             }
             var chunkSize = Math.max(1, Math.ceil(fullText.length / 30));
@@ -873,11 +873,11 @@ Item {
                  }
 
                  StyledRect {
-                     width: isHistoryTab ? historyTab.width : chatTab.width
+                     width: root.isHistoryTab ? historyTab.width : chatTab.width
                      height: parent.height
                      radius: Tokens.rounding.full
                      color: Colours.palette.m3primary
-                     x: isHistoryTab ? historyTab.x : chatTab.x
+                     x: root.isHistoryTab ? historyTab.x : chatTab.x
                      
                      Behavior on x { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
                      Behavior on width { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
@@ -892,14 +892,14 @@ Item {
                          id: chatTab
 
                          height: parent.height
-                         width: !isHistoryTab ? 40 : chatContent.implicitWidth + Tokens.padding.medium * 2
+                         width: !root.isHistoryTab ? 40 : chatContent.implicitWidth + Tokens.padding.medium * 2
                          
 
                          Behavior on width { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
 
                          StateLayer {
                              radius: Tokens.rounding.full
-                             onClicked: isHistoryTab = false
+                             onClicked: root.isHistoryTab = false
                          }
 
                          Row {
@@ -911,15 +911,15 @@ Item {
                              MaterialIcon {
                                  anchors.verticalCenter: parent.verticalCenter
                                  text: "chat"
-                                 color: !isHistoryTab ? Colours.palette.m3onPrimary : Colours.palette.m3onSurfaceVariant
+                                 color: !root.isHistoryTab ? Colours.palette.m3onPrimary : Colours.palette.m3onSurfaceVariant
                                  font: Tokens.font.icon.small
                              }
                              Text {
                                  anchors.verticalCenter: parent.verticalCenter
                                  text: "Chat"
-                                 color: !isHistoryTab ? Colours.palette.m3onPrimary : Colours.palette.m3onSurfaceVariant
+                                 color: !root.isHistoryTab ? Colours.palette.m3onPrimary : Colours.palette.m3onSurfaceVariant
                                  font: Tokens.font.body.small
-                                 visible: isHistoryTab
+                                 visible: root.isHistoryTab
                              }
                          }
                      }
@@ -928,14 +928,14 @@ Item {
                          id: historyTab
 
                          height: parent.height
-                         width: isHistoryTab ? 40 : historyContent.implicitWidth + Tokens.padding.medium * 2
+                         width: root.isHistoryTab ? 40 : historyContent.implicitWidth + Tokens.padding.medium * 2
                          
 
                          Behavior on width { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
 
                          StateLayer {
                              radius: Tokens.rounding.full
-                             onClicked: isHistoryTab = true
+                             onClicked: root.isHistoryTab = true
                          }
 
                          Row {
@@ -947,15 +947,15 @@ Item {
                              MaterialIcon {
                                  anchors.verticalCenter: parent.verticalCenter
                                  text: "history"
-                                 color: isHistoryTab ? Colours.palette.m3onPrimary : Colours.palette.m3onSurfaceVariant
+                                 color: root.isHistoryTab ? Colours.palette.m3onPrimary : Colours.palette.m3onSurfaceVariant
                                  font: Tokens.font.icon.small
                              }
                              Text {
                                  anchors.verticalCenter: parent.verticalCenter
                                  text: "History"
-                                 color: isHistoryTab ? Colours.palette.m3onPrimary : Colours.palette.m3onSurfaceVariant
+                                 color: root.isHistoryTab ? Colours.palette.m3onPrimary : Colours.palette.m3onSurfaceVariant
                                  font: Tokens.font.body.small
-                                 visible: !isHistoryTab
+                                 visible: !root.isHistoryTab
                              }
                          }
                      }
@@ -1013,7 +1013,7 @@ Item {
              // Chat View
              Item {
                  anchors.fill: parent
-                 opacity: !isHistoryTab ? 1 : 0
+                 opacity: !root.isHistoryTab ? 1 : 0
                  visible: opacity > 0
 
                  Behavior on opacity { NumberAnimation { duration: 250; easing.type: Easing.InOutQuad } }
@@ -1032,7 +1032,7 @@ Item {
                      
                      ColumnLayout {
                          anchors.centerIn: parent
-                         opacity: chatHistory.count === 0 && !isTyping && !isThinking ? 1.0 : 0.0
+                         opacity: chatHistory.count === 0 && !root.isTyping && !root.isThinking ? 1.0 : 0.0
                          visible: opacity > 0
 
                          Behavior on opacity { NumberAnimation { duration: 250; easing.type: Easing.InOutQuad } }
@@ -1094,9 +1094,9 @@ Item {
 
                      footer: Item {
                          width: listView.width
-                         height: isThinking ? bubbleBg.height + Tokens.spacing.medium : 0
+                         height: root.isThinking ? bubbleBg.height + Tokens.spacing.medium : 0
                          visible: opacity > 0
-                         opacity: isThinking ? 1 : 0
+                         opacity: root.isThinking ? 1 : 0
                          
                          Behavior on height { Anim { type: Anim.DefaultSpatial } }
                          Behavior on opacity { Anim { type: Anim.DefaultSpatial } }
@@ -1181,7 +1181,7 @@ Item {
                                              }
 
                                              SequentialAnimation {
-                                                 running: isThinking && !switchAnim.running
+                                                 running: root.isThinking && !switchAnim.running
                                                  loops: Animation.Infinite
 
                                                  NumberAnimation { target: mainText; property: "opacity"; from: 1.0; to: 0.4; duration: 800; easing.type: Easing.InOutSine }
@@ -1268,7 +1268,7 @@ Item {
                          required property string thoughtText
 
                          width: listView.width - Tokens.padding.large
-                         visible: (!delegateItem.isFinished && isThinking) ? false : (delegateItem.text !== "" || delegateItem.thoughtText !== "")
+                         visible: (!delegateItem.isFinished && root.isThinking) ? false : (delegateItem.text !== "" || delegateItem.thoughtText !== "")
                          height: visible ? bubbleRect.height : 0
                          
                          scale: 0.0
@@ -1606,7 +1606,7 @@ Item {
              // History Grid View
              Item {
                  anchors.fill: parent
-                 opacity: isHistoryTab ? 1 : 0
+                 opacity: root.isHistoryTab ? 1 : 0
                  visible: opacity > 0
 
                  Behavior on opacity { NumberAnimation { duration: 250; easing.type: Easing.InOutQuad } }

@@ -53,10 +53,10 @@ ScrollBar {
     implicitHeight: isVertical ? 0 : Tokens.padding.extraSmall
 
     contentItem: StyledRect {
-        anchors.left: isVertical ? parent.left : undefined
-        anchors.right: isVertical ? parent.right : undefined
-        anchors.top: isVertical ? undefined : parent.top
-        anchors.bottom: isVertical ? undefined : parent.bottom
+        anchors.left: root.isVertical ? parent.left : undefined
+        anchors.right: root.isVertical ? parent.right : undefined
+        anchors.top: root.isVertical ? undefined : parent.top
+        anchors.bottom: root.isVertical ? undefined : parent.bottom
         
         opacity: {
             if (root.size === 1)

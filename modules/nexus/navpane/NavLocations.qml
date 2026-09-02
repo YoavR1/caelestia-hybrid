@@ -124,7 +124,7 @@ VerticalFadeFlickable {
                 opacity: modelData.originalIndex === 2 ? animSlide : 1.0
 
                 transform: Translate {
-                    y: modelData.originalIndex === 2 ? (1 - item.animSlide) * -40 : 0
+                    y: item.modelData.originalIndex === 2 ? (1 - item.animSlide) * -40 : 0
                 }
 
                 color: isCurrentPage ? Colours.palette.m3secondaryContainer : Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
@@ -163,7 +163,7 @@ VerticalFadeFlickable {
                     anchors.margins: Tokens.padding.large
                     spacing: Tokens.spacing.medium
 
-                    opacity: modelData.originalIndex === 2 ? item.animSlide : 1.0
+                    opacity: item.modelData.originalIndex === 2 ? item.animSlide : 1.0
 
                     StyledRect {
                         Layout.fillHeight: true

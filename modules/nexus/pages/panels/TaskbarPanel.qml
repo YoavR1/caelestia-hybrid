@@ -66,13 +66,13 @@ PageBase {
             configNode: root.targetConfig.bar
             propertyName: "position"
             active: {
-                for (let i = 0; i < positionItems.length; i++) {
-                    if (positionItems[i].value === root.targetConfig.bar.position)
-                        return positionItems[i];
+                for (let i = 0; i < root.positionItems.length; i++) {
+                    if (root.positionItems[i].value === root.targetConfig.bar.position)
+                        return root.positionItems[i];
                 }
-                return positionItems[0];
+                return root.positionItems[0];
             }
-            menuItems: positionItems
+            menuItems: root.positionItems
             onSelected: item => {
                 root.targetConfig.bar.position = item.value;
                 root.targetConfig.save();

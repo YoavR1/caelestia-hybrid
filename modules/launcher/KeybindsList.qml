@@ -152,6 +152,6 @@ StyledListView {
             handleSearchTextChanged();
         }
 
-        target: search
+        target: root.search
     }
 }

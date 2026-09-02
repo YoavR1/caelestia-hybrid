@@ -66,9 +66,9 @@ StyledClippingRect {
             id: layout
 
             anchors.centerIn: parent
-            columns: isHorizontal ? -1 : 1
-            rows: isHorizontal ? 1 : -1
-            flow: isHorizontal ? GridLayout.LeftToRight : GridLayout.TopToBottom
+            columns: root.isHorizontal ? -1 : 1
+            rows: root.isHorizontal ? 1 : -1
+            flow: root.isHorizontal ? GridLayout.LeftToRight : GridLayout.TopToBottom
             columnSpacing: Math.floor(Tokens.spacing.small)
             rowSpacing: Math.floor(Tokens.spacing.small)
 
@@ -87,8 +87,8 @@ StyledClippingRect {
 
         Loader {
             asynchronous: true
-            anchors.horizontalCenter: isHorizontal ? undefined : parent.horizontalCenter
-            anchors.verticalCenter: isHorizontal ? parent.verticalCenter : undefined
+            anchors.horizontalCenter: root.isHorizontal ? undefined : parent.horizontalCenter
+            anchors.verticalCenter: root.isHorizontal ? parent.verticalCenter : undefined
             active: Config.bar.workspaces.activeIndicator
 
             sourceComponent: ActiveIndicator {

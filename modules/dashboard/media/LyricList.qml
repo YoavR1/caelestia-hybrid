@@ -306,7 +306,7 @@ Item {
                 cursorShape: Qt.PointingHandCursor
                 onClicked: {
                     if (Players.active) {
-                        let time = Lyrics.timeForIndex(index);
+                        let time = Lyrics.timeForIndex(lyric.index);
                         if (time >= 0) {
                             Players.active.position = time + Lyrics.offset + 0.01;
                         }

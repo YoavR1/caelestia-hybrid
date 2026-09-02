@@ -172,7 +172,7 @@ Item {
 
         interval: 50
         onTriggered: {
-            if (state === "keybinds" && keybindsList.item) {
+            if (root.state === "keybinds" && keybindsList.item) {
                 keybindsList.item.refreshModel();
             }
         }

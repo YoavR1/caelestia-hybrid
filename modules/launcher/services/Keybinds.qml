@@ -21,8 +21,8 @@ QtObject {
                 try {
                     const parsed = JSON.parse(text);
                     if (Array.isArray(parsed)) {
-                        keybinds = parsed;
-                        initialized = true;
+                        root.keybinds = parsed;
+                        root.initialized = true;
                         root.loaded();
                         return;
                     }
@@ -30,8 +30,8 @@ QtObject {
                     console.error("Failed to parse lua keybinds: " + e);
                 }
                 // If Lua parsing failed or returned invalid data, try fallback
-                if (!initialized && !fallbackReader.running) {
-                    fallbackReader.running = true;
+                if (!root.initialized && !root.fallbackReader.running) {
+                    root.fallbackReader.running = true;
                 }
             }
         }
@@ -77,8 +77,8 @@ QtObject {
                         });
                     }
                     
-                    keybinds = formattedBinds;
-                    initialized = true;
+                    root.keybinds = formattedBinds;
+                    root.initialized = true;
                     root.loaded();
                 } catch (e) {
                     console.error("Failed to parse hyprctl binds -j: " + e);

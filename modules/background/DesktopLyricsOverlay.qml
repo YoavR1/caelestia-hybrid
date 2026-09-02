@@ -147,7 +147,7 @@ Variants {
             }
 
             sourceComponent: DesktopLyrics {
-                screen: modelData
+                screen: win.modelData
                 wallpaper: null
                 absX: lyricsLoader.x
                 absY: lyricsLoader.y

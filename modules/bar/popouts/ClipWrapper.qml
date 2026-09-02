@@ -63,7 +63,7 @@ Item {
     }
 
     Behavior on x {
-        enabled: content.isDetached || isHorizontal
+        enabled: content.isDetached || root.isHorizontal
 
         Anim {
             duration: content.animLength
@@ -72,7 +72,7 @@ Item {
     }
 
     Behavior on y {
-        enabled: content.isDetached || (!isHorizontal && root.offsetScale < 1)
+        enabled: content.isDetached || (!root.isHorizontal && root.offsetScale < 1)
 
         Anim {
             duration: content.animLength
@@ -88,15 +88,15 @@ Item {
         screenState: root.screenState
 
         // Apply slide animation margins based on edge
-        anchors.leftMargin: bar.position === "left" ? (-implicitWidth - 5) * root.offsetScale : 0
-        anchors.rightMargin: bar.position === "right" ? (-implicitWidth - 5) * root.offsetScale : 0
-        anchors.topMargin: bar.position === "top" ? (-implicitHeight - 5) * root.offsetScale : 0
-        anchors.bottomMargin: bar.position === "bottom" ? (-implicitHeight - 5) * root.offsetScale : 0
+        anchors.leftMargin: root.bar.position === "left" ? (-implicitWidth - 5) * root.offsetScale : 0
+        anchors.rightMargin: root.bar.position === "right" ? (-implicitWidth - 5) * root.offsetScale : 0
+        anchors.topMargin: root.bar.position === "top" ? (-implicitHeight - 5) * root.offsetScale : 0
+        anchors.bottomMargin: root.bar.position === "bottom" ? (-implicitHeight - 5) * root.offsetScale : 0
 
         states: [
             State {
                 name: "left"
-                when: bar.position === "left"
+                when: root.bar.position === "left"
 
                 AnchorChanges {
                     target: content
@@ -110,7 +110,7 @@ Item {
             },
             State {
                 name: "right"
-                when: bar.position === "right"
+                when: root.bar.position === "right"
 
                 AnchorChanges {
                     target: content
@@ -124,7 +124,7 @@ Item {
             },
             State {
                 name: "top"
-                when: bar.position === "top"
+                when: root.bar.position === "top"
 
                 AnchorChanges {
                     target: content
@@ -138,7 +138,7 @@ Item {
             },
             State {
                 name: "bottom"
-                when: bar.position === "bottom"
+                when: root.bar.position === "bottom"
 
                 AnchorChanges {
                     target: content

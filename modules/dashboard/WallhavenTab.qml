@@ -335,7 +335,7 @@ Item {
 
         interval: Tokens.anim.durations.expressiveDefaultEffects
         onTriggered: {
-            if (!detailPanelOpen)
+            if (!root.detailPanelOpen)
                 root.selectedWallpaper = null;
         }
     }

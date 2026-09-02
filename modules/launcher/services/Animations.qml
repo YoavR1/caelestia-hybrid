@@ -41,8 +41,8 @@ QtObject {
                         });
                     }
 
-                    animations = result;
-                    initialized = true;
+                    root.animations = result;
+                    root.initialized = true;
                     root.loaded();
                 } catch (e) {
                     console.error("Failed to parse animations: " + e);

@@ -87,7 +87,7 @@ Item {
     MediaPlayer {
         id: mediaPlayer
 
-        source: path || ""
+        source: root.path || ""
         videoOutput: videoOutput
         loops: MediaPlayer.Infinite
         autoPlay: true
