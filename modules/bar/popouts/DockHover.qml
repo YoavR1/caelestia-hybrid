@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
-import Quickshell.Wayland
 import Quickshell.Widgets
 import Quickshell.Services.Mpris
 import Caelestia.Config

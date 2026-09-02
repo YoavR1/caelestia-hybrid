@@ -1,16 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
-import Quickshell.Hyprland
-import Quickshell.Widgets
-import Caelestia
 import Caelestia.Config
-import qs.components
-import qs.components.containers
-import qs.components.controls
-import qs.components.images
-import qs.services
-import qs.utils
 import qs.modules.nexus.common
 
 PageBase {

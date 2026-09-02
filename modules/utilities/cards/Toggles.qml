@@ -3,14 +3,12 @@ pragma ComponentBehavior: Bound
 import "../../background"
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
 import Quickshell.Bluetooth
 import Caelestia.Components
 import Caelestia.Config
 import qs.components
 import qs.components.controls
 import qs.services
-import qs.utils
 import qs.modules.nexus
 import qs.modules.bar.popouts as BarPopouts
 

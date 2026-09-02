@@ -1,7 +1,5 @@
 import QtQuick
 import QtMultimedia
-import Quickshell
-import Quickshell.Widgets
 import Caelestia.Config
 import qs.services
 

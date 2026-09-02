@@ -349,3 +349,43 @@ in four places — including `caelestia wallpaper -f "$fallback"`, so a fresh in
 to set a nonexistent wallpaper.
 
 Now points at `assets/wallpapers/Gravitation.png`. Found by the very first smoke run.
+
+---
+
+## T16 — `qmllint` reports imports as unused that are actually required
+
+Two files in the tree hit a `qmllint` 6.11.2 false positive: the import is reported as
+`[unused-imports]`, and deleting it turns every use of the singleton it provided into
+`[unqualified]`. The linter contradicts itself.
+
+| File | Import | Symbol | Uses |
+|---|---|---|---|
+| `modules/Shortcuts.qml` | `Caelestia.Config` | `GlobalConfig` | 7 |
+| `modules/launcher/services/Animations.qml` | `qs.utils` | `Paths` | 2 |
+
+It is not simply "used only in a template literal" — that alone is credited correctly. A minimal
+reproducer, linted with the project's own import paths:
+
+```qml
+Item { property string a: `${Paths.config}/x` }        // clean
+Item { property string a: Paths.config + "/x" }        // clean
+Item { property string a: `${Paths.config}` + "/x" }   // FALSE "Unused import"
+```
+
+Both real cases use the singleton only inside JS statement bodies or an array literal, never in a
+plain property binding.
+
+**Handling.** Keep the import and silence the one line:
+
+```qml
+import Caelestia.Config // qmllint disable unused-imports
+```
+
+Before adding one of these, *prove* it: delete the import, re-lint the file, and confirm you get
+`Unqualified access` on the symbol. If you don't, the import really is unused — remove it.
+
+**Consequence for bulk cleanup.** Do not trust `[unused-imports]` in bulk. Remove, re-lint the
+whole tree, and diff the diagnostics by `(file, message, category)` rather than by line — line
+numbers shift under you. A removal that introduces *any* new `unqualified` or `unresolved-type`
+was wrong. Cross-check the pre-existing `unqualified` list too: if a symbol was already unresolved
+before the removal, breaking it further produces no new diagnostic and the diff will not see it.

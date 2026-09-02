@@ -1,10 +1,8 @@
 import QtQuick
 import Quickshell
-import Quickshell.Io
 import Caelestia
 import Caelestia.Config
 import qs.components
-import qs.components.images
 import qs.services
 import qs.modules.launcher.services
 

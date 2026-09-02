@@ -4,17 +4,13 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell.Services.Mpris
 import Quickshell.Services.Pipewire
-import Caelestia
 import Caelestia.Components
 import Caelestia.Config
-import Caelestia.Services
 import qs.components
 import qs.components.controls
 import qs.components.effects
 import qs.components.images
-import qs.components.widgets
 import qs.services
-import qs.utils
 
 ColumnLayout {
     id: root

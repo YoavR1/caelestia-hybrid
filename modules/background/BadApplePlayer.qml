@@ -1,7 +1,6 @@
 pragma Singleton
 
 import QtQuick
-import QtMultimedia
 
 Item {
     property bool shouldPlay: false

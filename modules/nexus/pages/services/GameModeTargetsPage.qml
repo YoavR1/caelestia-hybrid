@@ -10,7 +10,6 @@ import Caelestia.Config
 import qs.components
 import qs.components.containers
 import qs.components.controls
-import qs.components.images
 import qs.services
 import qs.modules.nexus.common
 

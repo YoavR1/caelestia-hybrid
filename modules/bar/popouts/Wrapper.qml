@@ -6,7 +6,6 @@ import Quickshell.Hyprland
 import Quickshell.Wayland
 import Caelestia.Config
 import qs.components
-import qs.services
 import qs.modules.nexus
 import qs.modules.windowinfo
 

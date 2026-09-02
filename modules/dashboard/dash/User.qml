@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import Quickshell.Io
 import M3Shapes
 import Caelestia.Config
 import qs.components

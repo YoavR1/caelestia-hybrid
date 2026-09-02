@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Layouts
 import qs.modules.dashboard
 import qs.modules.nexus.common
 

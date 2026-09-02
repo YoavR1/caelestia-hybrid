@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import "cards"
 import QtQuick
-import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import Caelestia.Config
 import qs.components

@@ -1,13 +1,7 @@
 import QtQuick
-import Quickshell
 import Quickshell.Hyprland
-import Quickshell.Wayland
-import Caelestia
 import Caelestia.Config
-import Caelestia.Models
 import qs.components
-import qs.components.controls
-import qs.components.images
 import qs.services
 
 Item {

@@ -1,7 +1,6 @@
 pragma Singleton
 
 import QtQuick
-import QtMultimedia
 
 QtObject {
     readonly property bool playing: video.playing

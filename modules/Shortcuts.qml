@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Caelestia
-import Caelestia.Config
+import Caelestia.Config // qmllint disable unused-imports
 import qs.components.misc
 import qs.services
 import qs.modules.nexus

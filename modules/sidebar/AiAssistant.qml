@@ -6,14 +6,11 @@ import QtQuick.Effects
 import QtQuick.Layouts
 import Quickshell
 import M3Shapes
-import Caelestia.Blobs
 import Caelestia.Config
 import qs.components
 import qs.components.containers
 import qs.components.controls
-import qs.components.effects
 import qs.services
-import qs.utils
 
 Item {
     id: root

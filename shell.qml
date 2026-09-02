@@ -18,7 +18,6 @@ import QtQml
 import Quickshell
 import Quickshell.Services.SystemTray
 import Caelestia.Config
-import qs.components.containers
 import qs.services
 import qs.utils
 

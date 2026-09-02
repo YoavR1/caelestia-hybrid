@@ -3,9 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import Caelestia
 import Caelestia.Config
-import Caelestia.Images
 
 QtObject {
     id: root
