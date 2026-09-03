@@ -10,31 +10,121 @@ Q_LOGGING_CATEGORY(lcQuickShareCrypto, "caelestia.quickshare.crypto", QtInfoMsg)
 
 #include <qdebug.h>
 
+#include <openssl/core_names.h>
 #include <openssl/ec.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/kdf.h>
 #include <openssl/obj_mac.h>
+#include <openssl/params.h>
 #include <openssl/rand.h>
 #include <openssl/sha.h>
 
+#include <array>
 #include <string>
 
 #include "securemessage.pb.h"
 #include "ukey.pb.h"
-
-// TODO: migrate the peer-key handling off the EC_KEY API. OpenSSL 3.0 deprecated all of
-// it in favour of EVP_PKEY/OSSL_PARAM, and it still works, but it will eventually be
-// removed. Doing it means rewriting the UKEY2 handshake's key import and export, and
-// nothing in this tree can exercise a real Quick Share transfer to check the result --
-// so it is recorded here rather than attempted blind.
-// NOLINTBEGIN(clang-diagnostic-deprecated-declarations)
 
 namespace caelestia::services {
 
 using Qt::StringLiterals::operator""_s;
 
 namespace {
+
+// P-256 public keys cross the wire as the 65-byte uncompressed point 0x04 || X || Y.
+// OSSL_PKEY_PARAM_PUB_KEY is the OpenSSL 3.0 spelling of both directions of that, and
+// replaces the EC_KEY/EC_POINT API deprecated in the same release. The two are byte-for-
+// byte equivalent, because uncompressed is the default point-conversion format for a key
+// EVP generates. Rather than rely on that, encodedP256PublicKey checks the length and the
+// 0x04 tag and refuses anything else, so a drifting default fails loudly here instead of
+// putting a compressed point on the wire.
+constexpr qsizetype k_p256PointLen = 65;
+
+QByteArray encodedP256PublicKey(EVP_PKEY* key) {
+    if (!key)
+        return {};
+
+    size_t len = 0;
+    if (EVP_PKEY_get_octet_string_param(key, OSSL_PKEY_PARAM_PUB_KEY, nullptr, 0, &len) != 1) {
+        qCWarning(lcQuickShareCrypto, "Failed to read the public key");
+        return {};
+    }
+
+    QByteArray point(static_cast<qsizetype>(len), '\0');
+    if (EVP_PKEY_get_octet_string_param(
+            key, OSSL_PKEY_PARAM_PUB_KEY, reinterpret_cast<unsigned char*>(point.data()), len, &len) != 1) {
+        qCWarning(lcQuickShareCrypto, "Failed to read the public key");
+        return {};
+    }
+
+    point.resize(static_cast<qsizetype>(len));
+    if (point.size() != k_p256PointLen || point.at(0) != '\x04') {
+        qCWarning(lcQuickShareCrypto, "Public key is not an uncompressed P-256 point");
+        return {};
+    }
+    return point;
+}
+
+EVP_PKEY* importP256PublicKey(const QByteArray& point) {
+    if (point.size() != k_p256PointLen)
+        return nullptr;
+
+    // The construct_* helpers take non-const pointers even for values they only read.
+    // NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast)
+    std::array<OSSL_PARAM, 3> params{
+        OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, const_cast<char*>(SN_X9_62_prime256v1), 0),
+        OSSL_PARAM_construct_octet_string(
+            OSSL_PKEY_PARAM_PUB_KEY, const_cast<char*>(point.constData()), static_cast<size_t>(point.size())),
+        OSSL_PARAM_construct_end(),
+    };
+    // NOLINTEND(cppcoreguidelines-pro-type-const-cast)
+
+    EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new_from_name(nullptr, "EC", nullptr);
+    if (!ctx)
+        return nullptr;
+
+    EVP_PKEY* key = nullptr;
+    // fromdata validates that the point decodes and lies on the curve, so a peer sending
+    // garbage or an off-curve point fails here rather than reaching the ECDH.
+    if (EVP_PKEY_fromdata_init(ctx) != 1 || EVP_PKEY_fromdata(ctx, &key, EVP_PKEY_PUBLIC_KEY, params.data()) != 1) {
+        qCWarning(lcQuickShareCrypto, "Peer sent an unusable P-256 public key");
+        EVP_PKEY_free(key);
+        key = nullptr;
+    }
+
+    EVP_PKEY_CTX_free(ctx);
+    return key;
+}
+
+// UKEY2 carries a public key as a serialised securemessage::GenericPublicKey, whose two
+// coordinates are signed big-endian integers -- so a leading zero byte goes in front of
+// any coordinate whose top bit is set, or the peer reads it as negative.
+QByteArray serialisedGenericPublicKey(const QByteArray& point) {
+    if (point.size() != k_p256PointLen)
+        return {};
+
+    const auto coordinate = [&point](qsizetype offset) {
+        const QByteArray raw = point.mid(offset, 32);
+        std::string encoded;
+        if (static_cast<unsigned char>(raw[0]) >= 0x80)
+            encoded += '\0';
+        encoded.append(raw.constData(), 32);
+        return encoded;
+    };
+
+    securemessage::GenericPublicKey genericPubKey;
+    genericPubKey.set_type(securemessage::EC_P256);
+    genericPubKey.mutable_ec_p256_public_key()->set_x(coordinate(1));
+    genericPubKey.mutable_ec_p256_public_key()->set_y(coordinate(33));
+
+    QByteArray out(static_cast<qsizetype>(genericPubKey.ByteSizeLong()), '\0');
+    if (!genericPubKey.SerializeToArray(out.data(), static_cast<int>(out.size()))) {
+        qCWarning(lcQuickShareCrypto, "Failed to serialise the generic public key");
+        return {};
+    }
+    return out;
+}
 
 QByteArray hkdfInternal(
     const EVP_MD* md, const QByteArray& salt, const QByteArray& ikm, const QByteArray& info, size_t outLen) {
@@ -106,23 +196,7 @@ void QuickShareCrypto::generateDhKeypair() {
 }
 
 void QuickShareCrypto::deriveKeys(const QByteArray& peerPublicKeyBytes) {
-    EVP_PKEY* peerKey = nullptr;
-    EC_GROUP* group = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1);
-    if (group) {
-        EC_POINT* point = EC_POINT_new(group);
-        if (point) {
-            if (EC_POINT_oct2point(group, point, reinterpret_cast<const unsigned char*>(peerPublicKeyBytes.constData()),
-                    static_cast<size_t>(peerPublicKeyBytes.size()), nullptr)) {
-                EC_KEY* ecKey = EC_KEY_new();
-                EC_KEY_set_group(ecKey, group);
-                EC_KEY_set_public_key(ecKey, point);
-                peerKey = EVP_PKEY_new();
-                EVP_PKEY_assign_EC_KEY(peerKey, ecKey);
-            }
-            EC_POINT_free(point);
-        }
-        EC_GROUP_free(group);
-    }
+    EVP_PKEY* peerKey = importP256PublicKey(peerPublicKeyBytes);
 
     QByteArray const sharedSecret = extractSharedSecret(peerKey);
 
@@ -306,44 +380,9 @@ bool QuickShareCrypto::processClientFinished(const QByteArray& data) {
 QByteArray QuickShareCrypto::generateClientInit() {
     securegcm::Ukey2ClientFinished clientFinished;
     if (m_dhKey) {
-        EC_KEY* ecKey = EVP_PKEY_get1_EC_KEY(m_dhKey);
-        if (ecKey) {
-            const EC_GROUP* group = EC_KEY_get0_group(ecKey);
-            const EC_POINT* point = EC_KEY_get0_public_key(ecKey);
-            size_t const len = EC_POINT_point2oct(group, point, POINT_CONVERSION_UNCOMPRESSED, nullptr, 0, nullptr);
-            QByteArray pubKeyBytes(static_cast<qsizetype>(len), '\0');
-            EC_POINT_point2oct(group, point, POINT_CONVERSION_UNCOMPRESSED,
-                reinterpret_cast<unsigned char*>(pubKeyBytes.data()), len, nullptr);
-
-            QByteArray xRaw = pubKeyBytes.mid(1, 32);
-            QByteArray yRaw = pubKeyBytes.mid(33, 32);
-
-            std::string xEncoded;
-            if (static_cast<unsigned char>(xRaw[0]) >= 0x80)
-                xEncoded += '\0';
-            xEncoded.append(xRaw.constData(), 32);
-
-            std::string yEncoded;
-            if (static_cast<unsigned char>(yRaw[0]) >= 0x80)
-                yEncoded += '\0';
-            yEncoded.append(yRaw.constData(), 32);
-
-            securemessage::EcP256PublicKey ecPubKey;
-            ecPubKey.set_x(xEncoded);
-            ecPubKey.set_y(yEncoded);
-
-            securemessage::GenericPublicKey genericPubKey;
-            genericPubKey.set_type(securemessage::EC_P256);
-            *genericPubKey.mutable_ec_p256_public_key() = ecPubKey;
-
-            QByteArray serializedGenPubKey;
-            serializedGenPubKey.resize(static_cast<qsizetype>(genericPubKey.ByteSizeLong()));
-            if (!genericPubKey.SerializeToArray(
-                    serializedGenPubKey.data(), static_cast<int>(serializedGenPubKey.size())))
-                qCWarning(lcQuickShareCrypto, "Failed to serialise the generic public key");
-            clientFinished.set_public_key(serializedGenPubKey.constData(), serializedGenPubKey.size());
-            EC_KEY_free(ecKey);
-        }
+        const QByteArray genericPubKey = serialisedGenericPublicKey(encodedP256PublicKey(m_dhKey));
+        if (!genericPubKey.isEmpty())
+            clientFinished.set_public_key(genericPubKey.constData(), genericPubKey.size());
     }
 
     std::string clientFinishedData = clientFinished.SerializeAsString();
@@ -392,50 +431,10 @@ QByteArray QuickShareCrypto::generateServerInit() {
     serverInit.set_random(randData.constData(), 32);
     serverInit.set_handshake_cipher(securegcm::P256_SHA512);
 
-    EVP_PKEY* pkey = m_dhKey;
-    if (pkey) {
-        EC_KEY* ecKey = EVP_PKEY_get1_EC_KEY(pkey);
-        if (ecKey) {
-            const EC_GROUP* group = EC_KEY_get0_group(ecKey);
-            const EC_POINT* point = EC_KEY_get0_public_key(ecKey);
-            size_t const len = EC_POINT_point2oct(group, point, POINT_CONVERSION_UNCOMPRESSED, nullptr, 0, nullptr);
-            QByteArray pubKeyBytes;
-            pubKeyBytes.resize(static_cast<qsizetype>(len));
-            EC_POINT_point2oct(group, point, POINT_CONVERSION_UNCOMPRESSED,
-                reinterpret_cast<unsigned char*>(pubKeyBytes.data()), len, nullptr);
-
-            QByteArray xRaw = pubKeyBytes.mid(1, 32);
-            QByteArray yRaw = pubKeyBytes.mid(33, 32);
-
-            std::string xEncoded;
-            if (static_cast<unsigned char>(xRaw[0]) >= 0x80) {
-                xEncoded += '\0';
-            }
-            xEncoded.append(xRaw.constData(), 32);
-
-            std::string yEncoded;
-            if (static_cast<unsigned char>(yRaw[0]) >= 0x80) {
-                yEncoded += '\0';
-            }
-            yEncoded.append(yRaw.constData(), 32);
-
-            securemessage::EcP256PublicKey ecPubKey;
-            ecPubKey.set_x(xEncoded);
-            ecPubKey.set_y(yEncoded);
-
-            securemessage::GenericPublicKey genericPubKey;
-            genericPubKey.set_type(securemessage::EC_P256);
-            *genericPubKey.mutable_ec_p256_public_key() = ecPubKey;
-
-            QByteArray serializedGenPubKey;
-            serializedGenPubKey.resize(static_cast<qsizetype>(genericPubKey.ByteSizeLong()));
-            if (!genericPubKey.SerializeToArray(
-                    serializedGenPubKey.data(), static_cast<int>(serializedGenPubKey.size())))
-                qCWarning(lcQuickShareCrypto, "Failed to serialise the generic public key");
-
-            serverInit.set_public_key(serializedGenPubKey.constData(), serializedGenPubKey.size());
-            EC_KEY_free(ecKey);
-        }
+    if (m_dhKey) {
+        const QByteArray genericPubKey = serialisedGenericPublicKey(encodedP256PublicKey(m_dhKey));
+        if (!genericPubKey.isEmpty())
+            serverInit.set_public_key(genericPubKey.constData(), genericPubKey.size());
     }
 
     securegcm::Ukey2Message msg;
@@ -529,5 +528,3 @@ QByteArray QuickShareCrypto::decryptPayload(const QByteArray& ciphertextBytes) {
 }
 
 } // namespace caelestia::services
-
-// NOLINTEND(clang-diagnostic-deprecated-declarations)
