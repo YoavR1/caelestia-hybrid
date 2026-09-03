@@ -743,3 +743,24 @@ exactly this — makes `--self-test` report FAIL.
 you trust a pass. `smoke-ignore.txt` deserves particular suspicion, because every line in it
 is a deliberate blindfold and a line that is slightly too broad is invisible.
 
+So the ignore list audits itself now too:
+
+```
+./hybrid/tools/smoke-matrix.sh --audit-ignores
+```
+
+It reports how many log lines each pattern matched, and never fails the run — several
+entries are legitimately intermittent, so a zero is a prompt to check, not a verdict. Its
+first run found 8 of 11 patterns load-bearing and 3 matching nothing:
+
+- `caelestia.requests: \w+: request failed with error` — kept. The weather API 503s often
+  enough to have failed 5 of 12 runs in one sitting; a zero here means a good day.
+- the two `QObject: ... different thread` entries — **deleted**. They were attributed to
+  QuickShare teardown, matched nothing across 12 runs, and were suppressing an entire Qt bug
+  class globally rather than one known instance. The matrix stayed clean over 12 runs
+  without them, so the coverage is back and cost nothing.
+
+The distinction to draw when auditing is not "does this still fire" but "if the thing this
+hides came back, would I want to know?" A pattern naming one file and one condition is a
+note; a pattern naming a Qt-wide diagnostic is a policy.
+

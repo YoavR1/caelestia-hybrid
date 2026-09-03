@@ -14,6 +14,7 @@
 #   ./hybrid/tools/smoke-matrix.sh --compositor sway  # headless sway, for CI
 #   ./hybrid/tools/smoke-matrix.sh --no-interact      # boot only, no IPC drive
 #   ./hybrid/tools/smoke-matrix.sh --self-test        # prove the gate can still fail
+#   ./hybrid/tools/smoke-matrix.sh --audit-ignores    # which ignore patterns still earn their place
 #
 # Env:
 #   BUILD_DIR    default ./build
@@ -84,6 +85,7 @@ QS=${QS:-qs}
 SWAY=${SWAY:-sway}
 PRESET_DIR=$ROOT/hybrid/presets
 SELF_TEST=0
+AUDIT=0
 IGNORE_FILE=$ROOT/hybrid/tools/smoke-ignore.txt
 IGNORE_HEADLESS=$ROOT/hybrid/tools/smoke-ignore-headless.txt
 LOG_DIR=$ROOT/.smoke-logs
@@ -113,6 +115,7 @@ while [ $# -gt 0 ]; do
         --baseline)  BASELINE=1; KEEP_LOGS=1; shift ;;
         --no-interact) INTERACT=0; shift ;;
         --self-test)   SELF_TEST=1; shift ;;
+        --audit-ignores) AUDIT=1; KEEP_LOGS=1; shift ;;
         --compositor)
             case $2 in
                 hyprland|sway|auto) COMPOSITOR=$2 ;;
@@ -545,3 +548,25 @@ if [ "$failures" -gt 0 ]; then
 fi
 
 printf '%s all %d run(s) clean\n' "$(green PASS)" "$runs"
+
+# Every line in the ignore list is a deliberate blindfold (T23). One that no longer matches
+# anything is a blindfold with no remaining justification, and the only way to find it is to
+# ask. This reports counts and never fails the run: several entries are legitimately
+# intermittent -- absent bluetooth hardware, a weather API that 503s some days -- so a zero
+# here is a prompt to go and check, not a verdict.
+if [ "$AUDIT" = 1 ]; then
+    printf '\n%s ignore-pattern audit over %d log(s):\n\n' "$(yellow note)" "$runs"
+    files=("$IGNORE_FILE")
+    [ "$COMPOSITOR" = sway ] && files+=("$IGNORE_HEADLESS")
+    while IFS= read -r pat; do
+        [ -z "$pat" ] && continue
+        n=$(cat "$LOG_DIR"/*.log 2>/dev/null | grep -Ec "$pat" || true)
+        if [ "$n" -eq 0 ]; then
+            printf '  %s  %s\n' "$(red '   0')" "$pat"
+        else
+            printf '  %5d  %s\n' "$n" "$pat"
+        fi
+    done < <(cat "${files[@]}" 2>/dev/null | grep -Ev '^[[:space:]]*(#|$)' || true)
+    printf '\n  a 0 means that pattern matched nothing in this run. Check whether the\n'
+    printf '  condition is intermittent or whether the entry is dead and should go.\n'
+fi

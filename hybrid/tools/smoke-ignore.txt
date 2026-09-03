@@ -28,10 +28,12 @@ failed to register listener on path "/org/quickshell/PolkitAgent"
 # the CLI's job and the shell falls back correctly.
 Read of .*/state/caelestia/scheme\.json failed: File does not exist
 
-# Qt internal, raised from QuickShare's worker thread during teardown when we SIGTERM
-# the shell mid-run. Not reachable in normal operation.
-QObject: Cannot create children for a parent that is in a different thread
-QObject::installEventFilter\(\): Cannot filter events for objects in a different thread
+# Two entries lived here suppressing Qt's cross-thread warnings -- "Cannot create children
+# for a parent that is in a different thread" and the installEventFilter equivalent --
+# attributed to QuickShare's worker thread during teardown. `--audit-ignores` showed both
+# matching nothing across 12 runs, and they were silencing a real bug class globally rather
+# than one known instance, so they are gone. If cross-thread warnings return, the log will
+# name the object and the fix belongs in the code, not here.
 
 # =============================================================================
 # The shell fetches weather, GitHub activity and lyrics over the network at startup. A CI
