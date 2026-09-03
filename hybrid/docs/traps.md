@@ -764,3 +764,36 @@ The distinction to draw when auditing is not "does this still fire" but "if the 
 hides came back, would I want to know?" A pattern naming one file and one condition is a
 note; a pattern naming a Qt-wide diagnostic is a policy.
 
+
+---
+
+## T24 — A `NOLINTNEXTLINE` silently detaches when you insert anything above its target
+
+**Symptom:** a suppression that has worked for months stops suppressing, and the check it
+was hiding reappears somewhere unrelated — or, worse, starts covering a different function.
+
+`NOLINTNEXTLINE` binds to *the literal next line*, comment lines included. It has no idea
+what function it was written for.
+
+Both failure modes happened here, in the same file:
+
+**Detached by an insertion.** `handlePayloadTransfer` carried a
+`NOLINTNEXTLINE(readability-function-cognitive-complexity)`. Extracting `sendOutgoingFile()`
+and placing it above `handlePayloadTransfer` put a new function *between* the comment and
+its target. The suppression then pointed at `sendOutgoingFile`'s leading comment line, which
+suppresses nothing at all, and `handlePayloadTransfer` was reported again. Nothing warned:
+an unused NOLINT is not a diagnostic by default.
+
+**Detached by a comment.** Four suppressions written as a two-line comment — the reason on
+the first line, `NOLINTNEXTLINE` on the second — were fine, but four written the other way
+round, with prose *after* the marker, silently did nothing.
+
+**What to do instead.** Prefer removing the cause. Every cognitive-complexity suppression in
+this tree is gone now, not because they were re-anchored but because both functions were
+split: 28 → under 5 for `onServiceResolved`, 70 → 9 for `handlePayloadTransfer`. When a
+suppression is genuinely right, keep it on the line immediately above its target with the
+explanation *above* the marker, never between it and the code.
+
+The reason this is worth a trap rather than a note: a detached suppression fails in the
+direction that looks like a new bug. The check fires on code that has not changed, on a
+commit that did not touch it, and the natural reading is that the refactor caused it.

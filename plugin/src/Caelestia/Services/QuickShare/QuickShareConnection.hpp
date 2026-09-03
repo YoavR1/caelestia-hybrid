@@ -53,6 +53,9 @@ private:
     void handlePostHandshake(const QByteArray& data);
     void handleEncryptedFrame(const QByteArray& data);
     void handlePayloadTransfer(const QByteArray& plaintext);
+    void sendOutgoingFile();
+    void handleSharingFrame(const sharing::nearby::Frame& frame);
+    void handleIncomingFileChunk(const QByteArray& chunkBody, qint64 offset, qint32 flags);
 
     QByteArray wrapInSecureMessage(const QByteArray& offlineFrameData);
     QByteArray unwrapSecureMessage(const QByteArray& secureMessageData);

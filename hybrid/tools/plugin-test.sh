@@ -65,6 +65,9 @@ TESTS=(
     # mdns-name #includes QuickShareDiscovery.cpp to reach a file-local helper, so the
     # .cpp itself must NOT also be on the command line -- only its moc output.
     "mdns-name:$(moc moc_QuickShareDiscovery.cpp):Qt6DBus Qt6Network"
+    # payload-frame also #includes its subject, so QuickShareConnection.cpp is absent here
+    # too. It drags in the crypto and six generated protobuf units by reference.
+    "payload-frame:$SVC/QuickShare/QuickShareCrypto.cpp $(moc moc_QuickShareConnection.cpp) $GEN/device_to_device_messages.pb.cc $GEN/offline_wire_formats.pb.cc $GEN/securegcm.pb.cc $GEN/securemessage.pb.cc $GEN/ukey.pb.cc $GEN/wire_format.pb.cc:protobuf libcrypto Qt6Network"
 )
 
 rc=0

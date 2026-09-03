@@ -21,6 +21,8 @@ Q_LOGGING_CATEGORY(lcQuickShareConn, "caelestia.quickshare.connection", QtInfoMs
 #include <openssl/hmac.h>
 #include <openssl/rand.h>
 
+#include <string>
+
 #include "device_to_device_messages.pb.h"
 #include "offline_wire_formats.pb.h"
 #include "securegcm.pb.h"
@@ -38,6 +40,57 @@ void writeLengthPrefixed(QTcpSocket* socket, const QByteArray& data) {
     uint32_t length = qToBigEndian(static_cast<uint32_t>(data.size()));
     socket->write(reinterpret_cast<const char*>(&length), 4);
     socket->write(data);
+}
+
+// One PAYLOAD_TRANSFER frame carrying a file chunk. The data chunks and the final empty
+// chunk differed only in offset, body and flags -- every other field was written out twice,
+// verbatim, forty lines apart. `flags` is a bit set in which 1 means LAST_CHUNK.
+// `flags` is qint32 rather than an unsigned type because that is what the generated
+// set_flags takes; anything wider trips -Wsign-conversion, which CI builds with -Werror.
+QByteArray fileChunkFrame(qint64 payloadId, qint64 totalSize, const std::string& fileName, qint64 offset,
+    const QByteArray& body, qint32 flags) {
+    location::nearby::connections::PayloadTransferFrame transfer;
+
+    auto* header = transfer.mutable_payload_header();
+    header->set_id(payloadId);
+    header->set_type(location::nearby::connections::PayloadTransferFrame::PayloadHeader::FILE);
+    header->set_total_size(totalSize);
+    header->set_is_sensitive(false);
+    header->set_file_name(fileName);
+
+    transfer.set_packet_type(location::nearby::connections::PayloadTransferFrame::DATA);
+    auto* chunk = transfer.mutable_payload_chunk();
+    chunk->set_offset(offset);
+    chunk->set_flags(flags);
+    chunk->set_body(body.constData(), static_cast<size_t>(body.size()));
+
+    location::nearby::connections::OfflineFrame offline;
+    offline.set_version(location::nearby::connections::OfflineFrame::V1);
+    auto* v1 = offline.mutable_v1();
+    v1->set_type(location::nearby::connections::V1Frame::PAYLOAD_TRANSFER);
+    *v1->mutable_payload_transfer() = transfer;
+
+    QByteArray out(static_cast<qsizetype>(offline.ByteSizeLong()), '\0');
+    if (!offline.SerializeToArray(out.data(), static_cast<int>(out.size()))) {
+        qCWarning(lcQuickShareConn, "Failed to serialise a file chunk frame");
+        return {};
+    }
+    return out;
+}
+
+QByteArray disconnectionFrame() {
+    location::nearby::connections::OfflineFrame offline;
+    offline.set_version(location::nearby::connections::OfflineFrame::V1);
+    auto* v1 = offline.mutable_v1();
+    v1->set_type(location::nearby::connections::V1Frame::DISCONNECTION);
+    v1->mutable_disconnection(); // present but empty, which is the whole message
+
+    QByteArray out(static_cast<qsizetype>(offline.ByteSizeLong()), '\0');
+    if (!offline.SerializeToArray(out.data(), static_cast<int>(out.size()))) {
+        qCWarning(lcQuickShareConn, "Failed to serialise a disconnection frame");
+        return {};
+    }
+    return out;
 }
 
 } // namespace
@@ -620,10 +673,42 @@ void QuickShareConnection::handleEncryptedFrame(const QByteArray& data) {
     // Everything else, KEEP_ALIVE included, needs no action.
 }
 
-// TODO: split this up. clang-tidy measures its cognitive complexity at 70 against a
-// threshold of 25, and it is the hardest part of the protocol to follow. Left as-is for
-// now because there is no way to exercise a real transfer from this tree.
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
+// Streams m_outgoingFilePath to the peer: 1 MiB data chunks, then an empty chunk with
+// LAST_CHUNK set, then a disconnection. Lifted verbatim out of handlePayloadTransfer's
+// RESPONSE/ACCEPT case, where it sat eight levels deep and was most of that function's
+// cognitive complexity of 70.
+void QuickShareConnection::sendOutgoingFile() {
+    QFile file(m_outgoingFilePath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        qCWarning(lcQuickShareConn, "Failed to open the file to send");
+        emit transferFinished(false);
+        return;
+    }
+
+    // A frame that failed to serialise is not sent at all: a truncated one on the wire is
+    // worse than a missing one, and the builder has already said what went wrong.
+    const auto send = [this](const QByteArray& frame) {
+        if (!frame.isEmpty())
+            encryptAndSendOfflineFrameBytes(frame);
+    };
+
+    const std::string fileName = QFileInfo(m_outgoingFilePath).fileName().toStdString();
+    constexpr qint64 k_chunkSize = 1024LL * 1024;
+    qint64 offset = 0;
+
+    while (!file.atEnd()) {
+        const QByteArray data = file.read(k_chunkSize);
+        send(fileChunkFrame(m_outgoingFilePayloadId, m_outgoingFileSize, fileName, offset, data, 0));
+        offset += data.size();
+        emit transferProgress(offset, m_outgoingFileSize);
+    }
+    file.close();
+
+    send(fileChunkFrame(m_outgoingFilePayloadId, m_outgoingFileSize, fileName, m_outgoingFileSize, {}, 1));
+    send(disconnectionFrame());
+    emit transferFinished(true);
+}
+
 void QuickShareConnection::handlePayloadTransfer(const QByteArray& plaintext) {
     location::nearby::connections::OfflineFrame offlineFrame;
     if (!offlineFrame.ParseFromArray(plaintext.constData(), static_cast<int>(plaintext.size())))
@@ -637,35 +722,7 @@ void QuickShareConnection::handlePayloadTransfer(const QByteArray& plaintext) {
     QByteArray const chunkBody(payloadChunk.body().data(), static_cast<qsizetype>(payloadChunk.body().size()));
 
     if (payloadHeader.type() == location::nearby::connections::PayloadTransferFrame::PayloadHeader::FILE) {
-        if (!m_fileTransferActive) {
-            m_fileTransferActive = true;
-            m_fileBuffer.clear();
-        }
-
-        if (payloadChunk.offset() != m_fileBuffer.size()) {
-            return;
-        }
-
-        if (!chunkBody.isEmpty()) {
-            m_fileBuffer.append(chunkBody);
-        }
-
-        emit transferProgress(m_fileBuffer.size(), m_incomingFileSize);
-
-        if ((payloadChunk.flags() & 1) == 1) {
-            QString const savePath = QDir::homePath() + u"/Downloads/"_s + m_incomingFileName;
-            QFile file(savePath);
-            if (file.open(QIODevice::WriteOnly)) {
-                file.write(m_fileBuffer);
-                file.close();
-            } else {
-                qWarning() << "QuickShareConnection: Failed to save file to" << savePath;
-            }
-            m_fileTransferActive = false;
-            m_fileBuffer.clear();
-            emit transferFinished(true);
-        }
-
+        handleIncomingFileChunk(chunkBody, payloadChunk.offset(), payloadChunk.flags());
         return;
     }
 
@@ -683,146 +740,91 @@ void QuickShareConnection::handlePayloadTransfer(const QByteArray& plaintext) {
     }
 
     if ((payloadChunk.flags() & 1) == 1) {
-
-        if (!m_payloadBuffers[payloadId].isEmpty()) {
-            QByteArray buf = m_payloadBuffers[payloadId];
-            QString hex;
-            for (int i = 0; i < qMin(buf.size(), 64); ++i)
-                hex += QString(u"%1 "_s).arg(static_cast<uchar>(buf[i]), 2, 16, u'0');
-
-            sharing::nearby::Frame frame;
-            if (frame.ParseFromArray(
-                    m_payloadBuffers[payloadId].constData(), static_cast<int>(m_payloadBuffers[payloadId].size()))) {
-
-                switch (frame.v1().type()) {
-                case sharing::nearby::V1Frame::PAIRED_KEY_ENCRYPTION: {
-                    sendEncryptedSharingFrame(sharing::nearby::V1Frame::PAIRED_KEY_RESULT);
-                    break;
-                }
-                case sharing::nearby::V1Frame::PAIRED_KEY_RESULT: {
-                    if (m_state != ConnectionAccepted) {
-                        m_state = ConnectionAccepted;
-                        emit stateChanged(m_state);
-                    }
-                    break;
-                }
-                case sharing::nearby::V1Frame::INTRODUCTION: {
-                    const auto& intro = frame.v1().introduction();
-                    if (intro.file_metadata_size() > 0) {
-                        const auto& fileMeta = intro.file_metadata(0);
-                        m_incomingFileName = QString::fromStdString(fileMeta.name());
-                        m_incomingFileSize = fileMeta.size();
-                        emit transferRequested(m_incomingFileName, m_incomingFileSize);
-                    }
-                    break;
-                }
-                case sharing::nearby::V1Frame::RESPONSE: {
-                    const auto& resp = frame.v1().connection_response();
-                    if (resp.status() == sharing::nearby::ConnectionResponseFrame::ACCEPT) {
-                        if (!m_outgoingFilePath.isEmpty()) {
-
-                            QFile file(m_outgoingFilePath);
-                            if (file.open(QIODevice::ReadOnly)) {
-                                qint64 offset = 0;
-                                const qint64 chunkSize = 1024LL * 1024; // 1MB chunks
-
-                                while (!file.atEnd()) {
-                                    QByteArray const fileData = file.read(chunkSize);
-
-                                    location::nearby::connections::PayloadTransferFrame ptfFile;
-                                    auto* headerF = ptfFile.mutable_payload_header();
-                                    headerF->set_id(m_outgoingFilePayloadId);
-                                    headerF->set_type(
-                                        location::nearby::connections::PayloadTransferFrame::PayloadHeader::FILE);
-                                    headerF->set_total_size(m_outgoingFileSize);
-                                    headerF->set_is_sensitive(false);
-                                    headerF->set_file_name(QFileInfo(m_outgoingFilePath).fileName().toStdString());
-
-                                    ptfFile.set_packet_type(location::nearby::connections::PayloadTransferFrame::DATA);
-                                    auto* chunkF = ptfFile.mutable_payload_chunk();
-                                    chunkF->set_offset(offset);
-                                    chunkF->set_flags(0);
-                                    chunkF->set_body(fileData.constData(), fileData.size());
-
-                                    location::nearby::connections::OfflineFrame offlineFile;
-                                    offlineFile.set_version(location::nearby::connections::OfflineFrame::V1);
-                                    auto* v1F = offlineFile.mutable_v1();
-                                    v1F->set_type(location::nearby::connections::V1Frame::PAYLOAD_TRANSFER);
-                                    *v1F->mutable_payload_transfer() = ptfFile;
-
-                                    QByteArray outFile;
-                                    outFile.resize(static_cast<qsizetype>(offlineFile.ByteSizeLong()));
-                                    (void)offlineFile.SerializeToArray(
-                                        outFile.data(), static_cast<int>(outFile.size()));
-                                    encryptAndSendOfflineFrameBytes(outFile);
-
-                                    offset += fileData.size();
-                                    emit transferProgress(offset, m_outgoingFileSize);
-                                }
-                                file.close();
-
-                                // Send empty last chunk
-                                location::nearby::connections::PayloadTransferFrame ptfLast;
-                                auto* headerL = ptfLast.mutable_payload_header();
-                                headerL->set_id(m_outgoingFilePayloadId);
-                                headerL->set_type(
-                                    location::nearby::connections::PayloadTransferFrame::PayloadHeader::FILE);
-                                headerL->set_total_size(m_outgoingFileSize);
-                                headerL->set_is_sensitive(false);
-                                headerL->set_file_name(QFileInfo(m_outgoingFilePath).fileName().toStdString());
-
-                                ptfLast.set_packet_type(location::nearby::connections::PayloadTransferFrame::DATA);
-                                auto* chunkL = ptfLast.mutable_payload_chunk();
-                                chunkL->set_offset(m_outgoingFileSize);
-                                chunkL->set_flags(1); // LAST_CHUNK
-                                chunkL->set_body("");
-
-                                location::nearby::connections::OfflineFrame offlineLast;
-                                offlineLast.set_version(location::nearby::connections::OfflineFrame::V1);
-                                auto* v1L = offlineLast.mutable_v1();
-                                v1L->set_type(location::nearby::connections::V1Frame::PAYLOAD_TRANSFER);
-                                *v1L->mutable_payload_transfer() = ptfLast;
-
-                                QByteArray outLast;
-                                outLast.resize(static_cast<qsizetype>(offlineLast.ByteSizeLong()));
-                                (void)offlineLast.SerializeToArray(outLast.data(), static_cast<int>(outLast.size()));
-                                encryptAndSendOfflineFrameBytes(outLast);
-
-                                // Send Disconnection
-                                location::nearby::connections::OfflineFrame offlineDisc;
-                                offlineDisc.set_version(location::nearby::connections::OfflineFrame::V1);
-                                auto* v1Disc = offlineDisc.mutable_v1();
-                                v1Disc->set_type(location::nearby::connections::V1Frame::DISCONNECTION);
-                                v1Disc->mutable_disconnection(); // Create empty disconnection frame
-
-                                QByteArray discBytes;
-                                discBytes.resize(static_cast<qsizetype>(offlineDisc.ByteSizeLong()));
-                                (void)offlineDisc.SerializeToArray(
-                                    discBytes.data(), static_cast<int>(discBytes.size()));
-                                encryptAndSendOfflineFrameBytes(discBytes);
-
-                                emit transferFinished(true);
-                            } else {
-                                qWarning() << "QuickShareConnection: Failed to open file to send!";
-                                emit transferFinished(false);
-                            }
-                        } else {
-                        }
-                    } else {
-                        emit transferFinished(false);
-                    }
-                    break;
-                }
-                default:
-                    break;
-                }
-            } else {
-            }
-        }
+        const QByteArray& complete = m_payloadBuffers[payloadId];
+        sharing::nearby::Frame frame;
+        if (!complete.isEmpty() && frame.ParseFromArray(complete.constData(), static_cast<int>(complete.size())))
+            handleSharingFrame(frame);
 
         m_payloadBuffers.remove(payloadId);
         m_payloadTotalSizes.remove(payloadId);
     }
+}
+
+// A complete BYTES payload is a sharing::nearby::Frame -- the control channel that carries
+// the key exchange, the file introduction and the accept/reject. Unknown types are ignored
+// on purpose: the protocol carries more of them than this implementation handles.
+void QuickShareConnection::handleSharingFrame(const sharing::nearby::Frame& frame) {
+    switch (frame.v1().type()) {
+    case sharing::nearby::V1Frame::PAIRED_KEY_ENCRYPTION:
+        sendEncryptedSharingFrame(sharing::nearby::V1Frame::PAIRED_KEY_RESULT);
+        break;
+
+    case sharing::nearby::V1Frame::PAIRED_KEY_RESULT:
+        if (m_state != ConnectionAccepted) {
+            m_state = ConnectionAccepted;
+            emit stateChanged(m_state);
+        }
+        break;
+
+    case sharing::nearby::V1Frame::INTRODUCTION: {
+        const auto& intro = frame.v1().introduction();
+        if (intro.file_metadata_size() > 0) {
+            const auto& fileMeta = intro.file_metadata(0);
+            m_incomingFileName = QString::fromStdString(fileMeta.name());
+            m_incomingFileSize = fileMeta.size();
+            emit transferRequested(m_incomingFileName, m_incomingFileSize);
+        }
+        break;
+    }
+
+    case sharing::nearby::V1Frame::RESPONSE:
+        // An accept with nothing queued to send is not a failure -- it is the incoming
+        // transfer case, where the peer is accepting our connection and the file arrives
+        // as payload chunks. So only a rejection finishes the transfer here.
+        if (frame.v1().connection_response().status() != sharing::nearby::ConnectionResponseFrame::ACCEPT) {
+            emit transferFinished(false);
+        } else if (!m_outgoingFilePath.isEmpty()) {
+            sendOutgoingFile();
+        }
+        break;
+
+    default:
+        break;
+    }
+}
+
+// Accumulates an incoming FILE payload and writes it out on the chunk flagged last. Chunks
+// that do not start exactly where the buffer ends are dropped rather than reordered, which
+// is what the inline version did.
+void QuickShareConnection::handleIncomingFileChunk(const QByteArray& chunkBody, qint64 offset, qint32 flags) {
+    if (!m_fileTransferActive) {
+        m_fileTransferActive = true;
+        m_fileBuffer.clear();
+    }
+
+    if (offset != m_fileBuffer.size())
+        return;
+
+    if (!chunkBody.isEmpty())
+        m_fileBuffer.append(chunkBody);
+
+    emit transferProgress(m_fileBuffer.size(), m_incomingFileSize);
+
+    if ((flags & 1) != 1)
+        return;
+
+    const QString savePath = QDir::homePath() + u"/Downloads/"_s + m_incomingFileName;
+    QFile file(savePath);
+    if (file.open(QIODevice::WriteOnly)) {
+        file.write(m_fileBuffer);
+        file.close();
+    } else {
+        qCWarning(lcQuickShareConn) << "Failed to save file to" << savePath;
+    }
+
+    m_fileTransferActive = false;
+    m_fileBuffer.clear();
+    emit transferFinished(true);
 }
 
 void QuickShareConnection::onDisconnected() {
