@@ -31,7 +31,9 @@ Item {
     Process {
         id: thumbGenerator
 
-        command: ["bash", "-c", `mkdir -p "$(dirname "${thumbImg.path.toString().replace("file://", "")}")" && ffmpeg -i "${root.modelData.path}" -vframes 1 -q:v 2 "${thumbImg.path.toString().replace("file://", "")}" -y`]
+        // $1 is the thumbnail, $2 the source video. Wallpaper filenames are the user's and
+        // routinely contain quotes, spaces and $; none of that reaches the shell as syntax.
+        command: ["sh", "-c", 'mkdir -p "$(dirname "$1")" && ffmpeg -i "$2" -vframes 1 -q:v 2 "$1" -y', "sh", thumbImg.path.toString().replace("file://", ""), root.modelData.path]
         onExited: { // qmllint disable signal-handler-parameters
             let oldSource = thumbImg.path;
             thumbImg.path = "";

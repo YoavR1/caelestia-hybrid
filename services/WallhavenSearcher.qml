@@ -37,7 +37,6 @@ Singleton {
     }
 
     signal searchComplete(var results, var meta)
-    signal downloadProgress(string id, real progress)
     signal downloadComplete(string id, string path)
     signal downloadFailed(string id, string error)
 
@@ -271,7 +270,9 @@ Singleton {
         console.log("Wallhaven: Downloading", wallpaper.path, "to", tmpPath);
         console.log("Wallhaven: Will move to", dstPath, "(ext:", ext, ")");
 
-        downloadProc.command = ["sh", "-c", "curl -L -s -o '" + tmpPath + "' '" + wallpaper.path + "'"];
+        // No shell: wallpaper.path is a URL straight out of the wallhaven.cc JSON, and a
+        // single quote in it would have ended the quoting and run the rest.
+        downloadProc.command = ["curl", "-L", "-s", "-o", tmpPath, wallpaper.path];
         downloadProc.running = true;
     }
 
@@ -306,7 +307,8 @@ Singleton {
                 console.log("Wallhaven: Download complete, moving to", dst);
                 moveProc.source = src;
                 moveProc.destination = dst;
-                moveProc.command = ["sh", "-c", "test -f '" + src + "' && mv '" + src + "' '" + dst + "'"];
+                // Both paths embed the API-provided id, so they go in as $1 and $2.
+                moveProc.command = ["sh", "-c", 'test -f "$1" && mv "$1" "$2"', "sh", src, dst];
                 moveProc.running = true;
             }
             currentWallpaper = null;

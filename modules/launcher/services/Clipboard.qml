@@ -62,7 +62,7 @@ QtObject {
         for (const item of items) {
             if (item.isImage && item.id) {
                 const imgPath = getImagePath(item.id);
-                Quickshell.execDetached(["sh", "-c", "mkdir -p " + imageCacheDir + " && cliphist decode " + item.id + " > " + imgPath + " 2>&1"]);
+                Quickshell.execDetached(["sh", "-c", 'mkdir -p "$1" && cliphist decode "$2" > "$3" 2>&1', "sh", imageCacheDir, String(item.id), imgPath]);
             }
         }
     }
@@ -89,7 +89,7 @@ QtObject {
 
     function ensureImageCached(id: int, onReady: var): void {
         const imgPath = getImagePath(id);
-        Quickshell.execDetached(["sh", "-c", "mkdir -p " + imageCacheDir + " && cliphist decode " + id + " > " + imgPath + " 2>&1"]);
+        Quickshell.execDetached(["sh", "-c", 'mkdir -p "$1" && cliphist decode "$2" > "$3" 2>&1', "sh", imageCacheDir, String(id), imgPath]);
         const timer = waitTimer.createObject(root, {
             imgPath: imgPath,
             callback: onReady

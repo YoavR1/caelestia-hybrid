@@ -17,7 +17,7 @@ Item {
             return;
         root.list.screenState.launcher = false;
         const preview = root.modelData.preview.length > 30 ? root.modelData.preview.slice(0, 30) + "..." : root.modelData.preview;
-        Quickshell.execDetached(["sh", "-c", "cliphist decode " + root.modelData.id + " | wl-copy"]);
+        Quickshell.execDetached(["sh", "-c", 'cliphist decode "$1" | wl-copy', "sh", String(root.modelData.id)]);
         Toaster.toast(qsTr("Copied to clipboard"), preview, "content_paste");
     }
 

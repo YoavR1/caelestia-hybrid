@@ -190,11 +190,11 @@ Searcher {
         if (isVideo(targetPath)) {
             lastAnimated = targetPath;
             wallpaperMode = "animated";
-            Quickshell.execDetached(["sh", "-c", "mkdir -p '" + Paths.state + "/wallpaper' && echo '" + targetPath + "' > '" + Paths.state + "/wallpaper/last_animated.txt'"]);
+            Quickshell.execDetached(["sh", "-c", 'mkdir -p "$1" && printf "%s\\n" "$2" > "$3"', "sh", `${Paths.state}/wallpaper`, targetPath, `${Paths.state}/wallpaper/last_animated.txt`]);
         } else {
             lastStatic = targetPath;
             wallpaperMode = "static";
-            Quickshell.execDetached(["sh", "-c", "mkdir -p '" + Paths.state + "/wallpaper' && echo '" + targetPath + "' > '" + Paths.state + "/wallpaper/last_static.txt'"]);
+            Quickshell.execDetached(["sh", "-c", 'mkdir -p "$1" && printf "%s\\n" "$2" > "$3"', "sh", `${Paths.state}/wallpaper`, targetPath, `${Paths.state}/wallpaper/last_static.txt`]);
         }
 
         stopPreview();
@@ -306,7 +306,7 @@ Searcher {
     }
 
     onEnableAnimationChanged: {
-        Quickshell.execDetached(["sh", "-c", "mkdir -p '" + Paths.state + "/wallpaper' && echo '" + (enableAnimation ? "1" : "0") + "' > '" + Paths.state + "/wallpaper/enable_animation.txt'"]);
+        Quickshell.execDetached(["sh", "-c", 'mkdir -p "$1" && printf "%s\\n" "$2" > "$3"', "sh", `${Paths.state}/wallpaper`, enableAnimation ? "1" : "0", `${Paths.state}/wallpaper/enable_animation.txt`]);
     }
 
     onPreviewColourLockChanged: {

@@ -110,3 +110,24 @@ commit**. Prefer `git cherry-pick -x` over copying — it records the source com
 `modules/lock/` is authentication code. Changes there get a second look, and OP's pattern lock does
 not ship in its current form (T3, D10). Never introduce a credential comparison in QML, and never
 call `lock.unlock()` outside a PAM success path.
+
+**Never build a shell command by concatenation.** `Process.command` and
+`Quickshell.execDetached` take an argv list, so the shell is usually unnecessary:
+
+```qml
+// no                                        // yes
+["sh", "-c", "curl -o '" + dst + "' '" + url + "'"]   ["curl", "-o", dst, url]
+```
+
+When you genuinely need a shell — a pipe, a redirect, `mkdir -p && ...` — pass the values
+as positional arguments so they never reach it as syntax:
+
+```qml
+["sh", "-c", 'mkdir -p "$1" && cliphist decode "$2" > "$3"', "sh", dir, id, path]
+```
+
+Quoting the value inside the string is not a fix. A `'` in the value closes the quote and
+what follows is executed; ten sites in this tree were written that way, two of them
+interpolating a URL taken straight from an HTTP response (T26). The question is never "is
+there a shell" but "does any value reach it as syntax" — running the user's own configured
+command through `sh -c` is the feature, not a bug.

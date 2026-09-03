@@ -837,3 +837,52 @@ making a real call.
 **The general shape, again:** a tool that reports failure on a channel you are not reading is
 indistinguishable from a tool that works. Check what a tool does on bad input before trusting
 what it says on good input.
+
+---
+
+## T26 — Shell commands built by string concatenation, with remote data in them
+
+**Symptom:** a wallpaper whose filename contains an apostrophe does nothing, or worse.
+
+`Process.command` and `Quickshell.execDetached` both take an argv list, so a shell is
+optional — but fourteen sites built one anyway by concatenating values into a `sh -c`
+string. Single quotes around the value were the only barrier, and a `'` in the value ends
+the quoting and returns to shell syntax. Measured, with the payload `'; touch pwned.txt;
+echo '`:
+
+```
+old:  sh -c "... echo '$VALUE' > 'out.txt'"      -> pwned.txt created; arbitrary command ran
+new:  sh -c '... printf "%s\n" "$2" > "$3"' sh "$VALUE" out.txt
+                                                  -> nothing ran; out.txt holds the value verbatim
+```
+
+**Where the value comes from decides how bad it is.** Ten sites were changed, in three tiers:
+
+| site | value | origin |
+|---|---|---|
+| `WallhavenSearcher.qml` download, move | `wallpaper.path`, `wallpaper.id` | **`JSON.parse` of the wallhaven.cc API response** |
+| `Wallpapers.qml` ×3, `WallpaperItem.qml` | a wallpaper path | a filename on the user's disk |
+| `Clipboard.qml` ×2, `ClipItem.qml` | cache dir, cliphist id | local — and `imageCacheDir` was not even quoted |
+
+The Wallhaven pair is the one that matters: those values are attacker-influenced in the
+ordinary sense, not just awkward.
+
+**The fix is the pattern already in the tree.** `services/Nmcli.qml` was doing it right all
+along: `["sh", "-c", script, "sh", a, b]` passes `a` and `b` as `$1` and `$2`, which the
+shell never parses as syntax. Where no shell is needed at all — the Wallhaven download was
+just `curl` — the argv form replaces `sh` entirely.
+
+**Not everything with `sh -c` is a bug.** Four uses are correct by design and were left
+alone: `Keybinds.qml` runs the user's own keybind commands, which is the feature; the Hypr
+config pages write user config through quoted heredocs; and `ArpcPage.qml` and
+`BarGithub.qml` already pass secrets as `"--", token` with `<<< "$1"`. The question to ask
+is not "is there a shell" but "does any value reach it as syntax".
+
+**One instance was found and deliberately left.** `modules/launcher/items/CalcItem.qml`
+interpolates the launcher's calculator expression into `fish -C "exec qalc -i '...'"`. A
+value does reach the shell as syntax there, so it belongs on this list — but the value is
+what the user just typed into their own launcher, and the launcher already runs arbitrary
+commands by design, so no boundary is crossed. What is left is a robustness nit: an
+apostrophe in an expression breaks the calculator. Fixing it properly means escaping for
+*fish* rather than POSIX quoting rules, in a code path that spawns an interactive terminal
+and so cannot be exercised by the harness. Recorded rather than changed blind.
