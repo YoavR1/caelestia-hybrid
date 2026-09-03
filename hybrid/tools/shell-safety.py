@@ -58,7 +58,7 @@ def allowed(rel, line):
 
 
 def main():
-    files = subprocess.run(["git", "-C", str(ROOT), "ls-files", "*.qml"],
+    files = subprocess.run(["git", "-C", str(ROOT), "ls-files", "--cached", "--others", "--exclude-standard", "*.qml"],
                            capture_output=True, text=True).stdout.split()
 
     # the script argument of an sh -c / bash -c invocation, on one line

@@ -42,11 +42,11 @@ ALLOWED = {
 
 
 def main():
-    files = subprocess.run(["git", "-C", str(ROOT), "ls-files", "*.qml"],
+    files = subprocess.run(["git", "-C", str(ROOT), "ls-files", "--cached", "--others", "--exclude-standard", "*.qml"],
                            capture_output=True, text=True).stdout.split()
     texts = {f: (ROOT / f).read_text() for f in files}
     others = subprocess.run(
-        ["git", "-C", str(ROOT), "ls-files", "*.cpp", "*.hpp", "CMakeLists.txt", "*.json", "qmldir"],
+        ["git", "-C", str(ROOT), "ls-files", "--cached", "--others", "--exclude-standard", "*.cpp", "*.hpp", "CMakeLists.txt", "*.json", "qmldir"],
         capture_output=True, text=True).stdout.split()
     outside = "\n".join((ROOT / f).read_text(errors="ignore") for f in others)
 
