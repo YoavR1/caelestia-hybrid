@@ -26,14 +26,14 @@ public:
     explicit QuickShareService(QObject* parent = nullptr);
     ~QuickShareService() override;
 
-    [[nodiscard]] [[nodiscard]] bool isEnabled() const;
+    [[nodiscard]] bool isEnabled() const;
     void setEnabled(bool enabled);
 
-    [[nodiscard]] [[nodiscard]] bool isVisible() const;
+    [[nodiscard]] bool isVisible() const;
     void setVisible(bool visible);
 
-    [[nodiscard]] [[nodiscard]] QVariantList nearbyDevices() const;
-    [[nodiscard]] [[nodiscard]] QVariantList transferHistory() const;
+    [[nodiscard]] QVariantList nearbyDevices() const;
+    [[nodiscard]] QVariantList transferHistory() const;
 
     Q_INVOKABLE void sendFile(const QString& deviceId, const QString& filePath);
     Q_INVOKABLE void acceptIncomingTransfer();

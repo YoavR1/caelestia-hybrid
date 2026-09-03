@@ -31,9 +31,9 @@ public:
     void acceptTransfer();
     void rejectTransfer();
 
-    [[nodiscard]] [[nodiscard]] QString incomingFileName() const { return m_incomingFileName; }
+    [[nodiscard]] QString incomingFileName() const { return m_incomingFileName; }
 
-    [[nodiscard]] [[nodiscard]] QString deviceName() const { return m_deviceName; }
+    [[nodiscard]] QString deviceName() const { return m_deviceName; }
 
 signals:
     void stateChanged(State newState);

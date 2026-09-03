@@ -20,7 +20,7 @@ public:
     explicit DiscordIpc(QObject* parent = nullptr);
     ~DiscordIpc() override;
 
-    [[nodiscard]] [[nodiscard]] bool connected() const;
+    [[nodiscard]] bool connected() const;
 
     Q_INVOKABLE void connectIpc(const QString& clientId);
     Q_INVOKABLE void disconnectIpc();

@@ -26,19 +26,19 @@ public:
     QByteArray encryptPayload(const QByteArray& plaintext);
     QByteArray decryptPayload(const QByteArray& ciphertext);
 
-    [[nodiscard]] [[nodiscard]] bool isHandshakeComplete() const { return m_handshakeComplete; }
+    [[nodiscard]] bool isHandshakeComplete() const { return m_handshakeComplete; }
 
-    [[nodiscard]] [[nodiscard]] bool isClient() const { return !m_isServer; }
+    [[nodiscard]] bool isClient() const { return !m_isServer; }
 
-    [[nodiscard]] [[nodiscard]] QByteArray encodeKey() const { return m_encodeKey; }
+    [[nodiscard]] QByteArray encodeKey() const { return m_encodeKey; }
 
-    [[nodiscard]] [[nodiscard]] QByteArray decodeKey() const { return m_decodeKey; }
+    [[nodiscard]] QByteArray decodeKey() const { return m_decodeKey; }
 
-    [[nodiscard]] [[nodiscard]] QByteArray hmacEncodeKey() const { return m_hmacEncodeKey; }
+    [[nodiscard]] QByteArray hmacEncodeKey() const { return m_hmacEncodeKey; }
 
-    [[nodiscard]] [[nodiscard]] QByteArray hmacDecodeKey() const { return m_hmacDecodeKey; }
+    [[nodiscard]] QByteArray hmacDecodeKey() const { return m_hmacDecodeKey; }
 
-    [[nodiscard]] [[nodiscard]] QString pinCode() const;
+    [[nodiscard]] QString pinCode() const;
 
 private:
     void generateDhKeypair();
