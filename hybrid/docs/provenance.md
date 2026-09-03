@@ -44,6 +44,18 @@ satisfies that; squashing an import into an anonymous commit does not.
 | Feature | Source | Source commit | Original path | Local path | Kind | Notes |
 |---|---|---|---|---|---|---|
 | _(baseline)_ | `midnight` | `bb7b5657` | _(whole tree)_ | _(whole tree)_ | `baseline` | Phase 0 fork point |
+| video wallpaper | `midnight` | `bb7b5657` | `components/images/CachingVideo.qml` | _(removed)_ | `superseded` | `modules/background/Wallpaper.qml` plus `services/WallpaperPauser.qml` own the playback and pausing now. Dead in MiDnight too. |
+| video wallpaper | `midnight` | `bb7b5657` | `services/VideoWallpaperPlayer.qml` | _(removed)_ | `superseded` | Its only user was `CachingVideo.qml`, here and in MiDnight. Orphaned by the row above. |
+| bad apple | `midnight` | `bb7b5657` | `modules/background/BadAppleController.qml` | _(removed)_ | `superseded` | `BadApplePlayer` is the singleton the overlay and the toggles actually use. Dead in MiDnight too. |
+| _(none)_ | `midnight` | `bb7b5657` | `modules/sidebar/TestComponent.qml` | _(removed)_ | `superseded` | Debug scaffolding: creates a red 100x100 FloatingWindow that logs on click. Never referenced, here or in MiDnight. |
+
+### Kept deliberately
+
+Not every unreferenced file is ours to remove. `components/misc/Ref.qml` is unused in all
+three upstreams — including `caelestia` itself, since the C++ `ServiceRef` replaced it — so it
+is upstream's to delete. `modules/notifications/QuickSharePrompt.qml` is the only incoming
+transfer UI that exists and is kept as the design for a gap that is still open (T27). Both are
+allowlisted in `hybrid/tools/dead-qml.py` with those reasons.
 
 ## Asset licensing watchlist
 

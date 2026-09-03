@@ -28,16 +28,24 @@ Every gate upstream enforces is green on a tree that arrived with all of them fa
 | `g++ -Werror` (`build.yml`) | 11, never run | 0 |
 | `clazy -Werror` (`build.yml`) | 9+, never run | 0 |
 | smoke matrix | did not run at all | 6 presets, x2 compositor configs |
-| `hybrid/tools/plugin-test.sh` | no test of any kind existed | 2 tests, 0 failures |
+| `hybrid/tools/plugin-test.sh` | no test of any kind existed | 4 tests, 0 failures |
+| `hybrid/tools/dead-signals.py` | didn't exist; 1 dead signal | 0 of 209 |
+| `hybrid/tools/dead-qml.py` | didn't exist; 5 dead files | 0 of 367 |
+| `hybrid/tools/shell-safety.py` | didn't exist; 15 injectable sites | 0 of 33 |
+| `hybrid/tools/check-index-modes.sh` | didn't exist; 4 tools non-executable | clean |
 
-CI runs every row (`.github/workflows/smoke.yml` carries the last two, on headless sway).
+`./hybrid/tools/verify.sh` runs every row of that table in one go and prints GREEN or RED.
+CI runs them too (`.github/workflows/smoke.yml` carries the last two, on headless sway).
 `hybrid/tools/qml-section-order.py` is ours — the `section-order` fixer upstream's checker
 lacks. `hybrid/tools/plugin-test.sh` is ours too, and runs the only executable tests in the
-tree: a full UKEY2 handshake between two `QuickShareCrypto` instances, and a check that
-`BeatTracker::beat` reaches its QML receiver — it had been declared, connected to by
-`MediaShapes.qml`, and emitted by nothing, in all three upstreams (T21).
+tree: the UKEY2 handshake, the `BeatTracker::beat` forward, the mDNS name decode and the
+QuickShare payload frames.
 
-Read `hybrid/docs/traps.md` T12–T26 before touching the harness; **T18 and T19 in
+The four checkers in that table each guard a bug class every other gate is blind to, and each
+was validated by being made to fail on purpose before being trusted — a checker that reports
+zero because it is looking in the wrong place is worse than no checker (T23).
+
+Read `hybrid/docs/traps.md` T12–T27 before touching the harness; **T18 and T19 in
 particular**, because qmllint silently lints against an installed `midnight-shell-git`
 unless `--bare` is passed, and because the two `-Werror` build legs sat red through a phase
 that reported CI green — they were never run locally, and a `clazy` finding is invisible to

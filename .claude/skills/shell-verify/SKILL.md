@@ -28,6 +28,18 @@ multi-line shell in `bash -c '...'`. The project's own scripts are fine — they
 
 ## The gate
 
+One command runs all of it:
+
+```bash
+./hybrid/tools/verify.sh              # everything, GREEN or RED at the end
+./hybrid/tools/verify.sh --quick      # skip the two -Werror builds and the compositor runs
+./hybrid/tools/verify.sh --no-smoke   # everything except the compositor runs
+```
+
+The steps below are what it does, in order, and remain the reference for reading a failure.
+Keep the two in sync: the script exists because assembling these by hand is how two of them
+went unrun for an entire phase (T19).
+
 ```bash
 # 1. Build (also generates build/qml that the linter and smoke runner need)
 cmake -B build -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
@@ -42,10 +54,11 @@ python3 scripts/qml-lint-conventions.py        # --fix handles all but section-o
 # 3. QML lint — any output at all is a failure
 ./hybrid/tools/qml-lint.sh                     # or --summary for category counts
 
-# 4. Three cheap checks, each for a bug class every other gate is blind to
+# 4. Four cheap checks, each for a bug class every other gate is blind to
 ./hybrid/tools/dead-signals.py       # signals declared but never emitted (T21)
 ./hybrid/tools/check-index-modes.sh  # scripts committed non-executable (T22)
 ./hybrid/tools/shell-safety.py       # sh -c scripts built from a value (T26)
+./hybrid/tools/dead-qml.py           # QML files nothing instantiates (T27)
 
 # 5. C++ lint — needs its OWN clang configure. Arch's Qt6 hands gcc
 #    -mno-direct-extern-access, which clang-tidy rejects on every file (T19).

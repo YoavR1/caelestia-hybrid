@@ -58,6 +58,9 @@ jobs:
       - name: Check shell command construction
         run: ./hybrid/tools/shell-safety.py
 
+      - name: Check for unreferenced QML
+        run: ./hybrid/tools/dead-qml.py
+
       - name: Configure
         run: |
           cmake -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
