@@ -37,11 +37,15 @@ if [ ! -f "$GEN/ukey.pb.cc" ]; then
     cmake --build "$BUILD_DIR" --target caelestia-services >/dev/null 2>&1 || exit 1
 fi
 
-AUTOGEN=$(dirname "$(find "$GEN/caelestia-services_autogen" -name moc_beattracker.cpp 2>/dev/null | head -1)")
-if [ ! -d "$AUTOGEN" ]; then
+# The autogen directory has a hashed name, so it is found rather than spelled out. Guard on
+# the find result, not on the dirname: `dirname ""` is "." and "." is a directory, so a
+# missing autogen tree would otherwise sail past the check and fail at the compile instead.
+MOC=$(find "$GEN/caelestia-services_autogen" -name moc_beattracker.cpp 2>/dev/null | head -1)
+if [ -z "$MOC" ]; then
     echo "no moc output under $GEN -- build the tree first" >&2
     exit 1
 fi
+AUTOGEN=$(dirname "$MOC")
 
 QTFLAGS=$(pkg-config --cflags --libs Qt6Core Qt6Qml)
 COMMON=(-std=c++20 -O1 -mno-direct-extern-access -w -fPIC -I"$SVC" -I"$ROOT/plugin/src" -I"$AUTOGEN")
