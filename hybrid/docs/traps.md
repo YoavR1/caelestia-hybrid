@@ -986,3 +986,46 @@ by `BadApplePlayer`), `TestComponent.qml` (27 lines of scaffolding that pops a r
 Kept: `components/misc/Ref.qml`, which is unused in **all three** upstreams including upstream
 itself, since the C++ `ServiceRef` replaced it. That one is upstream's to delete; removing it
 here trades eight dead lines for a delete/modify conflict on every merge that touches it.
+
+---
+
+## T28 — Fifteen config keys accept a value and do nothing
+
+**Symptom:** you set something in `shell.json`, the shell accepts it without complaint, and
+nothing changes. There is no warning, because the key *is* in the compiled schema — it simply
+has no reader.
+
+The schema declares 349 keys. Fifteen are read by nothing, in QML or C++:
+
+| keys | class | what happened |
+|---|---|---|
+| `videoWallpaperPauseOnFullscreen`, `...OnTiled`, `...OnAllDisplays`, `videoWallpaperSoundEnabled`, `videoWallpaperMuteOnMedia` | `BackgroundConfig` | **superseded, and provably so.** Their only reader was `components/images/CachingVideo.qml`, itself never instantiated. `services/WallpaperPauser.qml` replaced them with `manualPause`, `pauseOnBattery`, `pauseOnWindowOverlap` and `hwDecoder`, persisted through QtCore `Settings` rather than `shell.json`. |
+| `activeOllamaModel`, `activeProvider`, `defaultProvider`, `ollamaModel`, `orionModel`, `saveChatHistory`, `snapToDefaultOllama` | `AiConfig` | the feature exists (`modules/sidebar/AiAssistant.qml`), so these may be half-wired rather than debris. |
+| `screenCounts` | `ShimejiConfig` | unknown |
+| `tabIndicatorHeight` | `DashboardTokens` | unknown |
+| `wsIcons` | `BarWorkspaces` | unknown |
+
+**Not removed, deliberately.** Deleting a key is user-visible: an existing `shell.json`
+containing it starts emitting `Unknown option`, and the smoke matrix treats that as a
+failure. That is the right outcome for a key that is genuinely gone, and the wrong one for a
+key someone is halfway through wiring. The `videoWallpaper` five have an airtight story; the
+`AiConfig` seven do not, and guessing at another person's unfinished feature is how you
+delete groundwork.
+
+Recorded here so the next person touching video wallpaper or the AI assistant starts from
+evidence instead of rediscovering it.
+
+### How to re-run the sweep
+
+Extract every `CONFIG_*PROPERTY(type, name, …)` from `plugin/src/Caelestia/Config/*.hpp`, then
+look for `.name` or `"name"` in the QML and for the bare name in C++ **excluding the
+declaration lines themselves**. Three things it must handle, each of which produced a false
+positive first time:
+
+- **C++ consumers.** A QML-only sweep called `logout`, `shutdown`, `italic`, `vaxes`,
+  `lyricsBackend` and `configLoaded` dead; all six are read from C++.
+- **Dynamic access.** `modules/background/Wallpaper.qml` reads
+  `Config.background["wallpaperRecolor"]`. String-literal subscripts are caught by the
+  `"name"` check; a computed one would not be, and there are none today.
+- **The declaration itself.** Searching C++ for the bare name matches the `CONFIG_PROPERTY`
+  line, so every key looks live unless those lines are excluded.
