@@ -30,3 +30,20 @@ Render format initialization failed\. All buffers will fall back to SHM
 Failed to connect pipewire context\. Errno: 112
 PulseAudioService: pa_context_connect\(\) failed
 QSoundEffect: playback of this format is not supported on the selected audio device
+
+# =============================================================================
+# A CI CONTAINER, as opposed to a nested compositor on a real desktop. There is no
+# session bus, no system bus, no logind session, and none of the hardware tools. Each
+# of these is a *real* signal under Hyprland on a workstation, which is why they live
+# here rather than in the main list -- this file is only read with --compositor sway.
+# =============================================================================
+
+# No D-Bus at all. Every service that needs it says so once and degrades.
+Could not connect to DBus\.
+Failed to connect to system bus
+failed to create subject for listener: No session for pid [0-9]+
+
+# Hardware and network tools the image does not ship. The shell probes for them and
+# carries on; a missing binary is not a defect in the shell.
+Process failed to start, likely because the binary could not be found\. Command: QList\("(ddcutil|nmcli|hyprctl|lm_sensors|upower)"
+

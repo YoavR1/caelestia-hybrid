@@ -1199,3 +1199,42 @@ does not need, and dropping it works regardless of how the runner is configured,
 **Diagnosing this took one probe step and no guesses.** `getcap` plus `sway --version` in the
 job printed the capability and the exit code, which is the entire answer. When an error is an
 `execve` failure rather than program output, print what you are about to execute.
+
+---
+
+## T32 — The CI container is a harsher environment than a nested compositor, and it found a real bug
+
+The first smoke run that actually reached the matrix on headless sway failed all six
+presets. Almost all of it was environment: no session bus, no system bus, no logind session,
+and none of `ddcutil`, `nmcli` or `hyprctl`. `smoke-ignore-headless.txt` exists for exactly
+this and is only read under `--compositor sway`, so those entries cost nothing on a real
+desktop, where every one of them is a genuine signal.
+
+One line was not environment:
+
+```
+WARN scene: @utils/SysInfo.qml[22:-1]: TypeError: Cannot call method 'split' of null
+```
+
+```qml
+readonly property string shell: Quickshell.env("SHELL").split("/").pop()
+```
+
+`$SHELL` is unset in a container, and `Quickshell.env` returns null rather than an empty
+string, so `.split()` throws. This is **not** a CI-only defect: a systemd service, a display
+manager session, or any process without a login shell hits it identically. The line directly
+above it already guards the same risk with `||`, which is what makes it a slip rather than a
+design choice.
+
+Guarded with `?.split("/").pop() ?? ""`. A sweep for the same shape — a method called
+straight on `Quickshell.env(...)` — found no other instance.
+
+**Why this is worth its own entry.** The nested-Hyprland matrix on a workstation cannot find
+this class of bug, because a workstation has `$SHELL`, a session bus and the hardware tools.
+Anything that reads the environment and assumes it is populated will pass there and fail in
+a container, a VM, or a minimal session — which is where users of a shell actually run into
+it. The CI leg is narrower in what it exercises and *wider* in what it can expose.
+
+The ignore entries were checked against the real log lines rather than written from memory,
+and the check included confirming that the `SysInfo` TypeError is still reported — an ignore
+list that swallowed it would have hidden the only real finding in the run.

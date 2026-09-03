@@ -19,7 +19,10 @@ Singleton {
     property string uptime
     readonly property string user: Quickshell.env("USER")
     readonly property string wm: Quickshell.env("XDG_CURRENT_DESKTOP") || Quickshell.env("XDG_SESSION_DESKTOP")
-    readonly property string shell: Quickshell.env("SHELL").split("/").pop()
+    // $SHELL is not always set -- a container, a systemd service, or any session with no
+    // login shell leaves it null, and .split() on null throws. The line above already
+    // guards the same way for XDG_CURRENT_DESKTOP.
+    readonly property string shell: Quickshell.env("SHELL")?.split("/").pop() ?? ""
 
     property string kernel
     property string hostname
