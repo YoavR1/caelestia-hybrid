@@ -6,3 +6,4 @@ build/
 logs
 .smoke-logs/
 *.bak
+tidy-build/

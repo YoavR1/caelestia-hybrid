@@ -21,6 +21,11 @@ jobs:
           cmake -B build -G Ninja -DVERSION= -DGIT_REVISION=
           cmake --build build
 
+      # Fast, compositor-free, and cheapest to attribute -- so it runs before sway is even
+      # installed. Reuses the build above.
+      - name: Plugin tests
+        run: ./hybrid/tools/plugin-test.sh
+
       # Hyprland cannot run here: with no parent display and no DRM node it dies in
       # CBackend::create(), and it has no headless backend to ask for. Sway does, and it
       # speaks the only protocol PanelWindow actually needs -- wlr-layer-shell.
