@@ -37,10 +37,14 @@ PageBase {
                     const isGif = w.name.toLowerCase().endsWith(".gif");
                     const isImg = Images.isValidImageByName(w.name) && !isGif;
 
-                    if (filter === "all") return true;
-                    if (filter === "video") return isVid;
-                    if (filter === "gif") return isGif;
-                    if (filter === "image") return isImg;
+                    if (filter === "all")
+                        return true;
+                    if (filter === "video")
+                        return isVid;
+                    if (filter === "gif")
+                        return isGif;
+                    if (filter === "image")
+                        return isImg;
                     return false;
                 });
 

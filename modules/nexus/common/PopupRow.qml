@@ -3,23 +3,29 @@ import QtQuick.Layouts
 import Quickshell
 import Caelestia.Config
 import qs.components
+import qs.components.controls
 import qs.services
 import qs.modules.drawers
 import qs.modules.nexus.common
-import qs.components.controls
 
 ConnectedRect {
     id: root
 
     property bool showDelete: false
-    signal deleted()
 
     property alias icon: icon.text
+
     property alias label: label.text
+
     property alias status: status.text
+
     property bool keepPopupAsChild
+
     readonly property alias popup: popup
+
     default required property Item content
+
+    signal deleted
 
     Layout.fillWidth: true
     implicitHeight: navLayout.implicitHeight + navLayout.anchors.margins * 2
@@ -57,6 +63,7 @@ ConnectedRect {
 
                 StyledText {
                     id: label
+
                     font: Tokens.font.body.small
                     elide: Text.ElideRight
                 }
@@ -85,7 +92,6 @@ ConnectedRect {
                 animate: true
             }
         }
-
 
         Item {
             id: triggerArea

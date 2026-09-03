@@ -4,8 +4,8 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import Caelestia
 import Caelestia.Config
+import Caelestia.Images
 import qs.services
 import qs.utils
 
@@ -134,18 +134,28 @@ Singleton {
             root.reloadHyprRules();
         }
 
+        // usingLua is only known once Quickshell's IPC handshake lands, which is after
+        // Component.onCompleted -- so the startup call above always picks the legacy
+        // `keyword layerrule` spelling, and Hyprland rejects it on a lua config. Resend
+        // once the real answer arrives. See trap T17.
+        function onUsingLuaChanged(): void {
+            root.requestReloadHyprRules();
+        }
+
         target: Hypr
     }
 
     Connections {
-        target: GlobalConfig.utilities.toasts
-        ignoreUnknownSignals: true
         function onTransparencyChanged(): void {
             root.requestReloadHyprRules();
         }
+
         function onTransparencyBaseChanged(): void {
             root.requestReloadHyprRules();
         }
+
+        target: GlobalConfig.utilities.toasts
+        ignoreUnknownSignals: true
     }
 
     FileView {

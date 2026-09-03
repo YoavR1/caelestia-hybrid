@@ -6,21 +6,41 @@ import qs.modules.nexus.common
 
 PageBase {
     id: root
-    title: qsTr("Desktop lyrics")
-    isSubPage: true
 
     readonly property list<string> positionValues: ["top-left", "top-center", "top-right", "middle-left", "middle-center", "middle-right", "bottom-left", "bottom-center", "bottom-right"]
+
     readonly property list<MenuItem> positionItems: [
-        MenuItem { text: qsTr("Top Left") },
-        MenuItem { text: qsTr("Top Center") },
-        MenuItem { text: qsTr("Top Right") },
-        MenuItem { text: qsTr("Middle Left") },
-        MenuItem { text: qsTr("Middle Center") },
-        MenuItem { text: qsTr("Middle Right") },
-        MenuItem { text: qsTr("Bottom Left") },
-        MenuItem { text: qsTr("Bottom Center") },
-        MenuItem { text: qsTr("Bottom Right") }
+        MenuItem {
+            text: qsTr("Top Left")
+        },
+        MenuItem {
+            text: qsTr("Top Center")
+        },
+        MenuItem {
+            text: qsTr("Top Right")
+        },
+        MenuItem {
+            text: qsTr("Middle Left")
+        },
+        MenuItem {
+            text: qsTr("Middle Center")
+        },
+        MenuItem {
+            text: qsTr("Middle Right")
+        },
+        MenuItem {
+            text: qsTr("Bottom Left")
+        },
+        MenuItem {
+            text: qsTr("Bottom Center")
+        },
+        MenuItem {
+            text: qsTr("Bottom Right")
+        }
     ]
+
+    title: qsTr("Desktop lyrics")
+    isSubPage: true
 
     ColumnLayout {
         anchors.horizontalCenter: parent.horizontalCenter
@@ -42,7 +62,6 @@ PageBase {
             checked: root.targetConfig.background.desktopLyrics.enabled
             onToggled: {
                 root.targetConfig.background.desktopLyrics.enabled = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -56,7 +75,6 @@ PageBase {
             checked: root.targetConfig.background.desktopLyrics.overlay
             onToggled: {
                 root.targetConfig.background.desktopLyrics.overlay = checked;
-                root.targetConfig.save();
             }
             enabled: root.targetConfig.background.desktopLyrics.enabled
         }
@@ -71,7 +89,6 @@ PageBase {
             checked: root.targetConfig.background.desktopLyrics.autoHideFullscreen
             onToggled: {
                 root.targetConfig.background.desktopLyrics.autoHideFullscreen = checked;
-                root.targetConfig.save();
             }
             enabled: root.targetConfig.background.desktopLyrics.enabled
         }
@@ -87,7 +104,6 @@ PageBase {
             checked: root.targetConfig.background.desktopLyrics.autoHideTiled
             onToggled: {
                 root.targetConfig.background.desktopLyrics.autoHideTiled = checked;
-                root.targetConfig.save();
             }
             enabled: root.targetConfig.background.desktopLyrics.enabled
         }
@@ -108,7 +124,6 @@ PageBase {
                 let idx = root.positionItems.indexOf(item);
                 if (idx !== -1) {
                     root.targetConfig.background.desktopLyrics.position = root.positionValues[idx];
-                    root.targetConfig.save();
                 }
             }
         }
@@ -123,7 +138,6 @@ PageBase {
             valueLabel: (0.5 + value * 2.5).toFixed(1) + "x"
             onMoved: v => {
                 root.targetConfig.background.desktopLyrics.scale = 0.5 + v * 2.5;
-                root.targetConfig.save();
             }
         }
 
@@ -138,7 +152,6 @@ PageBase {
             checked: root.targetConfig.background.desktopLyrics.invertColors
             onToggled: {
                 root.targetConfig.background.desktopLyrics.invertColors = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -155,7 +168,6 @@ PageBase {
             checked: root.targetConfig.background.desktopLyrics.background.enabled
             onToggled: {
                 root.targetConfig.background.desktopLyrics.background.enabled = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -169,7 +181,6 @@ PageBase {
             valueLabel: Math.round(value * 100) + "%"
             onMoved: v => {
                 root.targetConfig.background.desktopLyrics.background.opacity = v;
-                root.targetConfig.save();
             }
             enabled: root.targetConfig.background.desktopLyrics.background.enabled
         }
@@ -184,7 +195,6 @@ PageBase {
             checked: root.targetConfig.background.desktopLyrics.background.blur
             onToggled: {
                 root.targetConfig.background.desktopLyrics.background.blur = checked;
-                root.targetConfig.save();
             }
             enabled: root.targetConfig.background.desktopLyrics.background.enabled
         }
@@ -202,7 +212,6 @@ PageBase {
             checked: root.targetConfig.background.desktopLyrics.shadow.enabled
             onToggled: {
                 root.targetConfig.background.desktopLyrics.shadow.enabled = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -216,7 +225,6 @@ PageBase {
             valueLabel: Math.round(value * 100) + "%"
             onMoved: v => {
                 root.targetConfig.background.desktopLyrics.shadow.opacity = v;
-                root.targetConfig.save();
             }
             enabled: root.targetConfig.background.desktopLyrics.shadow.enabled
         }
@@ -232,7 +240,6 @@ PageBase {
             valueLabel: (value * 2.0).toFixed(1)
             onMoved: v => {
                 root.targetConfig.background.desktopLyrics.shadow.blur = v * 2.0;
-                root.targetConfig.save();
             }
             enabled: root.targetConfig.background.desktopLyrics.shadow.enabled
         }

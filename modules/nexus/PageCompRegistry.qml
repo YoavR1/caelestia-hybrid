@@ -9,15 +9,15 @@ import qs.modules.nexus.common
 import qs.modules.nexus.pages
 import qs.modules.nexus.pages.apps
 import qs.modules.nexus.pages.audio
+import qs.modules.nexus.pages.background
 import qs.modules.nexus.pages.bluetooth
+import qs.modules.nexus.pages.hyprland
 import qs.modules.nexus.pages.network
 import qs.modules.nexus.pages.panels
 import qs.modules.nexus.pages.services
+import qs.modules.nexus.pages.tokens
 import qs.modules.nexus.pages.wallandstyle
 import qs.modules.nexus.pages.panels.taskbar
-import qs.modules.nexus.pages.background
-import qs.modules.nexus.pages.tokens
-import qs.modules.nexus.pages.hyprland
 
 QtObject {
     id: root
@@ -271,6 +271,14 @@ QtObject {
             }
         },
 
+        // Hybrid
+        Component {
+            StackPage {
+                Component {
+                    HybridPage {}
+                }
+            }
+        },
 
         // About
         Component {

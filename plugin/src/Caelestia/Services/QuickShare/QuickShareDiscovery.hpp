@@ -1,10 +1,10 @@
 #pragma once
 
-#include <QObject>
-#include <QString>
-#include <QVariantMap>
-#include <QDBusInterface>
-#include <QTimer>
+#include <qdbusinterface.h>
+#include <qobject.h>
+#include <qstring.h>
+#include <qtimer.h>
+#include <qvariantmap.h>
 
 namespace caelestia::services {
 
@@ -25,7 +25,7 @@ public:
 
     bool startDiscovery();
     void stopDiscovery();
-    
+
     bool advertise(const QString& deviceName, int port);
     void stopAdvertising();
 
@@ -36,11 +36,13 @@ signals:
     void deviceLost(const QString& deviceId);
 
 private slots:
-    void onItemNew(int interface, int protocol, const QString& name, const QString& type, const QString& domain, uint flags);
-    void onItemRemove(int interface, int protocol, const QString& name, const QString& type, const QString& domain, uint flags);
+    void onItemNew(
+        int interface, int protocol, const QString& name, const QString& type, const QString& domain, uint flags);
+    void onItemRemove(
+        int interface, int protocol, const QString& name, const QString& type, const QString& domain, uint flags);
     void onServiceResolved(const QDBusMessage& msg);
     void onTempAdvertiseTimeout();
-    
+
 private:
     QDBusInterface* m_serverBrowser;
     QDBusInterface* m_entryGroup;

@@ -57,11 +57,11 @@ PageBase {
             ColumnLayout {
                 id: hero
 
+                property int clicks: 0
+
                 anchors.centerIn: parent
                 width: parent.width - Tokens.padding.largeIncreased * 2
                 spacing: Tokens.spacing.small
-
-                property int clicks: 0
 
                 AnimatedLogo {
                     Layout.alignment: Qt.AlignHCenter

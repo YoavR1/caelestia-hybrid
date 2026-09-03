@@ -1,0 +1,100 @@
+name: Lint code
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  lint-qml:
+    runs-on: ubuntu-latest
+    # Lowercase literal, not ${{ github.repository_owner }}: Docker rejects an
+    # uppercase registry reference, container.image is resolved before any step
+    # could lowercase it, and GitHub expressions have no toLower(). A fork edits
+    # this one string (and nothing else) to point at its own namespace. See T29.
+    container:
+      image: ghcr.io/yoavr1/shell-arch-env:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Build
+        run: |
+          # Set version and git rev for CI build so we don't call git
+          cmake -B build -G Ninja -DCMAKE_CXX_COMPILER=clazy -DVERSION= -DGIT_REVISION=
+          cmake --build build
+
+      - name: Lint QML
+        shell: fish {0}
+        run: |
+          /usr/lib/qt6/bin/qmllint --version
+
+          # Generate tooling
+          touch .qmlls.ini
+          QT_QPA_PLATFORM=offscreen QML2_IMPORT_PATH="$PWD/build/qml:$QML2_IMPORT_PATH" timeout 2 qs -p .
+
+          # Construct linter args
+          set -l build_dir (grep -oP "(?<=buildDir=\")(.*)(?=\")" .qmlls.ini)
+          set -l import_paths (grep -oP "(?<=importPaths=\")(.*)(?=\")" .qmlls.ini | string split :)
+          set -l args -I $build_dir
+          for path in $import_paths
+            set -a args -I $path
+          end
+          set -l qml_files (string match -vr 'build/.*' **.qml)
+
+          # Lint
+          set -l lint_out (/usr/lib/qt6/bin/qmllint --import disable $args $qml_files 2>&1 | tee /dev/stderr)
+          test -z "$lint_out" || exit 1
+
+  lint-cpp:
+    runs-on: ubuntu-latest
+    # Lowercase literal, not ${{ github.repository_owner }}: Docker rejects an
+    # uppercase registry reference, container.image is resolved before any step
+    # could lowercase it, and GitHub expressions have no toLower(). A fork edits
+    # this one string (and nothing else) to point at its own namespace. See T29.
+    container:
+      image: ghcr.io/yoavr1/shell-arch-env:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      # The checkout is owned by a different uid than the container's root, so git refuses
+      # every command with "detected dubious ownership". The checkers now fail loudly on
+      # that rather than reporting an empty tree as clean, but they still need it to work.
+      - name: Trust the workspace
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      # Need no build, so they run first and fail in seconds rather than after a configure.
+      - name: Check for dead signals
+        run: ./hybrid/tools/dead-signals.py
+
+      - name: Check shell command construction
+        run: ./hybrid/tools/shell-safety.py
+
+      - name: Check for unreferenced QML
+        run: ./hybrid/tools/dead-qml.py
+
+      - name: Configure
+        run: |
+          cmake -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON -DVERSION= -DGIT_REVISION=
+
+      # protoc has not run after a bare configure, so the six generated .pb.h do not exist
+      # and every QuickShare translation unit fails to parse with "'wire_format.pb.h' file
+      # not found" -- taking a cascade of spurious findings with it. Upstream's lint job has
+      # no build step because upstream's tree has no protobuf.
+      - name: Build (generates the protobuf headers clang-tidy needs)
+        run: cmake --build build
+
+      - name: Lint C++
+        run: |
+          clang-tidy --version
+          run-clang-tidy -p build -quiet -j "$(nproc)" -warnings-as-errors='*' \
+            -source-filter='^(?!.*/build/).*\.cpp$'

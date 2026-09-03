@@ -1,0 +1,9 @@
+# Line endings: everything LF. Scaffolding may be authored on Windows.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.gif binary
+*.webp binary
+*.mp4 binary
+*.wav binary
+*.ogg binary

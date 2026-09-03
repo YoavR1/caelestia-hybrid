@@ -1,11 +1,12 @@
+pragma ComponentBehavior: Bound
 pragma Singleton
 
 import QtQuick
 import QtQml
 import Quickshell
 import Quickshell.Hyprland
-import qs.services
 import Caelestia.Config
+import qs.services
 
 Singleton {
     id: root
@@ -18,68 +19,9 @@ Singleton {
     property string lastPipMonitor: ""
     property string currentPipAddress: ""
 
-    Timer {
-        id: updateDebouncer
-        interval: 100 // Wait for Wayland exclusive zone & QML bindings to settle
-        running: false
-        repeat: false
-        onTriggered: root.checkPip()
-    }
-
-    Connections {
-        target: Hyprland
-        function onRawEvent(event: HyprlandEvent): void {
-            const n = event.name;
-            if (n === "closewindow" || n === "openwindow" || n === "windowtitle" || n === "changefloatingmode" || n === "activewindow" || n === "configreloaded" || n === "workspace" || n === "focusedmon") {
-                updateDebouncer.restart();
-            }
-        }
-    }
-
-    Instantiator {
-        model: Hyprland.monitors.values
-        Connections {
-            target: modelData
-            function onLastIpcObjectChanged(): void {
-                updateDebouncer.restart();
-            }
-        }
-    }
-
-    Connections {
-        target: GlobalConfig.services
-        function onPipPositionChanged(): void {
-            root.tempPipPosition = ""; // Reset temporary override on explicit setting change
-            root.lastPipMoveTime = Date.now(); // Block drag-detection from falsely re-triggering
-            root.checkPip();
-        }
-        function onPipFollowFocusChanged(): void {
-            root.lastPipMoveTime = Date.now();
-            root.checkPip();
-        }
-        function onPipPausedChanged(): void {
-            if (!GlobalConfig.services.pipPaused) {
-                root.checkPip();
-            }
-        }
-    }
-
-    Connections {
-        target: GlobalConfig.bar
-        function onPositionChanged(): void {
-            updateDebouncer.restart();
-        }
-    }
-
-    Connections {
-        target: GlobalConfig.border
-        function onThicknessChanged(): void {
-            updateDebouncer.restart();
-        }
-    }
-
     function checkPip(): void {
-        if (GlobalConfig.services.pipPaused) return;
+        if (GlobalConfig.services.pipPaused)
+            return;
 
         let foundPip = false;
         const toplevels = Hyprland.toplevels.values;
@@ -90,7 +32,7 @@ Singleton {
                 foundPip = true;
             }
         }
-        
+
         if (!foundPip) {
             root.currentPipAddress = "";
             root.lastPipX = -1;
@@ -100,14 +42,15 @@ Singleton {
     }
 
     function movePip(t: HyprlandToplevel): void {
-        if (GlobalConfig.services.pipPaused) return;
+        if (GlobalConfig.services.pipPaused)
+            return;
 
         if (Hyprland.activeToplevel && Hyprland.activeToplevel.address === t.address) {
             return; // Pause auto-alignment while the user is interacting with the window!
         }
 
         const addr = "address:0x" + t.address;
-        
+
         if (root.currentPipAddress !== addr) {
             root.lastPipX = -1;
             root.lastPipY = -1;
@@ -121,7 +64,8 @@ Singleton {
             monitor = Hyprland.focusedMonitor;
         }
 
-        if (!monitor) return;
+        if (!monitor)
+            return;
 
         if (root.lastPipMonitor !== monitor.name) {
             root.tempPipPosition = "";
@@ -155,13 +99,19 @@ Singleton {
                 const centerY = relY + sizeY / 2;
 
                 let newPos = "";
-                if (centerY < monitor_height / 3) newPos += "top";
-                else if (centerY > monitor_height * 2 / 3) newPos += "bottom";
-                else newPos += "middle";
+                if (centerY < monitor_height / 3)
+                    newPos += "top";
+                else if (centerY > monitor_height * 2 / 3)
+                    newPos += "bottom";
+                else
+                    newPos += "middle";
 
-                if (centerX < monitor_width / 3) newPos += " left";
-                else if (centerX > monitor_width * 2 / 3) newPos += " right";
-                else newPos += " center";
+                if (centerX < monitor_width / 3)
+                    newPos += " left";
+                else if (centerX > monitor_width * 2 / 3)
+                    newPos += " right";
+                else
+                    newPos += " center";
 
                 root.tempPipPosition = newPos.trim();
             }
@@ -193,10 +143,14 @@ Singleton {
             barSize = Tokens.forScreen(monitor.name).sizes.bar.innerWidth + padding * 2;
         }
 
-        if (bPos === "left") res_left += barSize;
-        else if (bPos === "right") res_right += barSize;
-        else if (bPos === "top") res_top += barSize;
-        else if (bPos === "bottom") res_bottom += barSize;
+        if (bPos === "left")
+            res_left += barSize;
+        else if (bPos === "right")
+            res_right += barSize;
+        else if (bPos === "top")
+            res_top += barSize;
+        else if (bPos === "bottom")
+            res_bottom += barSize;
 
         const avail_w = monitor_width - res_left - res_right - x_resize;
         const avail_h = monitor_height - res_top - res_bottom - y_resize;
@@ -238,5 +192,76 @@ Singleton {
             Hypr.dispatch(`movewindowpixel exact ${move_x} ${move_y},${addr}`);
             Hypr.dispatch(`setprop ${addr} keep_aspect_ratio true`);
         }
+    }
+
+    Timer {
+        id: updateDebouncer
+
+        interval: 100 // Wait for Wayland exclusive zone & QML bindings to settle
+        running: false
+        repeat: false
+        onTriggered: root.checkPip()
+    }
+
+    Connections {
+        function onRawEvent(event: HyprlandEvent): void {
+            const n = event.name;
+            if (n === "closewindow" || n === "openwindow" || n === "windowtitle" || n === "changefloatingmode" || n === "activewindow" || n === "configreloaded" || n === "workspace" || n === "focusedmon") {
+                updateDebouncer.restart();
+            }
+        }
+
+        target: Hyprland
+    }
+
+    Instantiator {
+        model: Hyprland.monitors.values
+
+        Connections {
+            required property HyprlandMonitor modelData
+
+            function onLastIpcObjectChanged(): void {
+                updateDebouncer.restart();
+            }
+
+            target: modelData
+        }
+    }
+
+    Connections {
+        function onPipPositionChanged(): void {
+            root.tempPipPosition = ""; // Reset temporary override on explicit setting change
+            root.lastPipMoveTime = Date.now(); // Block drag-detection from falsely re-triggering
+            root.checkPip();
+        }
+
+        function onPipFollowFocusChanged(): void {
+            root.lastPipMoveTime = Date.now();
+            root.checkPip();
+        }
+
+        function onPipPausedChanged(): void {
+            if (!GlobalConfig.services.pipPaused) {
+                root.checkPip();
+            }
+        }
+
+        target: GlobalConfig.services
+    }
+
+    Connections {
+        function onPositionChanged(): void {
+            updateDebouncer.restart();
+        }
+
+        target: GlobalConfig.bar
+    }
+
+    Connections {
+        function onThicknessChanged(): void {
+            updateDebouncer.restart();
+        }
+
+        target: GlobalConfig.border
     }
 }

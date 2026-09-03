@@ -1,7 +1,8 @@
 #pragma once
 
-#include <QObject>
-#include <QTcpSocket>
+#include <qobject.h>
+#include <qtcpsocket.h>
+
 #include "QuickShareCrypto.hpp"
 #include "wire_format.pb.h"
 
@@ -11,7 +12,7 @@ class QuickShareConnection : public QObject {
     Q_OBJECT
 
 public:
-    enum State {
+    enum State : quint8 {
         Disconnected,
         Connecting,
         OfflineFrameExchange,
@@ -29,8 +30,10 @@ public:
     void sendFile(const QString& filePath);
     void acceptTransfer();
     void rejectTransfer();
-    QString incomingFileName() const { return m_incomingFileName; }
-    QString deviceName() const { return m_deviceName; }
+
+    [[nodiscard]] QString incomingFileName() const { return m_incomingFileName; }
+
+    [[nodiscard]] QString deviceName() const { return m_deviceName; }
 
 signals:
     void stateChanged(State newState);
@@ -50,13 +53,16 @@ private:
     void handlePostHandshake(const QByteArray& data);
     void handleEncryptedFrame(const QByteArray& data);
     void handlePayloadTransfer(const QByteArray& plaintext);
+    void sendOutgoingFile();
+    void handleSharingFrame(const sharing::nearby::Frame& frame);
+    void handleIncomingFileChunk(const QByteArray& chunkBody, qint64 offset, qint32 flags);
 
     QByteArray wrapInSecureMessage(const QByteArray& offlineFrameData);
     QByteArray unwrapSecureMessage(const QByteArray& secureMessageData);
     void sendEncryptedSharingFrame(sharing::nearby::V1Frame::FrameType type);
     void sendEncryptedSharingFrame(const sharing::nearby::Frame& frame);
-    QByteArray buildPayloadTransferFrame(const QByteArray& sharingFrameData, bool lastChunk, qint64 offset);
-    QByteArray buildOfflineFrame(const QByteArray& payloadTransferData);
+    static QByteArray buildPayloadTransferFrame(const QByteArray& sharingFrameData, bool lastChunk, qint64 offset);
+    static QByteArray buildOfflineFrame(const QByteArray& payloadTransferData);
     void encryptAndSendOfflineFrameBytes(const QByteArray& offlineFrameData);
 
     QTcpSocket* m_socket;
@@ -66,7 +72,7 @@ private:
     int m_recvSeq = 1;
     QuickShareCrypto m_crypto;
     QByteArray m_buffer;
-    
+
     QString m_incomingFileName;
     qint64 m_incomingFileSize = 0;
     QString m_deviceName;

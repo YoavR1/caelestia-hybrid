@@ -2,8 +2,8 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell
-import Quickshell.Wayland
 import Quickshell.Io
+import Quickshell.Wayland
 import Caelestia.Config
 import qs.components
 import qs.components.containers
@@ -21,8 +21,8 @@ Variants {
         screen: modelData
         name: "background"
         WlrLayershell.exclusionMode: ExclusionMode.Ignore
-        WlrLayershell.layer: (contentItem.Config.background.wallpaperEnabled && !(wallpaper.item && wallpaper.item.weActive)) ? WlrLayer.Background : WlrLayer.Bottom
-        color: contentItem.Config.background.wallpaperEnabled && !(wallpaper.item && wallpaper.item.weActive) ? "black" : "transparent"
+        WlrLayershell.layer: (contentItem.Config.background.wallpaperEnabled && !(wallpaper.item && wallpaper.item.weActive)) ? WlrLayer.Background : WlrLayer.Bottom // qmllint disable missing-property
+        color: contentItem.Config.background.wallpaperEnabled && !(wallpaper.item && wallpaper.item.weActive) ? "black" : "transparent" // qmllint disable missing-property
         surfaceFormat.opaque: false
 
         anchors.top: true
@@ -48,7 +48,7 @@ Variants {
 
                 anchors.fill: parent
                 active: Config.background.wallpaperEnabled
-                opacity: (item && item.weActive) ? 0 : 1
+                opacity: (item && item.weActive) ? 0 : 1 // qmllint disable missing-property
 
                 sourceComponent: Wallpaper {
                     screen: win.modelData
@@ -57,9 +57,10 @@ Variants {
 
             Process {
                 id: weProc
-                property string weDir: wallpaper.item ? wallpaper.item.weDir : ""
-                property bool weActive: wallpaper.item ? wallpaper.item.weActive : false
-                
+
+                property string weDir: wallpaper.item ? wallpaper.item.weDir : "" // qmllint disable missing-property
+                property bool weActive: wallpaper.item ? wallpaper.item.weActive : false // qmllint disable missing-property
+
                 command: {
                     let cmd = ["linux-wallpaperengine", "--screen-root", win.modelData.name, "--layer", "background"];
                     if (Wallpapers.weSilent) {
@@ -70,9 +71,8 @@ Variants {
                     cmd.push(weDir);
                     return cmd;
                 }
-                running: weActive && weDir !== "" && contentItem.Config.background.wallpaperEnabled
+                running: weActive && weDir !== "" && win.contentItem.Config.background.wallpaperEnabled
             }
-
 
             Visualiser {
                 anchors.fill: parent
@@ -98,13 +98,17 @@ Variants {
             anchors.bottomMargin: Config.bar.position === "bottom" ? clockBaseMargin + clockBarZone : clockBaseMargin
 
             anchors.horizontalCenterOffset: {
-                if (Config.bar.position === "left") return clockBarZone / 2;
-                if (Config.bar.position === "right") return -clockBarZone / 2;
+                if (Config.bar.position === "left")
+                    return clockBarZone / 2;
+                if (Config.bar.position === "right")
+                    return -clockBarZone / 2;
                 return 0;
             }
             anchors.verticalCenterOffset: {
-                if (Config.bar.position === "top") return clockBarZone / 2;
-                if (Config.bar.position === "bottom") return -clockBarZone / 2;
+                if (Config.bar.position === "top")
+                    return clockBarZone / 2;
+                if (Config.bar.position === "bottom")
+                    return -clockBarZone / 2;
                 return 0;
             }
 
@@ -220,13 +224,17 @@ Variants {
             anchors.bottomMargin: Config.bar.position === "bottom" ? lyricsBaseMargin + lyricsBarZone : lyricsBaseMargin
 
             anchors.horizontalCenterOffset: {
-                if (Config.bar.position === "left") return lyricsBarZone / 2;
-                if (Config.bar.position === "right") return -lyricsBarZone / 2;
+                if (Config.bar.position === "left")
+                    return lyricsBarZone / 2;
+                if (Config.bar.position === "right")
+                    return -lyricsBarZone / 2;
                 return 0;
             }
             anchors.verticalCenterOffset: {
-                if (Config.bar.position === "top") return lyricsBarZone / 2;
-                if (Config.bar.position === "bottom") return -lyricsBarZone / 2;
+                if (Config.bar.position === "top")
+                    return lyricsBarZone / 2;
+                if (Config.bar.position === "bottom")
+                    return -lyricsBarZone / 2;
                 return 0;
             }
 
@@ -320,7 +328,7 @@ Variants {
             }
 
             sourceComponent: DesktopLyrics {
-                screen: modelData
+                screen: win.modelData
                 wallpaper: behindClock
                 absX: lyricsLoader.x
                 absY: lyricsLoader.y

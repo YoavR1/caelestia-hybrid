@@ -1,0 +1,25 @@
+{
+  "hybrid": {
+    "preset": "recommended",
+    "features": {
+      "dock": true,
+      "overview": true,
+      "clipboard": true,
+      "emojiPicker": true,
+      "windowSwitcher": true,
+      "keybindViewer": true,
+      "videoWallpaper": true,
+      "wallhaven": true,
+      "floatingLyrics": true,
+      "shimeji": false,
+      "badApple": false,
+      "dino": false
+    },
+    "variants": {
+      "lockCentre": "op",
+      "audioPopout": "midnight",
+      "desktopClock": "op",
+      "colours": "op"
+    }
+  }
+}

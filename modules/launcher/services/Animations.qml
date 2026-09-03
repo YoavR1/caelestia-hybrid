@@ -3,8 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell
 import Quickshell.Io
-import Caelestia.Config
-import qs.utils
+import qs.utils // qmllint disable unused-imports
 
 QtObject {
     id: root
@@ -12,11 +11,11 @@ QtObject {
     property var animations: []
     property bool initialized: false
 
-    signal loaded
-
     property Process reader: Process {
         running: false
-        command: ["sh", "-c", `ls -1 "${Paths.config}/animations"/*.lua 2>/dev/null || true`]
+        // A shell is needed for the glob, but the directory goes in as $1: the config
+        // path contains the user's home, which is not guaranteed to be free of spaces.
+        command: ["sh", "-c", 'ls -1 "$1"/animations/*.lua 2>/dev/null || true', "sh", Paths.config]
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
@@ -41,8 +40,8 @@ QtObject {
                         });
                     }
 
-                    animations = result;
-                    initialized = true;
+                    root.animations = result;
+                    root.initialized = true;
                     root.loaded();
                 } catch (e) {
                     console.error("Failed to parse animations: " + e);
@@ -50,6 +49,8 @@ QtObject {
             }
         }
     }
+
+    signal loaded
 
     function loadAnimations() {
         if (initialized && animations.length > 0) {

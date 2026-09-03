@@ -52,15 +52,15 @@ StyledRect {
         id: iconColumn
 
         anchors.left: parent.left
-        anchors.right: isHorizontal ? undefined : parent.right
-        anchors.bottom: isHorizontal ? undefined : parent.bottom
-        anchors.verticalCenter: isHorizontal ? parent.verticalCenter : undefined
-        anchors.bottomMargin: isHorizontal ? 0 : Tokens.padding.medium
-        anchors.leftMargin: isHorizontal ? Tokens.padding.medium : 0
+        anchors.right: root.isHorizontal ? undefined : parent.right
+        anchors.bottom: root.isHorizontal ? undefined : parent.bottom
+        anchors.verticalCenter: root.isHorizontal ? parent.verticalCenter : undefined
+        anchors.bottomMargin: root.isHorizontal ? 0 : Tokens.padding.medium
+        anchors.leftMargin: root.isHorizontal ? Tokens.padding.medium : 0
 
-        columns: isHorizontal ? -1 : 1
-        rows: isHorizontal ? 1 : -1
-        flow: isHorizontal ? GridLayout.LeftToRight : GridLayout.TopToBottom
+        columns: root.isHorizontal ? -1 : 1
+        rows: root.isHorizontal ? 1 : -1
+        flow: root.isHorizontal ? GridLayout.LeftToRight : GridLayout.TopToBottom
 
         columnSpacing: 0
         rowSpacing: 0

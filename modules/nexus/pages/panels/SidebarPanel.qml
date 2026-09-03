@@ -2,10 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
 import Caelestia.Config
-import qs.components
-import qs.components.controls
 import qs.modules.nexus.common
 
 PageBase {
@@ -33,7 +30,6 @@ PageBase {
             checked: root.targetConfig.sidebar.enabled
             onToggled: {
                 root.targetConfig.sidebar.enabled = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -51,7 +47,6 @@ PageBase {
             stepSize: 5
             onMoved: v => {
                 root.targetConfig.sidebar.dragThreshold = v;
-                root.targetConfig.save();
             }
         }
 
@@ -71,7 +66,6 @@ PageBase {
             checked: root.targetConfig.sidebar.showNews !== false
             onToggled: {
                 root.targetConfig.sidebar.showNews = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -90,7 +84,6 @@ PageBase {
             checked: root.targetConfig.ai.enableOllama
             onToggled: {
                 root.targetConfig.ai.enableOllama = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -105,7 +98,6 @@ PageBase {
             checked: root.targetConfig.ai.enableCelestialMode
             onToggled: {
                 root.targetConfig.ai.enableCelestialMode = checked;
-                root.targetConfig.save();
             }
         }
     }

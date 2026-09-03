@@ -3,14 +3,13 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
-import Quickshell.Io
 import Caelestia.Config
 import qs.components
 import qs.components.containers
 import qs.services
 
 Variants {
-    model: Screens.screens.filter(s => GlobalConfig.forScreen(s.name).background.enabled)
+    model: GlobalConfig.hybrid.features.floatingLyrics ? Screens.screens.filter(s => GlobalConfig.forScreen(s.name).background.enabled) : []
 
     StyledWindow {
         id: win
@@ -47,13 +46,17 @@ Variants {
             anchors.bottomMargin: Config.bar.position === "bottom" ? lyricsBaseMargin + lyricsBarZone : lyricsBaseMargin
 
             anchors.horizontalCenterOffset: {
-                if (Config.bar.position === "left") return lyricsBarZone / 2;
-                if (Config.bar.position === "right") return -lyricsBarZone / 2;
+                if (Config.bar.position === "left")
+                    return lyricsBarZone / 2;
+                if (Config.bar.position === "right")
+                    return -lyricsBarZone / 2;
                 return 0;
             }
             anchors.verticalCenterOffset: {
-                if (Config.bar.position === "top") return lyricsBarZone / 2;
-                if (Config.bar.position === "bottom") return -lyricsBarZone / 2;
+                if (Config.bar.position === "top")
+                    return lyricsBarZone / 2;
+                if (Config.bar.position === "bottom")
+                    return -lyricsBarZone / 2;
                 return 0;
             }
 
@@ -147,7 +150,7 @@ Variants {
             }
 
             sourceComponent: DesktopLyrics {
-                screen: modelData
+                screen: win.modelData
                 wallpaper: null
                 absX: lyricsLoader.x
                 absY: lyricsLoader.y

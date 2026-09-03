@@ -28,7 +28,6 @@ PageBase {
             stepSize: 1
             onMoved: v => {
                 root.targetConfig.bar.workspaces.shown = v;
-                root.targetConfig.save();
             }
         }
 
@@ -39,7 +38,6 @@ PageBase {
             checked: root.targetConfig.bar.workspaces.activeIndicator
             onToggled: {
                 root.targetConfig.bar.workspaces.activeIndicator = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -50,7 +48,6 @@ PageBase {
             checked: root.targetConfig.bar.workspaces.activeTrail
             onToggled: {
                 root.targetConfig.bar.workspaces.activeTrail = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -61,7 +58,6 @@ PageBase {
             checked: root.targetConfig.bar.workspaces.occupiedBg
             onToggled: {
                 root.targetConfig.bar.workspaces.occupiedBg = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -73,7 +69,6 @@ PageBase {
             checked: root.targetConfig.bar.workspaces.useIcon
             onToggled: {
                 root.targetConfig.bar.workspaces.useIcon = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -86,7 +81,6 @@ PageBase {
             checked: root.targetConfig.bar.workspaces.showWindows
             onToggled: {
                 root.targetConfig.bar.workspaces.showWindows = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -97,7 +91,6 @@ PageBase {
             checked: root.targetConfig.bar.workspaces.showWindowsOnSpecialWorkspaces
             onToggled: {
                 root.targetConfig.bar.workspaces.showWindowsOnSpecialWorkspaces = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -111,7 +104,6 @@ PageBase {
             stepSize: 1
             onMoved: v => {
                 root.targetConfig.bar.workspaces.maxWindowIcons = v;
-                root.targetConfig.save();
             }
         }
 
@@ -124,7 +116,6 @@ PageBase {
             checked: root.targetConfig.bar.workspaces.perMonitorWorkspaces
             onToggled: {
                 root.targetConfig.bar.workspaces.perMonitorWorkspaces = checked;
-                root.targetConfig.save();
             }
         }
     }

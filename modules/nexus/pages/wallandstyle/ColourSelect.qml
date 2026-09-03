@@ -2,29 +2,55 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Caelestia.Config
-import qs.components
 import qs.components.controls
 import qs.services
-import qs.modules.nexus.common
 import qs.modules.launcher.services
+import qs.modules.nexus.common
 
 PageBase {
     id: root
 
+    readonly property list<var> variantData: [
+        {
+            name: "vibrant",
+            label: qsTr("Vibrant")
+        },
+        {
+            name: "tonalspot",
+            label: qsTr("Tonal Spot")
+        },
+        {
+            name: "expressive",
+            label: qsTr("Expressive")
+        },
+        {
+            name: "fidelity",
+            label: qsTr("Fidelity")
+        },
+        {
+            name: "content",
+            label: qsTr("Content")
+        },
+        {
+            name: "fruitsalad",
+            label: qsTr("Fruit Salad")
+        },
+        {
+            name: "rainbow",
+            label: qsTr("Rainbow")
+        },
+        {
+            name: "neutral",
+            label: qsTr("Neutral")
+        },
+        {
+            name: "monochrome",
+            label: qsTr("Monochrome")
+        }
+    ]
+
     title: qsTr("Colours")
     isSubPage: true
-
-    readonly property list<var> variantData: [
-        { name: "vibrant", label: qsTr("Vibrant") },
-        { name: "tonalspot", label: qsTr("Tonal Spot") },
-        { name: "expressive", label: qsTr("Expressive") },
-        { name: "fidelity", label: qsTr("Fidelity") },
-        { name: "content", label: qsTr("Content") },
-        { name: "fruitsalad", label: qsTr("Fruit Salad") },
-        { name: "rainbow", label: qsTr("Rainbow") },
-        { name: "neutral", label: qsTr("Neutral") },
-        { name: "monochrome", label: qsTr("Monochrome") }
-    ]
 
     ColumnLayout {
         anchors.horizontalCenter: parent.horizontalCenter
@@ -34,9 +60,12 @@ PageBase {
 
         Variants {
             id: schemeItems
+
             model: Schemes.list
+
             MenuItem {
                 required property var modelData
+
                 text: `${modelData.name} ${modelData.flavour}`
                 onClicked: {
                     Quickshell.execDetached(["caelestia", "scheme", "set", "-n", modelData.name, "-f", modelData.flavour]);
@@ -46,9 +75,12 @@ PageBase {
 
         Variants {
             id: variantItems
+
             model: root.variantData
+
             MenuItem {
                 required property var modelData
+
                 text: modelData.label
                 onClicked: {
                     Quickshell.execDetached(["caelestia", "scheme", "set", "-v", modelData.name]);
@@ -106,7 +138,8 @@ PageBase {
                         break;
                     }
                 }
-                if (!match) return null;
+                if (!match)
+                    return null;
                 const list = menuItems;
                 for (let i = 0; i < list.length; i++) {
                     if (list[i].text === match.label)

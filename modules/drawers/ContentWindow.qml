@@ -16,8 +16,6 @@ import qs.modules.bar
 StyledWindow {
     id: root
 
-    Config.screen: screen.name
-
     readonly property alias bar: bar
     readonly property alias interactionWrapper: interactions
 
@@ -26,6 +24,7 @@ StyledWindow {
     readonly property HyprlandMonitor monitor: Hypr.monitorFor(screen)
     readonly property bool hasSpecialWorkspace: (monitor?.lastIpcObject.specialWorkspace?.name.length ?? 0) > 0
     readonly property bool hasFullscreenOnNormalWs: monitor?.activeWorkspace?.toplevels.values.some(t => t.lastIpcObject.fullscreen > 1) ?? false
+
     readonly property bool hasFullscreen: {
         if (hasSpecialWorkspace) {
             const specialName = monitor?.lastIpcObject.specialWorkspace?.name;
@@ -59,6 +58,8 @@ StyledWindow {
                 thresholds.push(contentItem.Config[panel].dragThreshold);
         return Math.max(...thresholds);
     }
+
+    Config.screen: screen.name
 
     onHasFullscreenChanged: {
         screenState.launcher = false;
@@ -117,7 +118,8 @@ StyledWindow {
         active: {
             const s = root.screenState;
             const conf = root.contentItem.Config;
-            if (s.workspaceDrawer) return true;
+            if (s.workspaceDrawer)
+                return true;
             if ((s.launcher && conf.launcher.enabled) || (s.session && conf.session.enabled) || (s.sidebar && conf.sidebar.enabled))
                 return true;
             if (!conf.dashboard.showOnHover && s.dashboard && conf.dashboard.enabled)
@@ -157,6 +159,7 @@ StyledWindow {
         anchors.fill: parent
         opacity: GlobalConfig.appearance.pitchBlack ? 1 : (Colours.transparency.enabled ? Colours.transparency.base : root.surfaceColour.a)
         layer.enabled: true
+
         layer.effect: MultiEffect {
             shadowEnabled: true
             blurMax: 15
@@ -220,19 +223,21 @@ StyledWindow {
         PanelBg {
             id: sidebarBg
 
+            property bool connectedToPopout: (Config.bar.position === "top" || Config.bar.position === "bottom") && panels.popouts.sidebarOpen && panels.popouts.currentSection === "end" && panels.popouts.implicitWidth <= Tokens.sizes.sidebar.width + 1 && !panels.popouts.isDockPopout
+
             panel: panels.sidebar
             deformAmount: 0.03
             implicitHeight: panel.height * (1 / rawDeformMatrix.m22) + 2
-            
-            property bool connectedToPopout: (Config.bar.position === "top" || Config.bar.position === "bottom") && panels.popouts.sidebarOpen && panels.popouts.currentSection === "end" && panels.popouts.implicitWidth <= Tokens.sizes.sidebar.width + 1 && !panels.popouts.isDockPopout
-            
+
             exclude: {
                 let arr = [];
-                if (panels.sidebar.offsetScale <= 0.08) arr.push(utilsBg);
-                if (connectedToPopout) arr.push(popoutBg);
+                if (panels.sidebar.offsetScale <= 0.08)
+                    arr.push(utilsBg);
+                if (connectedToPopout)
+                    arr.push(popoutBg);
                 return arr;
             }
-            
+
             topLeftRadius: GlobalConfig.appearance.islands ? radius : ((Config.bar.position === "top" && connectedToPopout) ? 0 : (Config.bar.position === "bottom" ? Math.max(0, Math.min(1, panels.sidebar.offsetScale / 0.3)) * radius : radius))
             topRightRadius: GlobalConfig.appearance.islands ? radius : ((Config.bar.position === "top" && connectedToPopout) ? 0 : (Config.bar.position === "bottom" ? Math.max(0, Math.min(1, panels.sidebar.offsetScale / 0.3)) * radius : radius))
             bottomLeftRadius: GlobalConfig.appearance.islands ? radius : ((Config.bar.position === "bottom" && connectedToPopout) ? 0 : (Config.bar.position === "right" ? radius : Math.max(0, Math.min(1, panels.sidebar.offsetScale / 0.3)) * radius))
@@ -250,13 +255,13 @@ StyledWindow {
 
         PanelBg {
             id: workspaceOverviewBg
-            
+
+            property bool isAnchoredRight: Config.bar.position === "right"
+
             panel: panels.workspaceOverview
             deformAmount: 0.03
-            
+
             exclude: []
-            
-            property bool isAnchoredRight: Config.bar.position === "right"
             topRightRadius: GlobalConfig.appearance.islands ? radius : (!isAnchoredRight ? radius : Math.max(0, Math.min(1, panels.workspaceOverview.offsetScale / 0.3)) * radius)
             bottomRightRadius: GlobalConfig.appearance.islands ? radius : (!isAnchoredRight ? radius : Math.max(0, Math.min(1, panels.workspaceOverview.offsetScale / 0.3)) * radius)
             topLeftRadius: GlobalConfig.appearance.islands ? radius : (isAnchoredRight ? radius : Math.max(0, Math.min(1, panels.workspaceOverview.offsetScale / 0.3)) * radius)
@@ -291,7 +296,7 @@ StyledWindow {
             panel: panels.popoutsWrapper
             deformAmount: connectedToSidebar ? 0.03 : (panels.popouts.isDetached ? 0.05 : panels.popouts.hasCurrent ? 0.15 : 0.1)
             exclude: connectedToSidebar ? [sidebarBg] : []
-            
+
             x: {
                 const baseX = panels.popoutsWrapper.x + panels.popouts.x + panels.leftMargin;
                 if (bar.position === "left")
@@ -303,7 +308,7 @@ StyledWindow {
                     return panels.popouts.implicitWidth * (1 + extraShift);
                 return panels.popouts.implicitWidth;
             }
-            
+
             bottomLeftRadius: GlobalConfig.appearance.islands ? radius : ((bar.position === "top" && connectedToSidebar) ? 0 : radius)
             bottomRightRadius: GlobalConfig.appearance.islands ? radius : ((bar.position === "top" && connectedToSidebar) ? 0 : radius)
             topLeftRadius: GlobalConfig.appearance.islands ? radius : ((bar.position === "bottom" && connectedToSidebar) ? 0 : radius)
@@ -320,7 +325,8 @@ StyledWindow {
             implicitHeight: {
                 if (bar.position === "top" || bar.position === "bottom") {
                     let h = panels.popouts.implicitHeight * (1 + extraShift);
-                    if (connectedToSidebar) h += Tokens.spacing.medium + 10;
+                    if (connectedToSidebar)
+                        h += Tokens.spacing.medium + 10;
                     return h;
                 }
                 return panels.popouts.implicitHeight;
@@ -359,16 +365,14 @@ StyledWindow {
                     anchors.bottom: parent.bottom
                 }
                 PropertyChanges {
-                    target: bar
-                    width: bar.implicitWidth
-                    height: undefined
-                    anchors.topMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
-                    anchors.bottomMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
-                    anchors.leftMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
-                    anchors.rightMargin: 0
+                    bar.width: bar.implicitWidth
+                    bar.height: undefined
+                    bar.anchors.topMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
+                    bar.anchors.bottomMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
+                    bar.anchors.leftMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
+                    bar.anchors.rightMargin: 0
                 }
             },
-
             State {
                 name: "right"
                 Config.screen: root.screen.name
@@ -382,16 +386,14 @@ StyledWindow {
                     anchors.bottom: parent.bottom
                 }
                 PropertyChanges {
-                    target: bar
-                    width: bar.implicitWidth
-                    height: undefined
-                    anchors.topMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
-                    anchors.bottomMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
-                    anchors.leftMargin: 0
-                    anchors.rightMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
+                    bar.width: bar.implicitWidth
+                    bar.height: undefined
+                    bar.anchors.topMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
+                    bar.anchors.bottomMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
+                    bar.anchors.leftMargin: 0
+                    bar.anchors.rightMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
                 }
             },
-
             State {
                 name: "top"
                 Config.screen: root.screen.name
@@ -405,16 +407,14 @@ StyledWindow {
                     anchors.bottom: undefined
                 }
                 PropertyChanges {
-                    target: bar
-                    width: undefined
-                    height: bar.implicitHeight
-                    anchors.leftMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
-                    anchors.rightMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
-                    anchors.topMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
-                    anchors.bottomMargin: 0
+                    bar.width: undefined
+                    bar.height: bar.implicitHeight
+                    bar.anchors.leftMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
+                    bar.anchors.rightMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
+                    bar.anchors.topMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
+                    bar.anchors.bottomMargin: 0
                 }
             },
-
             State {
                 name: "bottom"
                 Config.screen: root.screen.name
@@ -428,13 +428,12 @@ StyledWindow {
                     anchors.bottom: parent.bottom
                 }
                 PropertyChanges {
-                    target: bar
-                    width: undefined
-                    height: bar.implicitHeight
-                    anchors.leftMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
-                    anchors.rightMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
-                    anchors.bottomMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
-                    anchors.topMargin: 0
+                    bar.width: undefined
+                    bar.height: bar.implicitHeight
+                    bar.anchors.leftMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
+                    bar.anchors.rightMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
+                    bar.anchors.bottomMargin: GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0
+                    bar.anchors.topMargin: 0
                 }
             }
         ]

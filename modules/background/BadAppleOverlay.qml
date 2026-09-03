@@ -1,19 +1,21 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Effects
 import Quickshell
 import Quickshell.Wayland
 import Caelestia.Config
 import qs.components.containers
 import qs.services
+import qs.modules.background
 
 Variants {
-    model: Quickshell.screens
+    model: GlobalConfig.hybrid.features.badApple ? Quickshell.screens : []
 
     StyledWindow {
         id: root
+
         required property ShellScreen modelData
+
         screen: modelData
         name: "drawers" // Use 'drawers' namespace so Hyprland blurs it automatically
         WlrLayershell.exclusionMode: ExclusionMode.Ignore
@@ -32,6 +34,7 @@ Variants {
 
         Item {
             id: badAppleMaskContainer
+
             anchors.fill: parent
             layer.enabled: BadApplePlayer.shouldPlay
             layer.effect: BadApplePlayer.shouldPlay ? badAppleShaderComponent : null
@@ -46,6 +49,7 @@ Variants {
 
         Component {
             id: badAppleShaderComponent
+
             ShaderEffect {
                 property variant mask: ShaderEffectSource {
                     sourceItem: badAppleMaskSource.videoOutput
@@ -57,12 +61,14 @@ Variants {
                     return 16.0 / 9.0;
                 }
                 property real screenRatio: root.width / root.height
+
                 fragmentShader: "qrc:/shaders/badapple.frag.qsb"
             }
         }
 
         BadAppleVideo {
             id: badAppleMaskSource
+
             screenModel: root.screen
             anchors.fill: parent
             opacity: 0.0

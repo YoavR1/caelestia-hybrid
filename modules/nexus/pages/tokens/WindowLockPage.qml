@@ -28,7 +28,9 @@ PageBase {
             valueLabel: value.toFixed(2)
             showReset: true
             onMoved: v => TokenConfig.sizes.lock.heightMult = v
-            onReset: { TokenConfig.sizes.lock.heightMult = TokenConfig.defaults().sizes.lock.heightMult; TokenConfig.sizes.lock.resetOption("heightMult"); }
+            onReset: {
+                TokenConfig.sizes.lock.resetOption("heightMult");
+            }
         }
 
         SliderRow {
@@ -39,7 +41,9 @@ PageBase {
             valueLabel: (1.0 + value * 1.5).toFixed(2)
             showReset: true
             onMoved: v => TokenConfig.sizes.lock.ratio = 1.0 + v * 1.5
-            onReset: { TokenConfig.sizes.lock.ratio = TokenConfig.defaults().sizes.lock.ratio; TokenConfig.sizes.lock.resetOption("ratio"); }
+            onReset: {
+                TokenConfig.sizes.lock.resetOption("ratio");
+            }
         }
 
         StepperRow {
@@ -52,7 +56,9 @@ PageBase {
             stepSize: 10
             showReset: true
             onMoved: v => TokenConfig.sizes.lock.centerWidth = v
-            onReset: { TokenConfig.sizes.lock.centerWidth = TokenConfig.defaults().sizes.lock.centerWidth; TokenConfig.sizes.lock.resetOption("centerWidth"); }
+            onReset: {
+                TokenConfig.sizes.lock.resetOption("centerWidth");
+            }
         }
 
         StepperRow {
@@ -65,7 +71,9 @@ PageBase {
             stepSize: 2
             showReset: true
             onMoved: v => TokenConfig.sizes.lock.forecastItemWidth = v
-            onReset: { TokenConfig.sizes.lock.forecastItemWidth = TokenConfig.defaults().sizes.lock.forecastItemWidth; TokenConfig.sizes.lock.resetOption("forecastItemWidth"); }
+            onReset: {
+                TokenConfig.sizes.lock.resetOption("forecastItemWidth");
+            }
         }
 
         StepperRow {
@@ -78,7 +86,9 @@ PageBase {
             stepSize: 10
             showReset: true
             onMoved: v => TokenConfig.sizes.lock.largeLogoWidth = v
-            onReset: { TokenConfig.sizes.lock.largeLogoWidth = TokenConfig.defaults().sizes.lock.largeLogoWidth; TokenConfig.sizes.lock.resetOption("largeLogoWidth"); }
+            onReset: {
+                TokenConfig.sizes.lock.resetOption("largeLogoWidth");
+            }
         }
 
         StepperRow {
@@ -92,7 +102,9 @@ PageBase {
             stepSize: 10
             showReset: true
             onMoved: v => TokenConfig.sizes.lock.largeFontWidth = v
-            onReset: { TokenConfig.sizes.lock.largeFontWidth = TokenConfig.defaults().sizes.lock.largeFontWidth; TokenConfig.sizes.lock.resetOption("largeFontWidth"); }
+            onReset: {
+                TokenConfig.sizes.lock.resetOption("largeFontWidth");
+            }
         }
 
         SectionHeader {
@@ -107,7 +119,9 @@ PageBase {
             valueLabel: value.toFixed(2)
             showReset: true
             onMoved: v => TokenConfig.sizes.nexus.heightMult = v
-            onReset: { TokenConfig.sizes.nexus.heightMult = TokenConfig.defaults().sizes.nexus.heightMult; TokenConfig.sizes.nexus.resetOption("heightMult"); }
+            onReset: {
+                TokenConfig.sizes.nexus.resetOption("heightMult");
+            }
         }
 
         SliderRow {
@@ -118,7 +132,9 @@ PageBase {
             valueLabel: (1.0 + value * 1.5).toFixed(2)
             showReset: true
             onMoved: v => TokenConfig.sizes.nexus.ratio = 1.0 + v * 1.5
-            onReset: { TokenConfig.sizes.nexus.ratio = TokenConfig.defaults().sizes.nexus.ratio; TokenConfig.sizes.nexus.resetOption("ratio"); }
+            onReset: {
+                TokenConfig.sizes.nexus.resetOption("ratio");
+            }
         }
 
         StepperRow {
@@ -131,7 +147,9 @@ PageBase {
             stepSize: 10
             showReset: true
             onMoved: v => TokenConfig.sizes.nexus.minWidth = v
-            onReset: { TokenConfig.sizes.nexus.minWidth = TokenConfig.defaults().sizes.nexus.minWidth; TokenConfig.sizes.nexus.resetOption("minWidth"); }
+            onReset: {
+                TokenConfig.sizes.nexus.resetOption("minWidth");
+            }
         }
 
         StepperRow {
@@ -144,7 +162,9 @@ PageBase {
             stepSize: 10
             showReset: true
             onMoved: v => TokenConfig.sizes.nexus.minHeight = v
-            onReset: { TokenConfig.sizes.nexus.minHeight = TokenConfig.defaults().sizes.nexus.minHeight; TokenConfig.sizes.nexus.resetOption("minHeight"); }
+            onReset: {
+                TokenConfig.sizes.nexus.resetOption("minHeight");
+            }
         }
 
         StepperRow {
@@ -157,7 +177,9 @@ PageBase {
             stepSize: 10
             showReset: true
             onMoved: v => TokenConfig.sizes.nexus.maxNavWidth = v
-            onReset: { TokenConfig.sizes.nexus.maxNavWidth = TokenConfig.defaults().sizes.nexus.maxNavWidth; TokenConfig.sizes.nexus.resetOption("maxNavWidth"); }
+            onReset: {
+                TokenConfig.sizes.nexus.resetOption("maxNavWidth");
+            }
         }
 
         StepperRow {
@@ -170,7 +192,9 @@ PageBase {
             stepSize: 10
             showReset: true
             onMoved: v => TokenConfig.sizes.nexus.maxContentWidth = v
-            onReset: { TokenConfig.sizes.nexus.maxContentWidth = TokenConfig.defaults().sizes.nexus.maxContentWidth; TokenConfig.sizes.nexus.resetOption("maxContentWidth"); }
+            onReset: {
+                TokenConfig.sizes.nexus.resetOption("maxContentWidth");
+            }
         }
 
         StepperRow {
@@ -184,7 +208,9 @@ PageBase {
             stepSize: 10
             showReset: true
             onMoved: v => TokenConfig.sizes.nexus.popupWidth = v
-            onReset: { TokenConfig.sizes.nexus.popupWidth = TokenConfig.defaults().sizes.nexus.popupWidth; TokenConfig.sizes.nexus.resetOption("popupWidth"); }
+            onReset: {
+                TokenConfig.sizes.nexus.resetOption("popupWidth");
+            }
         }
 
         SectionHeader {
@@ -199,7 +225,9 @@ PageBase {
             valueLabel: value.toFixed(2)
             showReset: true
             onMoved: v => TokenConfig.sizes.winfo.heightMult = v
-            onReset: { TokenConfig.sizes.winfo.heightMult = TokenConfig.defaults().sizes.winfo.heightMult; TokenConfig.sizes.winfo.resetOption("heightMult"); }
+            onReset: {
+                TokenConfig.sizes.winfo.resetOption("heightMult");
+            }
         }
 
         StepperRow {
@@ -213,7 +241,9 @@ PageBase {
             stepSize: 10
             showReset: true
             onMoved: v => TokenConfig.sizes.winfo.detailsWidth = v
-            onReset: { TokenConfig.sizes.winfo.detailsWidth = TokenConfig.defaults().sizes.winfo.detailsWidth; TokenConfig.sizes.winfo.resetOption("detailsWidth"); }
+            onReset: {
+                TokenConfig.sizes.winfo.resetOption("detailsWidth");
+            }
         }
     }
 }

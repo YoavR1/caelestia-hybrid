@@ -60,13 +60,13 @@ StyledRect {
         sourceColor: Colours.palette.m3onSurface
         colorizationColor: Colours.palette.m3onPrimary
 
-        x: isHorizontal ? -parent.offset : 0
-        y: isHorizontal ? 0 : -parent.offset
+        x: root.isHorizontal ? -parent.offset : 0
+        y: root.isHorizontal ? 0 : -parent.offset
         implicitWidth: root.mask.implicitWidth
         implicitHeight: root.mask.implicitHeight
 
-        anchors.horizontalCenter: isHorizontal ? undefined : parent.horizontalCenter
-        anchors.verticalCenter: isHorizontal ? parent.verticalCenter : undefined
+        anchors.horizontalCenter: root.isHorizontal ? undefined : parent.horizontalCenter
+        anchors.verticalCenter: root.isHorizontal ? parent.verticalCenter : undefined
     }
 
     Behavior on leading {

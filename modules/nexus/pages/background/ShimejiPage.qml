@@ -5,6 +5,7 @@ import qs.modules.nexus.common
 
 PageBase {
     id: root
+
     title: qsTr("Shimeji characters")
     isSubPage: true
 
@@ -28,7 +29,6 @@ PageBase {
             checked: root.targetConfig.shimeji.enabled
             onToggled: {
                 root.targetConfig.shimeji.enabled = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -42,7 +42,6 @@ PageBase {
             checked: root.targetConfig.shimeji.autoHide
             onToggled: {
                 root.targetConfig.shimeji.autoHide = checked;
-                root.targetConfig.save();
             }
             enabled: root.targetConfig.shimeji.enabled
         }
@@ -60,7 +59,6 @@ PageBase {
             value: root.targetConfig.shimeji.count
             onMoved: v => {
                 root.targetConfig.shimeji.count = v;
-                root.targetConfig.save();
             }
             enabled: root.targetConfig.shimeji.enabled
         }

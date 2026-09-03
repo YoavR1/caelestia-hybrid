@@ -1,12 +1,12 @@
 pragma ComponentBehavior: Bound
 
+import ".."
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Caelestia.Config
 import qs.components
 import qs.services
-import ".."
 
 ColumnLayout {
     id: root

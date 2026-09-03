@@ -32,7 +32,7 @@ Singleton {
     function shouldShowPopup(): bool {
         if (props.dnd || ShellState.anySidebarOpen())
             return false;
-        if (GlobalConfig.notifs.fullscreen === "off" && hasFullscreen())
+        if (GlobalConfig.notifs.fullscreen === NotifsFullscreen.Off && hasFullscreen())
             return false;
         return true;
     }
@@ -46,7 +46,7 @@ Singleton {
     }
 
     function addCustomNotification(summary: string, body: string, appIcon: string, actions: list<var>, expanded: bool): NotifData {
-        const notif = notifComp.createObject(root, {
+        const notif = notifComp.createObject(root, { // qmllint disable incompatible-type
             popup: root.shouldShowPopup(),
             resident: true,
             summary: summary,

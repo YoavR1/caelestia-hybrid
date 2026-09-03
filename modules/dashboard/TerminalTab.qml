@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Controls
 import Quickshell
 import Quickshell.Io
 import Caelestia.Config
@@ -181,8 +180,14 @@ Item {
     implicitWidth: 840
     implicitHeight: 500
 
+    Component.onCompleted: {
+        startShell();
+        initTimer.start();
+    }
+
     Timer {
         id: initTimer
+
         interval: 350
         running: false
         onTriggered: {
@@ -193,11 +198,6 @@ Item {
         }
     }
 
-    Component.onCompleted: {
-        startShell();
-        initTimer.start();
-    }
-
     Component {
         id: shellProcessComp
 
@@ -205,23 +205,23 @@ Item {
             running: false
             stdout: SplitParser {
                 onRead: text => {
-                    outputBuffer += text + "\n";
-                    outputArea.text = ansiToHtml(outputBuffer);
-                    scrollToBottom();
+                    root.outputBuffer += text + "\n";
+                    outputArea.text = root.ansiToHtml(root.outputBuffer);
+                    root.scrollToBottom();
                 }
             }
             stderr: SplitParser {
                 onRead: text => {
-                    outputBuffer += "\x1b[31m" + text + "\x1b[0m\n";
-                    outputArea.text = ansiToHtml(outputBuffer);
-                    scrollToBottom();
+                    root.outputBuffer += "\x1b[31m" + text + "\x1b[0m\n";
+                    outputArea.text = root.ansiToHtml(root.outputBuffer);
+                    root.scrollToBottom();
                 }
             }
             Component.onCompleted: {
-                activeProcessesCount++;
+                root.activeProcessesCount++;
             }
-            onExited: code => {
-                activeProcessesCount--;
+            onExited: code => { // qmllint disable signal-handler-parameters
+                root.activeProcessesCount--;
                 destroy();
             }
         }
@@ -236,16 +236,16 @@ Item {
                 onStreamFinished: {
                     let resolved = this.text.trim();
                     if (resolved && resolved !== "") {
-                        currentDirectory = resolved;
+                        root.currentDirectory = resolved;
                     }
                     destroy();
                 }
             }
             stderr: StdioCollector {
                 onStreamFinished: {
-                    outputBuffer += "\x1b[31m" + this.text + "\x1b[0m\n";
-                    outputArea.text = ansiToHtml(outputBuffer);
-                    scrollToBottom();
+                    root.outputBuffer += "\x1b[31m" + this.text + "\x1b[0m\n";
+                    outputArea.text = root.ansiToHtml(root.outputBuffer);
+                    root.scrollToBottom();
                     destroy();
                 }
             }
@@ -301,12 +301,12 @@ Item {
                         fullSuggestion = words.join(" ");
 
                         if (fullSuggestion.startsWith(commandInput.text)) {
-                            currentSuggestion = fullSuggestion;
+                            root.currentSuggestion = fullSuggestion;
                         } else {
-                            currentSuggestion = "";
+                            root.currentSuggestion = "";
                         }
                     } else {
-                        currentSuggestion = "";
+                        root.currentSuggestion = "";
                     }
                     destroy();
                 }
@@ -327,12 +327,12 @@ Item {
         onTriggered: {
             let typed = commandInput.text;
             if (typed.trim() === "") {
-                currentSuggestion = "";
+                root.currentSuggestion = "";
                 return;
             }
             silentAutocompleterComp.createObject(root, {
                 command: ["fish", "-c", "complete -C\"" + typed.replace(/"/g, "\\\"") + "\""],
-                workingDirectory: currentDirectory,
+                workingDirectory: root.currentDirectory,
                 running: true
             });
         }
@@ -446,8 +446,8 @@ Item {
                                 let escapedTyped = typed.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
                                 let suggestionColor = Qt.alpha(Colours.palette.m3onSurfaceVariant, 0.35).toString();
 
-                                if (currentSuggestion !== "" && currentSuggestion.startsWith(typed)) {
-                                    let suffix = currentSuggestion.substring(typed.length);
+                                if (root.currentSuggestion !== "" && root.currentSuggestion.startsWith(typed)) {
+                                    let suffix = root.currentSuggestion.substring(typed.length);
                                     let escapedSuffix = suffix.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
                                     return "<span style='color: transparent;'>" + escapedTyped + "</span>" + "<span style='color: " + suggestionColor + ";'>" + escapedSuffix + "</span>";
                                 }
@@ -486,8 +486,8 @@ Item {
 
                             // Press Right Arrow key to accept the suggestion
                             Keys.onRightPressed: event => {
-                                if (currentSuggestion !== "" && currentSuggestion.startsWith(text) && cursorPosition === text.length) {
-                                    text = currentSuggestion;
+                                if (root.currentSuggestion !== "" && root.currentSuggestion.startsWith(text) && cursorPosition === text.length) {
+                                    text = root.currentSuggestion;
                                     cursorPosition = text.length;
                                     event.accepted = true;
                                 } else {
@@ -527,8 +527,8 @@ Item {
 
                             // Trigger native fish autocompletion on Tab key press
                             Keys.onTabPressed: event => {
-                                if (currentSuggestion !== "" && currentSuggestion.startsWith(text)) {
-                                    text = currentSuggestion;
+                                if (root.currentSuggestion !== "" && root.currentSuggestion.startsWith(text)) {
+                                    text = root.currentSuggestion;
                                     cursorPosition = text.length;
                                     event.accepted = true;
                                 } else {
@@ -538,7 +538,7 @@ Item {
 
                                     autocompleterComp.createObject(root, {
                                         command: ["fish", "-c", "complete -C\"" + typed.replace(/"/g, "\\\"") + "\""],
-                                        workingDirectory: currentDirectory,
+                                        workingDirectory: root.currentDirectory,
                                         running: true
                                     });
                                     event.accepted = true;
@@ -556,7 +556,7 @@ Item {
                                 }
                                 historyIndex = -1;
                                 tempTypedText = "";
-                                currentSuggestion = "";
+                                root.currentSuggestion = "";
                                 root.sendCommand(cmd);
                             }
                         }

@@ -1,5 +1,7 @@
 import QtQuick
 import Quickshell
+import Quickshell.Io
+import Caelestia
 import Caelestia.Config
 import Caelestia.Models
 import qs.components
@@ -7,7 +9,6 @@ import qs.components.effects
 import qs.components.images
 import qs.services
 import qs.utils
-import Quickshell.Io
 
 Item {
     id: root
@@ -29,8 +30,11 @@ Item {
 
     Process {
         id: thumbGenerator
-        command: ["bash", "-c", `mkdir -p "$(dirname "${thumbImg.path.toString().replace("file://", "")}")" && ffmpeg -i "${root.modelData.path}" -vframes 1 -q:v 2 "${thumbImg.path.toString().replace("file://", "")}" -y`]
-        onExited: {
+
+        // $1 is the thumbnail, $2 the source video. Wallpaper filenames are the user's and
+        // routinely contain quotes, spaces and $; none of that reaches the shell as syntax.
+        command: ["sh", "-c", 'mkdir -p "$(dirname "$1")" && ffmpeg -i "$2" -vframes 1 -q:v 2 "$1" -y', "sh", thumbImg.path.toString().replace("file://", ""), root.modelData.path]
+        onExited: { // qmllint disable signal-handler-parameters
             let oldSource = thumbImg.path;
             thumbImg.path = "";
             thumbImg.path = oldSource;
@@ -79,6 +83,7 @@ Item {
 
         CachingImage {
             id: thumbImg
+
             anchors.fill: parent
             path: Wallpapers.getThumbnailPath(root.modelData.path)
             smooth: !root.PathView.view.moving
@@ -112,7 +117,8 @@ Item {
                 let content = CUtils.readFile(root.modelData.path);
                 try {
                     let json = JSON.parse(content);
-                    if (json.title) return json.title;
+                    if (json.title)
+                        return json.title;
                 } catch (e) {}
                 return root.modelData.path.split('/').slice(-2, -1)[0];
             }

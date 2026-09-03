@@ -1,14 +1,19 @@
 #include "discordipc.hpp"
-#include <QStandardPaths>
-#include <QDir>
-#include <QDebug>
-#include <QDataStream>
-#include <QCoreApplication>
-#include <QDateTime>
+
+#include <qcoreapplication.h>
+#include <qdatastream.h>
+#include <qdatetime.h>
+#include <qdebug.h>
+#include <qdir.h>
+#include <qstandardpaths.h>
 
 namespace caelestia {
 
-enum class Opcode : int32_t {
+using Qt::StringLiterals::operator""_s;
+
+namespace {
+
+enum class Opcode : quint8 {
     Handshake = 0,
     Frame = 1,
     Close = 2,
@@ -16,9 +21,13 @@ enum class Opcode : int32_t {
     Pong = 4
 };
 
+} // namespace
+
 DiscordIpc::DiscordIpc(QObject* parent)
-    : QObject(parent), m_socket(new QLocalSocket(this)), m_reconnectTimer(new QTimer(this)), m_connected(false)
-{
+    : QObject(parent)
+    , m_socket(new QLocalSocket(this))
+    , m_reconnectTimer(new QTimer(this))
+    , m_connected(false) {
     connect(m_socket, &QLocalSocket::connected, this, &DiscordIpc::onSocketConnected);
     connect(m_socket, &QLocalSocket::disconnected, this, &DiscordIpc::onSocketDisconnected);
     connect(m_socket, &QLocalSocket::readyRead, this, &DiscordIpc::onReadyRead);
@@ -60,11 +69,13 @@ void DiscordIpc::disconnectIpc() {
 }
 
 void DiscordIpc::checkReconnect() {
-    if (m_clientId.isEmpty()) return;
-    if (m_socket->state() == QLocalSocket::ConnectedState || m_socket->state() == QLocalSocket::ConnectingState) return;
+    if (m_clientId.isEmpty())
+        return;
+    if (m_socket->state() == QLocalSocket::ConnectedState || m_socket->state() == QLocalSocket::ConnectingState)
+        return;
 
-    QString runtimeDir = QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation);
-    QString pipePath = runtimeDir + "/discord-ipc-0";
+    QString const runtimeDir = QStandardPaths::writableLocation(QStandardPaths::RuntimeLocation);
+    QString const pipePath = runtimeDir + u"/discord-ipc-0"_s;
 
     m_socket->connectToServer(pipePath);
 }
@@ -72,8 +83,8 @@ void DiscordIpc::checkReconnect() {
 void DiscordIpc::onSocketConnected() {
     // Send Handshake
     QJsonObject payload;
-    payload["v"] = 1;
-    payload["client_id"] = m_clientId;
+    payload[u"v"_s] = 1;
+    payload[u"client_id"_s] = m_clientId;
     sendFrame(static_cast<int>(Opcode::Handshake), payload);
 }
 
@@ -85,7 +96,7 @@ void DiscordIpc::onSocketDisconnected() {
     }
 }
 
-void DiscordIpc::onError(QLocalSocket::LocalSocketError) {
+void DiscordIpc::onError(QLocalSocket::LocalSocketError /*error*/) {
     emit errorOccurred(m_socket->errorString());
     onSocketDisconnected();
 }
@@ -105,10 +116,10 @@ void DiscordIpc::onReadyRead() {
             break; // Wait for more data
         }
 
-        QByteArray payloadData = m_buffer.mid(8, length);
+        QByteArray const payloadData = m_buffer.mid(8, length);
         m_buffer.remove(0, 8 + length);
 
-        QJsonDocument doc = QJsonDocument::fromJson(payloadData);
+        QJsonDocument const doc = QJsonDocument::fromJson(payloadData);
         if (doc.isObject()) {
             processPayload(opcode, doc.object());
         }
@@ -117,8 +128,8 @@ void DiscordIpc::onReadyRead() {
 
 void DiscordIpc::processPayload(int opcode, const QJsonObject& payload) {
     if (opcode == static_cast<int>(Opcode::Frame)) {
-        if (payload.contains("cmd") && payload["cmd"].toString() == "DISPATCH") {
-            if (payload.contains("evt") && payload["evt"].toString() == "READY") {
+        if (payload.contains(u"cmd"_s) && payload[u"cmd"_s].toString() == u"DISPATCH"_s) {
+            if (payload.contains(u"evt"_s) && payload[u"evt"_s].toString() == u"READY"_s) {
                 m_connected = true;
                 emit connectedChanged();
             }
@@ -129,10 +140,11 @@ void DiscordIpc::processPayload(int opcode, const QJsonObject& payload) {
 }
 
 void DiscordIpc::sendFrame(int opcode, const QJsonObject& payload) {
-    if (m_socket->state() != QLocalSocket::ConnectedState) return;
+    if (m_socket->state() != QLocalSocket::ConnectedState)
+        return;
 
-    QJsonDocument doc(payload);
-    QByteArray data = doc.toJson(QJsonDocument::Compact);
+    QJsonDocument const doc(payload);
+    QByteArray const data = doc.toJson(QJsonDocument::Compact);
 
     QByteArray header;
     QDataStream stream(&header, QIODevice::WriteOnly);
@@ -145,30 +157,32 @@ void DiscordIpc::sendFrame(int opcode, const QJsonObject& payload) {
 }
 
 void DiscordIpc::sendActivity(const QJsonObject& activity) {
-    if (!m_connected) return;
+    if (!m_connected)
+        return;
 
     QJsonObject args;
-    args["pid"] = static_cast<int>(QCoreApplication::applicationPid());
-    args["activity"] = activity;
+    args[u"pid"_s] = static_cast<int>(QCoreApplication::applicationPid());
+    args[u"activity"_s] = activity;
 
     QJsonObject payload;
-    payload["cmd"] = "SET_ACTIVITY";
-    payload["args"] = args;
-    payload["nonce"] = QString::number(QDateTime::currentMSecsSinceEpoch());
+    payload[u"cmd"_s] = u"SET_ACTIVITY"_s;
+    payload[u"args"_s] = args;
+    payload[u"nonce"_s] = QString::number(QDateTime::currentMSecsSinceEpoch());
 
     sendFrame(static_cast<int>(Opcode::Frame), payload);
 }
 
 void DiscordIpc::clearActivity() {
-    if (!m_connected) return;
+    if (!m_connected)
+        return;
 
     QJsonObject args;
-    args["pid"] = static_cast<int>(QCoreApplication::applicationPid());
+    args[u"pid"_s] = static_cast<int>(QCoreApplication::applicationPid());
 
     QJsonObject payload;
-    payload["cmd"] = "SET_ACTIVITY";
-    payload["args"] = args;
-    payload["nonce"] = QString::number(QDateTime::currentMSecsSinceEpoch());
+    payload[u"cmd"_s] = u"SET_ACTIVITY"_s;
+    payload[u"args"_s] = args;
+    payload[u"nonce"_s] = QString::number(QDateTime::currentMSecsSinceEpoch());
 
     sendFrame(static_cast<int>(Opcode::Frame), payload);
 }

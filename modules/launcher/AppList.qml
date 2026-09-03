@@ -29,7 +29,16 @@ StyledListView {
     function stateForText(text: string): string {
         const prefix = GlobalConfig.launcher.actionPrefix;
         if (text.startsWith(prefix)) {
-            const actionPrefixes = ["calc", "scheme", "variant", "emoji", "clipboard", "windows"];
+            // A gated prefix is simply not recognised, so typing `>emoji ` by hand falls
+            // through to the generic action list rather than reaching a disabled feature.
+            const features = GlobalConfig.hybrid.features;
+            const actionPrefixes = ["calc", "scheme", "variant"];
+            if (features.emojiPicker)
+                actionPrefixes.push("emoji");
+            if (features.clipboard)
+                actionPrefixes.push("clipboard");
+            if (features.windowSwitcher)
+                actionPrefixes.push("windows");
             for (const action of actionPrefixes)
                 if (text.startsWith(`${prefix}${action} `))
                     return action;
@@ -50,24 +59,26 @@ StyledListView {
             return Schemes.query(text);
         case "variant":
             return M3Variants.query(text);
-        case "emoji": {
-            const prefix = GlobalConfig.launcher.actionPrefix;
-            const queryText = text.slice((prefix + "emoji ").length).toLowerCase();
-            if (!queryText)
-                return Emojis.getSortedItems();
-            return Emojis.items.filter(function (item) {
-                return item.name.toLowerCase().includes(queryText);
-            });
-        }
-        case "clipboard": {
-            const prefix = GlobalConfig.launcher.actionPrefix;
-            const queryText = text.slice((prefix + "clipboard ").length).toLowerCase();
-            if (!queryText)
-                return Clipboard.getSortedItems();
-            return Clipboard.items.filter(function (item) {
-                return item.preview.toLowerCase().includes(queryText);
-            });
-        }
+        case "emoji":
+            {
+                const prefix = GlobalConfig.launcher.actionPrefix;
+                const queryText = text.slice((prefix + "emoji ").length).toLowerCase();
+                if (!queryText)
+                    return Emojis.getSortedItems();
+                return Emojis.items.filter(function (item) {
+                    return item.name.toLowerCase().includes(queryText);
+                });
+            }
+        case "clipboard":
+            {
+                const prefix = GlobalConfig.launcher.actionPrefix;
+                const queryText = text.slice((prefix + "clipboard ").length).toLowerCase();
+                if (!queryText)
+                    return Clipboard.getSortedItems();
+                return Clipboard.items.filter(function (item) {
+                    return item.preview.toLowerCase().includes(queryText);
+                });
+            }
         case "windows":
             return Windows.items;
         default:
@@ -89,6 +100,7 @@ StyledListView {
     highlightRangeMode: ListView.ApplyRange
 
     highlightFollowsCurrentItem: false
+
     highlight: StyledRect {
         radius: Tokens.rounding.large
         color: Colours.palette.m3onSurface
@@ -112,7 +124,7 @@ StyledListView {
             Emojis.reload();
         if (state === "clipboard")
             Clipboard.reload();
-            
+
         if (state !== "scheme" && state !== "variant") {
             Colours.showPreview = false;
         }
@@ -120,29 +132,13 @@ StyledListView {
 
     onCurrentItemChanged: {
         if (state === "scheme" || state === "variant") {
-            if (currentItem && currentItem.modelData)
+            if (currentItem && currentItem.modelData) // qmllint disable missing-property
                 previewTimer.restart();
         }
     }
 
     Component.onDestruction: {
         Colours.showPreview = false;
-    }
-
-    Timer {
-        id: previewTimer
-        interval: 100
-        onTriggered: {
-            if (!root.currentItem || !root.currentItem.modelData) return;
-            if (root.state === "scheme") {
-                const schemeData = root.currentItem.modelData;
-                Colours.load(JSON.stringify({ name: schemeData.name, flavour: schemeData.flavour, variant: Colours.variant, mode: Colours.light ? "light" : "dark", colours: schemeData.colours }), true);
-                Colours.showPreview = true;
-            } else if (root.state === "variant") {
-                const variantData = root.currentItem.modelData;
-                M3Variants.previewVariant(variantData.variant);
-            }
-        }
     }
 
     Component.onCompleted: displayText = search.text
@@ -321,6 +317,30 @@ StyledListView {
             type: Anim.DefaultEffects
             property: "opacity"
             to: 1
+        }
+    }
+
+    Timer {
+        id: previewTimer
+
+        interval: 100
+        onTriggered: {
+            if (!root.currentItem || !root.currentItem.modelData) // qmllint disable missing-property
+                return;
+            if (root.state === "scheme") {
+                const schemeData = root.currentItem.modelData; // qmllint disable missing-property
+                Colours.load(JSON.stringify({
+                    name: schemeData.name,
+                    flavour: schemeData.flavour,
+                    variant: Colours.variant,
+                    mode: Colours.light ? "light" : "dark",
+                    colours: schemeData.colours
+                }), true);
+                Colours.showPreview = true;
+            } else if (root.state === "variant") {
+                const variantData = root.currentItem.modelData; // qmllint disable missing-property
+                M3Variants.previewVariant(variantData.variant);
+            }
         }
     }
 

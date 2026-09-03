@@ -1,13 +1,12 @@
 pragma ComponentBehavior: Bound
 
+import "items"
 import QtQuick
 import Quickshell
 import Caelestia.Config
 import qs.components
 import qs.components.controls
-import qs.services
-import "items"
-import "services"
+import qs.modules.launcher.services
 
 PathView {
     id: root

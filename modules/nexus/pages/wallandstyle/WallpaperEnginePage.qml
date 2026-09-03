@@ -6,8 +6,6 @@ import Caelestia
 import Caelestia.Config
 import Caelestia.Models
 import qs.services
-import qs.utils
-import qs.components.controls
 import qs.modules.nexus.common
 
 PageBase {
@@ -52,7 +50,7 @@ PageBase {
             Repeater {
                 model: {
                     let walls = Wallpapers.list.filter(w => Wallpapers.getCategoryFor(w) === "Wallpaper Engine");
-                    
+
                     walls.sort((a, b) => a.name.localeCompare(b.name));
                     while (walls.length < Config.nexus.wallpapersPerRow)
                         walls.push(null);
@@ -68,11 +66,13 @@ PageBase {
                     source: modelData ? Wallpapers.getThumbnailPath(modelData.path) : ""
                     realPath: modelData ? modelData.path : ""
                     text: {
-                        if (!modelData) return "";
+                        if (!modelData)
+                            return "";
                         let content = CUtils.readFile(modelData.path);
                         try {
                             let json = JSON.parse(content);
-                            if (json.title) return json.title;
+                            if (json.title)
+                                return json.title;
                         } catch (e) {}
                         return modelData.parentDir.split('/').pop();
                     }

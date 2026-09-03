@@ -6,7 +6,6 @@ import Quickshell.Hyprland
 import Quickshell.Wayland
 import Caelestia.Config
 import qs.components
-import qs.services
 import qs.modules.nexus
 import qs.modules.windowinfo
 
@@ -40,6 +39,7 @@ Item {
     // Dummy object so Tokens attached prop resolves to global config
     // Anim configs are not per-monitor
     readonly property QtObject dummy: QtObject {}
+
     property int animLength: dummy.Tokens.anim.durations.expressiveDefaultSpatial
     property var animCurve: dummy.Tokens.anim.expressiveDefaultSpatial // The easingCurve type is Qt 6.11+ so we gotta use var for now
 
@@ -70,6 +70,7 @@ Item {
     implicitHeight: nonAnimHeight
 
     focus: hasCurrent
+
     Keys.onEscapePressed: {
         // Forward escape to password popout if active, otherwise close
         if (currentName === "wirelesspassword" && content.item) {
@@ -93,18 +94,18 @@ Item {
         id: popoutState
 
         sidebarOpen: root.screenState.sidebar
-        isHorizontal: Config.bar.position === "top" || Config.bar.position === "bottom"
+        isHorizontal: root.Config.bar.position === "top" || root.Config.bar.position === "bottom"
 
         onDetachRequested: mode => root.detach(mode)
     }
 
     Connections {
-        target: popoutState
-
         function onHasCurrentChanged() {
             if (!popoutState.hasCurrent)
                 root.currentSection = "";
         }
+
+        target: popoutState
     }
 
     HyprlandFocusGrab {
@@ -167,7 +168,12 @@ Item {
                 anchors.fill: parent
                 nState.screen: root.screen
                 nState.animatingContainer: nexus.opacity < 1
-                nState.currentPageIdx: ({ "appearance": 0, "network": 3, "bluetooth": 4, "audio": 5 })[root.queuedMode] ?? 0
+                nState.currentPageIdx: ({
+                        "appearance": 0,
+                        "network": 3,
+                        "bluetooth": 4,
+                        "audio": 5
+                    })[root.queuedMode] ?? 0
                 onClose: root.close()
             }
         }

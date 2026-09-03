@@ -30,7 +30,9 @@ PageBase {
             stepSize: 2
             showReset: true
             onMoved: v => TokenConfig.sizes.bar.innerWidth = v
-            onReset: { TokenConfig.sizes.bar.innerWidth = TokenConfig.defaults().sizes.bar.innerWidth; TokenConfig.sizes.bar.resetOption("innerWidth"); }
+            onReset: {
+                TokenConfig.sizes.bar.resetOption("innerWidth");
+            }
         }
 
         StepperRow {
@@ -43,7 +45,9 @@ PageBase {
             stepSize: 10
             showReset: true
             onMoved: v => TokenConfig.sizes.bar.windowPreviewSize = v
-            onReset: { TokenConfig.sizes.bar.windowPreviewSize = TokenConfig.defaults().sizes.bar.windowPreviewSize; TokenConfig.sizes.bar.resetOption("windowPreviewSize"); }
+            onReset: {
+                TokenConfig.sizes.bar.resetOption("windowPreviewSize");
+            }
         }
 
         StepperRow {
@@ -56,7 +60,9 @@ PageBase {
             stepSize: 10
             showReset: true
             onMoved: v => TokenConfig.sizes.bar.trayMenuWidth = v
-            onReset: { TokenConfig.sizes.bar.trayMenuWidth = TokenConfig.defaults().sizes.bar.trayMenuWidth; TokenConfig.sizes.bar.resetOption("trayMenuWidth"); }
+            onReset: {
+                TokenConfig.sizes.bar.resetOption("trayMenuWidth");
+            }
         }
 
         StepperRow {
@@ -69,7 +75,9 @@ PageBase {
             stepSize: 5
             showReset: true
             onMoved: v => TokenConfig.sizes.bar.batteryWidth = v
-            onReset: { TokenConfig.sizes.bar.batteryWidth = TokenConfig.defaults().sizes.bar.batteryWidth; TokenConfig.sizes.bar.resetOption("batteryWidth"); }
+            onReset: {
+                TokenConfig.sizes.bar.resetOption("batteryWidth");
+            }
         }
 
         StepperRow {
@@ -82,7 +90,9 @@ PageBase {
             stepSize: 10
             showReset: true
             onMoved: v => TokenConfig.sizes.bar.networkWidth = v
-            onReset: { TokenConfig.sizes.bar.networkWidth = TokenConfig.defaults().sizes.bar.networkWidth; TokenConfig.sizes.bar.resetOption("networkWidth"); }
+            onReset: {
+                TokenConfig.sizes.bar.resetOption("networkWidth");
+            }
         }
 
         StepperRow {
@@ -96,7 +106,9 @@ PageBase {
             stepSize: 10
             showReset: true
             onMoved: v => TokenConfig.sizes.bar.kbLayoutWidth = v
-            onReset: { TokenConfig.sizes.bar.kbLayoutWidth = TokenConfig.defaults().sizes.bar.kbLayoutWidth; TokenConfig.sizes.bar.resetOption("kbLayoutWidth"); }
+            onReset: {
+                TokenConfig.sizes.bar.resetOption("kbLayoutWidth");
+            }
         }
 
         SectionHeader {
@@ -113,7 +125,9 @@ PageBase {
             stepSize: 10
             showReset: true
             onMoved: v => TokenConfig.sizes.dashboard.userWidth = v
-            onReset: { TokenConfig.sizes.dashboard.userWidth = TokenConfig.defaults().sizes.dashboard.userWidth; TokenConfig.sizes.dashboard.resetOption("userWidth"); }
+            onReset: {
+                TokenConfig.sizes.dashboard.resetOption("userWidth");
+            }
         }
 
         StepperRow {
@@ -126,7 +140,9 @@ PageBase {
             stepSize: 2
             showReset: true
             onMoved: v => TokenConfig.sizes.dashboard.logoSize = v
-            onReset: { TokenConfig.sizes.dashboard.logoSize = TokenConfig.defaults().sizes.dashboard.logoSize; TokenConfig.sizes.dashboard.resetOption("logoSize"); }
+            onReset: {
+                TokenConfig.sizes.dashboard.resetOption("logoSize");
+            }
         }
 
         StepperRow {
@@ -139,7 +155,9 @@ PageBase {
             stepSize: 2
             showReset: true
             onMoved: v => TokenConfig.sizes.dashboard.uptimeSize = v
-            onReset: { TokenConfig.sizes.dashboard.uptimeSize = TokenConfig.defaults().sizes.dashboard.uptimeSize; TokenConfig.sizes.dashboard.resetOption("uptimeSize"); }
+            onReset: {
+                TokenConfig.sizes.dashboard.resetOption("uptimeSize");
+            }
         }
 
         StepperRow {
@@ -152,7 +170,9 @@ PageBase {
             stepSize: 5
             showReset: true
             onMoved: v => TokenConfig.sizes.dashboard.dateTimeWidth = v
-            onReset: { TokenConfig.sizes.dashboard.dateTimeWidth = TokenConfig.defaults().sizes.dashboard.dateTimeWidth; TokenConfig.sizes.dashboard.resetOption("dateTimeWidth"); }
+            onReset: {
+                TokenConfig.sizes.dashboard.resetOption("dateTimeWidth");
+            }
         }
 
         StepperRow {
@@ -165,7 +185,9 @@ PageBase {
             stepSize: 5
             showReset: true
             onMoved: v => TokenConfig.sizes.dashboard.weatherWidth = v
-            onReset: { TokenConfig.sizes.dashboard.weatherWidth = TokenConfig.defaults().sizes.dashboard.weatherWidth; TokenConfig.sizes.dashboard.resetOption("weatherWidth"); }
+            onReset: {
+                TokenConfig.sizes.dashboard.resetOption("weatherWidth");
+            }
         }
 
         StepperRow {
@@ -178,7 +200,9 @@ PageBase {
             stepSize: 10
             showReset: true
             onMoved: v => TokenConfig.sizes.dashboard.mediaWidth = v
-            onReset: { TokenConfig.sizes.dashboard.mediaWidth = TokenConfig.defaults().sizes.dashboard.mediaWidth; TokenConfig.sizes.dashboard.resetOption("mediaWidth"); }
+            onReset: {
+                TokenConfig.sizes.dashboard.resetOption("mediaWidth");
+            }
         }
 
         StepperRow {
@@ -191,7 +215,9 @@ PageBase {
             stepSize: 10
             showReset: true
             onMoved: v => TokenConfig.sizes.dashboard.mediaSectionWidth = v
-            onReset: { TokenConfig.sizes.dashboard.mediaSectionWidth = TokenConfig.defaults().sizes.dashboard.mediaSectionWidth; TokenConfig.sizes.dashboard.resetOption("mediaSectionWidth"); }
+            onReset: {
+                TokenConfig.sizes.dashboard.resetOption("mediaSectionWidth");
+            }
         }
 
         StepperRow {
@@ -204,7 +230,9 @@ PageBase {
             stepSize: 10
             showReset: true
             onMoved: v => TokenConfig.sizes.dashboard.mediaCoverArtSize = v
-            onReset: { TokenConfig.sizes.dashboard.mediaCoverArtSize = TokenConfig.defaults().sizes.dashboard.mediaCoverArtSize; TokenConfig.sizes.dashboard.resetOption("mediaCoverArtSize"); }
+            onReset: {
+                TokenConfig.sizes.dashboard.resetOption("mediaCoverArtSize");
+            }
         }
 
         StepperRow {
@@ -217,7 +245,9 @@ PageBase {
             stepSize: 20
             showReset: true
             onMoved: v => TokenConfig.sizes.dashboard.mediaTabWidth = v
-            onReset: { TokenConfig.sizes.dashboard.mediaTabWidth = TokenConfig.defaults().sizes.dashboard.mediaTabWidth; TokenConfig.sizes.dashboard.resetOption("mediaTabWidth"); }
+            onReset: {
+                TokenConfig.sizes.dashboard.resetOption("mediaTabWidth");
+            }
         }
 
         StepperRow {
@@ -231,7 +261,9 @@ PageBase {
             stepSize: 10
             showReset: true
             onMoved: v => TokenConfig.sizes.dashboard.mediaTabHeight = v
-            onReset: { TokenConfig.sizes.dashboard.mediaTabHeight = TokenConfig.defaults().sizes.dashboard.mediaTabHeight; TokenConfig.sizes.dashboard.resetOption("mediaTabHeight"); }
+            onReset: {
+                TokenConfig.sizes.dashboard.resetOption("mediaTabHeight");
+            }
         }
     }
 }

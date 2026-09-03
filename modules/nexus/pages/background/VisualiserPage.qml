@@ -5,6 +5,7 @@ import qs.modules.nexus.common
 
 PageBase {
     id: root
+
     title: qsTr("Background visualiser")
     isSubPage: true
 
@@ -28,7 +29,6 @@ PageBase {
             checked: root.targetConfig.background.visualiser.enabled
             onToggled: {
                 root.targetConfig.background.visualiser.enabled = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -42,7 +42,6 @@ PageBase {
             checked: root.targetConfig.background.visualiser.autoHide
             onToggled: {
                 root.targetConfig.background.visualiser.autoHide = checked;
-                root.targetConfig.save();
             }
             enabled: root.targetConfig.background.visualiser.enabled
         }
@@ -58,7 +57,6 @@ PageBase {
             checked: root.targetConfig.background.visualiser.blur
             onToggled: {
                 root.targetConfig.background.visualiser.blur = checked;
-                root.targetConfig.save();
             }
             enabled: root.targetConfig.background.visualiser.enabled
         }
@@ -77,7 +75,6 @@ PageBase {
             valueLabel: (value * 10.0).toFixed(1)
             onMoved: v => {
                 root.targetConfig.background.visualiser.rounding = v * 10.0;
-                root.targetConfig.save();
             }
         }
 
@@ -91,7 +88,6 @@ PageBase {
             valueLabel: (value * 10.0).toFixed(1)
             onMoved: v => {
                 root.targetConfig.background.visualiser.spacing = v * 10.0;
-                root.targetConfig.save();
             }
         }
 
@@ -109,7 +105,6 @@ PageBase {
             stepSize: 2
             onMoved: v => {
                 root.targetConfig.services.visualiserBars = v;
-                root.targetConfig.save();
             }
         }
     }

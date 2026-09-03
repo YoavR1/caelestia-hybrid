@@ -36,7 +36,6 @@ PageBase {
                     for (let i = 0; i < section.count; i++) {
                         if (section.at(i).id === "dock") {
                             section.at(i).enabled = checked;
-                            GlobalConfig.save();
                             return;
                         }
                     }
@@ -45,7 +44,6 @@ PageBase {
                     id: "dock",
                     enabled: checked
                 });
-                GlobalConfig.save();
             }
         }
 
@@ -58,7 +56,6 @@ PageBase {
             checked: root.targetConfig.bar.dock.monitorCenter
             onToggled: {
                 root.targetConfig.bar.dock.monitorCenter = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -72,7 +69,6 @@ PageBase {
             checked: root.targetConfig.bar.dock.recolourIcons
             onToggled: {
                 root.targetConfig.bar.dock.recolourIcons = checked;
-                root.targetConfig.save();
             }
         }
     }

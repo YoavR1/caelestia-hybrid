@@ -10,7 +10,6 @@ Item {
     id: root
 
     required property ShellScreen screen
-    Config.screen: screen.name
     required property var bar
     required property real borderThickness
     required property ScreenState screenState
@@ -18,6 +17,8 @@ Item {
     readonly property alias content: content
     readonly property bool isHorizontal: bar.isHorizontal
     property real offsetScale: content.isDetached || content.hasCurrent ? 0 : 1
+
+    Config.screen: screen.name
 
     visible: width > 0 && height > 0
     clip: true
@@ -32,7 +33,7 @@ Item {
             if (content.sidebarOpen && !content.isDockPopout && content.currentSection === "end")
                 return parent.width - content.nonAnimWidth;
 
-            const off = content.currentCenter - parent.leftMargin - content.nonAnimWidth / 2;
+            const off = content.currentCenter - parent.leftMargin - content.nonAnimWidth / 2; // qmllint disable missing-property
             const diff = parent.width - Math.floor(off + content.nonAnimWidth);
             if (diff < 0)
                 return off + diff;
@@ -42,6 +43,7 @@ Item {
             return parent.width - implicitWidth;
         return 0;
     }
+
     y: {
         if (content.isDetached)
             return (parent.height - content.nonAnimHeight) / 2;
@@ -51,7 +53,7 @@ Item {
             return 0;
         }
 
-        const off = content.currentCenter - parent.topMargin - content.nonAnimHeight / 2;
+        const off = content.currentCenter - parent.topMargin - content.nonAnimHeight / 2; // qmllint disable missing-property
         const diff = parent.height - Math.floor(off + content.nonAnimHeight);
         if (diff < 0)
             return off + diff;
@@ -63,7 +65,7 @@ Item {
     }
 
     Behavior on x {
-        enabled: content.isDetached || isHorizontal
+        enabled: content.isDetached || root.isHorizontal
 
         Anim {
             duration: content.animLength
@@ -72,7 +74,7 @@ Item {
     }
 
     Behavior on y {
-        enabled: content.isDetached || (!isHorizontal && root.offsetScale < 1)
+        enabled: content.isDetached || (!root.isHorizontal && root.offsetScale < 1)
 
         Anim {
             duration: content.animLength
@@ -88,15 +90,15 @@ Item {
         screenState: root.screenState
 
         // Apply slide animation margins based on edge
-        anchors.leftMargin: bar.position === "left" ? (-implicitWidth - 5) * root.offsetScale : 0
-        anchors.rightMargin: bar.position === "right" ? (-implicitWidth - 5) * root.offsetScale : 0
-        anchors.topMargin: bar.position === "top" ? (-implicitHeight - 5) * root.offsetScale : 0
-        anchors.bottomMargin: bar.position === "bottom" ? (-implicitHeight - 5) * root.offsetScale : 0
+        anchors.leftMargin: root.bar.position === "left" ? (-implicitWidth - 5) * root.offsetScale : 0
+        anchors.rightMargin: root.bar.position === "right" ? (-implicitWidth - 5) * root.offsetScale : 0
+        anchors.topMargin: root.bar.position === "top" ? (-implicitHeight - 5) * root.offsetScale : 0
+        anchors.bottomMargin: root.bar.position === "bottom" ? (-implicitHeight - 5) * root.offsetScale : 0
 
         states: [
             State {
                 name: "left"
-                when: bar.position === "left"
+                when: root.bar.position === "left"
 
                 AnchorChanges {
                     target: content
@@ -110,7 +112,7 @@ Item {
             },
             State {
                 name: "right"
-                when: bar.position === "right"
+                when: root.bar.position === "right"
 
                 AnchorChanges {
                     target: content
@@ -124,7 +126,7 @@ Item {
             },
             State {
                 name: "top"
-                when: bar.position === "top"
+                when: root.bar.position === "top"
 
                 AnchorChanges {
                     target: content
@@ -138,7 +140,7 @@ Item {
             },
             State {
                 name: "bottom"
-                when: bar.position === "bottom"
+                when: root.bar.position === "bottom"
 
                 AnchorChanges {
                     target: content

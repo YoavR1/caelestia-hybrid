@@ -26,6 +26,19 @@ GridLayout {
     readonly property int ws: groupOffset + index + 1
     readonly property bool isOccupied: occupied[ws] ?? false
     readonly property bool hasWindows: isOccupied && Config.bar.workspaces.showWindows
+    readonly property bool focused: activeWsId === ws
+    readonly property list<int> focusedShapeList: [MaterialShape.Slanted, MaterialShape.Oval, MaterialShape.Pill, MaterialShape.Triangle, MaterialShape.Arrow, MaterialShape.Diamond, MaterialShape.Pentagon, MaterialShape.Gem, MaterialShape.VerySunny, MaterialShape.Sunny, MaterialShape.Cookie4Sided, MaterialShape.Cookie6Sided, MaterialShape.Cookie7Sided, MaterialShape.Cookie9Sided, MaterialShape.Cookie12Sided, MaterialShape.Clover4Leaf, MaterialShape.SoftBurst, MaterialShape.Ghostish]
+
+    function updateShape(): void {
+        const shape = indicator.item as MaterialShape;
+        if (!shape)
+            return;
+
+        if (focused)
+            shape.shape = focusedShapeList[Math.floor(Math.random() * focusedShapeList.length)];
+        else
+            shape.shape = Qt.binding(() => isOccupied ? MaterialShape.Square : MaterialShape.Circle);
+    }
 
     columns: isHorizontal ? -1 : 1
     rows: isHorizontal ? 1 : -1
@@ -41,9 +54,9 @@ GridLayout {
     Loader {
         id: indicator
 
-        Layout.alignment: isHorizontal ? (Qt.AlignVCenter | Qt.AlignLeft) : (Qt.AlignHCenter | Qt.AlignTop)
-        Layout.preferredWidth: isHorizontal ? (Tokens.sizes.bar.innerWidth - Tokens.padding.small) : -1
-        Layout.preferredHeight: isHorizontal ? -1 : (Tokens.sizes.bar.innerWidth - Tokens.padding.small)
+        Layout.alignment: root.isHorizontal ? (Qt.AlignVCenter | Qt.AlignLeft) : (Qt.AlignHCenter | Qt.AlignTop)
+        Layout.preferredWidth: root.isHorizontal ? (Tokens.sizes.bar.innerWidth - Tokens.padding.small) : -1
+        Layout.preferredHeight: root.isHorizontal ? -1 : (Tokens.sizes.bar.innerWidth - Tokens.padding.small)
 
         asynchronous: true
         sourceComponent: Config.bar.workspaces.useIcon ? iconComponent : textComponent
@@ -217,16 +230,16 @@ GridLayout {
 
         asynchronous: true
 
-        Layout.alignment: isHorizontal ? Qt.AlignVCenter : Qt.AlignHCenter
-        Layout.fillWidth: isHorizontal && enabled
-        Layout.fillHeight: !isHorizontal && enabled
-        Layout.topMargin: isHorizontal ? 0 : -Tokens.sizes.bar.innerWidth / 10
-        Layout.leftMargin: isHorizontal ? -Tokens.sizes.bar.innerWidth / 10 : 0
+        Layout.alignment: root.isHorizontal ? Qt.AlignVCenter : Qt.AlignHCenter
+        Layout.fillWidth: root.isHorizontal && enabled
+        Layout.fillHeight: !root.isHorizontal && enabled
+        Layout.topMargin: root.isHorizontal ? 0 : -Tokens.sizes.bar.innerWidth / 10
+        Layout.leftMargin: root.isHorizontal ? -Tokens.sizes.bar.innerWidth / 10 : 0
 
         visible: active
         active: root.hasWindows
 
-        sourceComponent: isHorizontal ? rowComponent : columnComponent
+        sourceComponent: root.isHorizontal ? rowComponent : columnComponent
     }
 
     Component {
@@ -305,8 +318,7 @@ GridLayout {
             Repeater {
                 model: ScriptModel {
                     values: {
-                        const ws = root.ws;
-                        const windows = Hypr.toplevels.values.filter(c => c.workspace?.id === ws);
+                        const windows = Hypr.toplevelsForWs(root.ws);
                         const maxIcons = root.Config.bar.workspaces.maxWindowIcons;
                         return maxIcons > 0 ? windows.slice(0, maxIcons) : windows;
                     }
@@ -324,13 +336,13 @@ GridLayout {
     }
 
     Behavior on Layout.preferredHeight {
-        enabled: !isHorizontal
+        enabled: !root.isHorizontal
 
         Anim {}
     }
 
     Behavior on Layout.preferredWidth {
-        enabled: isHorizontal
+        enabled: root.isHorizontal
 
         Anim {}
     }

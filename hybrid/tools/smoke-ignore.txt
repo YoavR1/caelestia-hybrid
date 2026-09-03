@@ -1,0 +1,73 @@
+# smoke-matrix.sh ignore list - reviewed code, not a dumping ground.
+#
+# One extended-regex per line. A log line matching any of these is not a failure.
+# Blank lines and lines starting with # are ignored.
+#
+# --fix/--baseline can append here, but its output is NOT trustworthy as written: it
+# bakes in per-run temp paths and QMLTYPE ids that change every run. Always generalise
+# what it appends, and delete anything that is a genuine bug.
+#
+# Established on CachyOS / Hyprland 0.56.2 / Qt 6.x, nested-compositor run, 2026-09-02.
+
+# =============================================================================
+# ENVIRONMENT - absent hardware or services already owned by the host session.
+# These are legitimately not our problem inside a throwaway compositor.
+# =============================================================================
+
+# No bluetooth adapter in the VM.
+Failed to create DBusObjectManagerInterface for "org\.bluez"
+
+# The host session already owns these bus names / agent slots. A second shell
+# cannot register them, and correctly says so rather than stealing them.
+Could not register notification server at org\.freedesktop\.Notifications
+Registration will be attempted again if the active service is unregistered
+failed to register listener: GDBus\.Error:org\.freedesktop\.PolicyKit1\.Error\.Failed
+failed to register listener on path "/org/quickshell/PolkitAgent"
+
+# Fresh isolated XDG_STATE_HOME genuinely has no colour scheme yet. Writing one is
+# the CLI's job and the shell falls back correctly.
+Read of .*/state/caelestia/scheme\.json failed: File does not exist
+
+# Qt Quick's own image-loading thread, not ours. The full message names the participants:
+#
+#   QObject: Cannot create children for a parent that is in a different thread.
+#   (Parent is QGuiApplication, parent's thread is QThread, current thread is
+#    QQuickPixmapReader)
+#
+# QQuickPixmapReader is Qt's internal pixmap loader; it fires next to the first image load
+# and there is nothing in this repository to fix. An earlier comment here blamed QuickShare's
+# worker thread during teardown, which the message plainly contradicts.
+#
+# These were deleted once, on the strength of `--audit-ignores` reporting zero matches over
+# 12 runs, and restored when a later 12 runs failed 12/12 on them. The condition is a race
+# against startup timing, so a zero-match sample is not evidence of deadness -- deleting an
+# ignore entry needs a reason the condition *cannot* recur, not a run of quiet days. See T23.
+QObject: Cannot create children for a parent that is in a different thread
+QObject::installEventFilter\(\): Cannot filter events for objects in a different thread
+
+# =============================================================================
+# The shell fetches weather, GitHub activity and lyrics over the network at startup. A CI
+# container has no internet, and even here the weather API returns 503 often enough to have
+# failed 5 of 12 runs in one sitting. A boot gate must not depend on someone else's uptime.
+#
+# This does hide a genuinely malformed request, so if a feature that talks to the network
+# stops working, read the log with this file emptied before believing the gate.
+caelestia\.requests: \w+: request failed with error
+
+# The user avatar lives at ~/.face by convention and most accounts do not have one. The
+# dashboard and lock screen both draw a placeholder icon behind it, so a missing file is
+# the normal case rather than a defect. Only reachable once the dashboard is opened, which
+# is why it appeared with the interaction pass and not before.
+Source file does not exist: .*/\.face
+
+# KNOWN BUGS - real defects, suppressed only so the gate stays useful.
+# Each line here is debt. Delete the entry when the bug is fixed, not before.
+# =============================================================================
+
+# Upstream's components/Anim.qml reads Tokens.anim.durations, and Anim is a
+# NumberAnimation -- not a QQuickItem -- so its attached Tokens can never inherit a
+# screen and always resolves against the global layer. Animation durations do not vary
+# per monitor, so the value is right; upstream's own diagnostic just cannot tell. Fires
+# once per process. Fixing it means changing an upstream file for a cosmetic warning,
+# which is the wrong trade (hard rule 6) -- report it upstream instead.
+Tokens\.\w+ accessed without a screen set on Anim

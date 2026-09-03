@@ -1,11 +1,9 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import Quickshell
 import Caelestia.Config
 import qs.components
 import qs.services
-import qs.utils
 
 MaterialIcon {
     id: root
@@ -32,6 +30,8 @@ MaterialIcon {
                 Notifs.dnd = !Notifs.dnd;
             } else {
                 const vis = Visibilities.getForActive();
+                if (!vis)
+                    return;
                 vis.sidebar = !vis.sidebar;
             }
         }

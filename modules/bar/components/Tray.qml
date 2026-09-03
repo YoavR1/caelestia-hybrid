@@ -52,16 +52,16 @@ StyledRect {
     Grid {
         id: layout
 
-        anchors.horizontalCenter: isHorizontal ? undefined : parent.horizontalCenter
-        anchors.verticalCenter: isHorizontal ? parent.verticalCenter : undefined
-        anchors.top: isHorizontal ? undefined : parent.top
-        anchors.topMargin: isHorizontal ? 0 : root.padding
-        anchors.left: isHorizontal ? parent.left : undefined
-        anchors.leftMargin: isHorizontal ? root.padding : 0
+        anchors.horizontalCenter: root.isHorizontal ? undefined : parent.horizontalCenter
+        anchors.verticalCenter: root.isHorizontal ? parent.verticalCenter : undefined
+        anchors.top: root.isHorizontal ? undefined : parent.top
+        anchors.topMargin: root.isHorizontal ? 0 : root.padding
+        anchors.left: root.isHorizontal ? parent.left : undefined
+        anchors.leftMargin: root.isHorizontal ? root.padding : 0
 
-        columns: isHorizontal ? -1 : 1
-        rows: isHorizontal ? 1 : -1
-        flow: isHorizontal ? Grid.LeftToRight : Grid.TopToBottom
+        columns: root.isHorizontal ? -1 : 1
+        rows: root.isHorizontal ? 1 : -1
+        flow: root.isHorizontal ? Grid.LeftToRight : Grid.TopToBottom
 
         spacing: Tokens.spacing.small
 
@@ -109,43 +109,43 @@ StyledRect {
 
         asynchronous: true
 
-        anchors.horizontalCenter: isHorizontal ? undefined : parent.horizontalCenter
-        anchors.verticalCenter: isHorizontal ? parent.verticalCenter : undefined
-        anchors.bottom: isHorizontal ? undefined : parent.bottom
-        anchors.right: isHorizontal ? parent.right : undefined
+        anchors.horizontalCenter: root.isHorizontal ? undefined : parent.horizontalCenter
+        anchors.verticalCenter: root.isHorizontal ? parent.verticalCenter : undefined
+        anchors.bottom: root.isHorizontal ? undefined : parent.bottom
+        anchors.right: root.isHorizontal ? parent.right : undefined
 
         active: Config.bar.tray.compact && items.count > 0
 
         sourceComponent: Item {
-            implicitWidth: isHorizontal ? (expandIconInner.implicitWidth - Tokens.padding.small * 2) : expandIconInner.implicitWidth
-            implicitHeight: isHorizontal ? expandIconInner.implicitHeight : (expandIconInner.implicitHeight - Tokens.padding.small * 2)
+            implicitWidth: root.isHorizontal ? (expandIconInner.implicitWidth - Tokens.padding.small * 2) : expandIconInner.implicitWidth
+            implicitHeight: root.isHorizontal ? expandIconInner.implicitHeight : (expandIconInner.implicitHeight - Tokens.padding.small * 2)
 
             MaterialIcon {
                 id: expandIconInner
 
-                anchors.horizontalCenter: isHorizontal ? undefined : parent.horizontalCenter
-                anchors.verticalCenter: isHorizontal ? parent.verticalCenter : undefined
-                anchors.bottom: isHorizontal ? undefined : parent.bottom
-                anchors.right: isHorizontal ? parent.right : undefined
-                anchors.bottomMargin: isHorizontal ? 0 : (Config.bar.tray.background ? Tokens.padding.extraSmall : -Tokens.padding.small)
-                anchors.rightMargin: isHorizontal ? (Config.bar.tray.background ? Tokens.padding.extraSmall : -Tokens.padding.small) : 0
+                anchors.horizontalCenter: root.isHorizontal ? undefined : parent.horizontalCenter
+                anchors.verticalCenter: root.isHorizontal ? parent.verticalCenter : undefined
+                anchors.bottom: root.isHorizontal ? undefined : parent.bottom
+                anchors.right: root.isHorizontal ? parent.right : undefined
+                anchors.bottomMargin: root.isHorizontal ? 0 : (Config.bar.tray.background ? Tokens.padding.extraSmall : -Tokens.padding.small)
+                anchors.rightMargin: root.isHorizontal ? (Config.bar.tray.background ? Tokens.padding.extraSmall : -Tokens.padding.small) : 0
                 text: "expand_less"
                 color: Colours.palette.m3onSurfaceVariant
                 fontStyle: Tokens.font.icon.medium
-                rotation: isHorizontal ? (root.expanded ? 270 : 90) : (root.expanded ? 180 : 0)
+                rotation: root.isHorizontal ? (root.expanded ? 270 : 90) : (root.expanded ? 180 : 0)
 
                 Behavior on rotation {
                     Anim {}
                 }
 
                 Behavior on anchors.bottomMargin {
-                    enabled: !isHorizontal
+                    enabled: !root.isHorizontal
 
                     Anim {}
                 }
 
                 Behavior on anchors.rightMargin {
-                    enabled: isHorizontal
+                    enabled: root.isHorizontal
 
                     Anim {}
                 }
@@ -154,7 +154,7 @@ StyledRect {
     }
 
     Behavior on implicitHeight {
-        enabled: !isHorizontal
+        enabled: !root.isHorizontal
 
         Anim {
             type: Anim.DefaultSpatial
@@ -162,7 +162,7 @@ StyledRect {
     }
 
     Behavior on implicitWidth {
-        enabled: isHorizontal
+        enabled: root.isHorizontal
 
         Anim {
             type: Anim.DefaultSpatial

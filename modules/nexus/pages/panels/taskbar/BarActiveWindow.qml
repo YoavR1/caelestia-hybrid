@@ -35,7 +35,6 @@ PageBase {
                     for (let i = 0; i < section.count; i++) {
                         if (section.at(i).id === "activeWindow") {
                             section.at(i).enabled = checked;
-                            GlobalConfig.save();
                             return;
                         }
                     }
@@ -44,7 +43,6 @@ PageBase {
                     id: "activeWindow",
                     enabled: checked
                 });
-                GlobalConfig.save();
             }
         }
 
@@ -56,7 +54,6 @@ PageBase {
             checked: root.targetConfig.bar.activeWindow.compact
             onToggled: {
                 root.targetConfig.bar.activeWindow.compact = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -67,7 +64,6 @@ PageBase {
             checked: root.targetConfig.bar.activeWindow.inverted
             onToggled: {
                 root.targetConfig.bar.activeWindow.inverted = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -79,7 +75,6 @@ PageBase {
             checked: root.targetConfig.bar.activeWindow.showOnHover
             onToggled: {
                 root.targetConfig.bar.activeWindow.showOnHover = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -92,7 +87,6 @@ PageBase {
             checked: root.targetConfig.bar.popouts.activeWindow
             onToggled: {
                 root.targetConfig.bar.popouts.activeWindow = checked;
-                root.targetConfig.save();
             }
         }
     }

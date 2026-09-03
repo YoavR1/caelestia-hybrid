@@ -1,0 +1,75 @@
+name: Smoke matrix
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+
+    # Lowercase literal, not ${{ github.repository_owner }}: Docker rejects an
+    # uppercase registry reference, container.image is resolved before any step
+    # could lowercase it, and GitHub expressions have no toLower(). A fork edits
+    # this one string (and nothing else) to point at its own namespace. See T29.
+    container:
+      image: ghcr.io/yoavr1/shell-arch-env:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      # The checkout is owned by a different uid than the container's root, so git refuses
+      # every command with "detected dubious ownership". The checkers now fail loudly on
+      # that rather than reporting an empty tree as clean, but they still need it to work.
+      - name: Trust the workspace
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      # core.fileMode is false in this repo, so a chmod +x never reaches the index and a
+      # script committed 100644 fails here and nowhere else. Checked first, costs a second.
+      - name: Check index modes
+        run: ./hybrid/tools/check-index-modes.sh
+
+      - name: Build
+        run: |
+          cmake -B build -G Ninja -DVERSION= -DGIT_REVISION=
+          cmake --build build
+
+      # Fast, compositor-free, and cheapest to attribute -- so it runs before sway is even
+      # installed. Reuses the build above.
+      - name: Plugin tests
+        run: ./hybrid/tools/plugin-test.sh
+
+      # Hyprland cannot run here: with no parent display and no DRM node it dies in
+      # CBackend::create(), and it has no headless backend to ask for. Sway does, and it
+      # speaks the only protocol PanelWindow actually needs -- wlr-layer-shell.
+      - name: Install headless compositor
+        run: |
+          pacman -Sy --noconfirm --needed sway
+          # Arch's sway ships with cap_sys_nice=ep. Docker's default capability bounding set
+          # has no CAP_SYS_NICE, and execve of a binary carrying an *effective* file
+          # capability outside the bounding set fails with EPERM -- so the run died as
+          # "setsid: failed to execute sway: Operation not permitted", before sway itself
+          # ran at all. It wants CAP_SYS_NICE only for realtime scheduling, which a headless
+          # boot gate does not need, so dropping it is cheaper than granting it on the
+          # container and works regardless of runner configuration.
+          setcap -r "$(command -v sway)" || true
+          sway --version
+
+      # Runs before the matrix it validates: proves the harness still rejects a config
+      # the shell cannot load, so a green matrix cannot mean "tested nothing six times".
+      - name: Smoke matrix self-test
+        run: ./hybrid/tools/smoke-matrix.sh --compositor sway --self-test
+
+      - name: Smoke matrix
+        run: ./hybrid/tools/smoke-matrix.sh --compositor sway --keep-logs
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: smoke-logs
+          path: .smoke-logs/

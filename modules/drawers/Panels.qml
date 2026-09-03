@@ -17,7 +17,6 @@ Item {
     id: root
 
     required property ShellScreen screen
-    Config.screen: screen.name
     required property ScreenState screenState
     required property Bar.BarWrapper bar
     required property real borderThickness
@@ -40,6 +39,8 @@ Item {
     readonly property real rightMargin: anchors.rightMargin
     readonly property real topMargin: anchors.topMargin
     readonly property real bottomMargin: anchors.bottomMargin
+
+    Config.screen: screen.name
 
     anchors.fill: parent
     anchors.leftMargin: (Config.bar.position === "left" ? bar.implicitWidth + (GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge * 2 : 0) : borderThickness + (GlobalConfig.appearance.islands ? Tokens.spacing.extraLarge : 0))
@@ -89,9 +90,8 @@ Item {
                 anchors.right: undefined
             }
             PropertyChanges {
-                target: toasts
-                anchors.leftMargin: Tokens.padding.medium + (sidebar.visible ? sidebar.width * (1 - sidebar.offsetScale) : 0)
-                anchors.rightMargin: 0
+                toasts.anchors.leftMargin: Tokens.padding.medium + (sidebar.visible ? sidebar.width * (1 - sidebar.offsetScale) : 0)
+                toasts.anchors.rightMargin: 0
             }
             AnchorChanges {
                 target: sidebar
@@ -104,7 +104,6 @@ Item {
                 anchors.right: parent.right
             }
         },
-
         State {
             name: "bottom"
             Config.screen: root.screen.name
@@ -131,8 +130,7 @@ Item {
                 anchors.bottom: notifications.top
             }
             PropertyChanges {
-                target: sidebar
-                anchors.topMargin: -4
+                sidebar.anchors.topMargin: -4
             }
         }
     ]
@@ -255,6 +253,8 @@ Item {
     Sidebar.Wrapper {
         id: sidebar
 
+        property bool shouldPush: popoutsWrapper.offsetScale < 1 && !popoutsWrapper.content.isDockPopout && popoutsWrapper.content.currentSection === "end"
+
         screenState: root.screenState
         popouts: popoutsWrapper.content
         utilities: utilities
@@ -262,7 +262,6 @@ Item {
         anchors.top: notifications.bottom
         anchors.bottom: utilities.top
         anchors.right: parent.right
-        property bool shouldPush: popoutsWrapper.offsetScale < 1 && !popoutsWrapper.content.isDockPopout && popoutsWrapper.content.currentSection === "end"
 
         anchors.topMargin: (Config.bar.position === "top" && shouldPush) ? (popoutsWrapper.implicitHeight + Tokens.spacing.medium) : -notifications.anchors.topMargin
         anchors.bottomMargin: (Config.bar.position === "bottom" && shouldPush) ? (popoutsWrapper.implicitHeight + Tokens.spacing.medium) : 0
@@ -270,6 +269,7 @@ Item {
 
     WorkspaceOverview {
         id: workspaceOverview
+
         screen: root.screen
 
         anchors.left: parent.left

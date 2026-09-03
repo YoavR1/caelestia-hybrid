@@ -1,8 +1,9 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Layouts
 import Caelestia.Config
 import qs.components
-import qs.components.controls
 import qs.services
 
 Item {
@@ -20,26 +21,6 @@ Item {
 
     property string activeTab: "notifications"
 
-    Connections {
-        target: GlobalConfig.ai
-        function onEnableOllamaChanged() { checkTabs(); }
-    }
-
-    Connections {
-        target: GlobalConfig.sidebar
-        function onShowNewsChanged() { checkTabs(); }
-    }
-
-    Connections {
-        target: root.screenState
-        function onSidebarChanged() {
-            if (root.screenState.sidebar) {
-                root.activeTab = Visibilities.initialSidebarTab;
-                checkTabs();
-            }
-        }
-    }
-
     function checkTabs() {
         if (!GlobalConfig.ai.enableOllama) {
             if (root.activeTab === "ai") {
@@ -55,6 +36,33 @@ Item {
 
     Component.onCompleted: checkTabs()
 
+    Connections {
+        function onEnableOllamaChanged() {
+            root.checkTabs();
+        }
+
+        target: GlobalConfig.ai
+    }
+
+    Connections {
+        function onShowNewsChanged() {
+            root.checkTabs();
+        }
+
+        target: GlobalConfig.sidebar
+    }
+
+    Connections {
+        function onSidebarChanged() {
+            if (root.screenState.sidebar) {
+                root.activeTab = Visibilities.initialSidebarTab;
+                root.checkTabs();
+            }
+        }
+
+        target: root.screenState
+    }
+
     GridLayout {
         id: layout
 
@@ -65,7 +73,7 @@ Item {
         StyledRect {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.row: isBarHorizontal ? 1 : 0
+            Layout.row: root.isBarHorizontal ? 1 : 0
 
             radius: Tokens.rounding.large
             color: Colours.tPalette.m3surfaceContainerLow
@@ -77,7 +85,9 @@ Item {
                 // Tab Switcher Header
                 Item {
                     id: headerContainer
+
                     Layout.fillWidth: true
+
                     implicitHeight: 64
                     clip: true
                     visible: tabRepeater.count > 1
@@ -90,15 +100,28 @@ Item {
 
                         Repeater {
                             id: tabRepeater
+
                             model: {
                                 var tabs = [
-                                    { id: "notifications", label: qsTr("Notifications"), icon: "notifications" }
+                                    {
+                                        id: "notifications",
+                                        label: qsTr("Notifications"),
+                                        icon: "notifications"
+                                    }
                                 ];
                                 if (GlobalConfig.ai.enableOllama) {
-                                    tabs.push({ id: "ai", label: qsTr("AI Assistant"), icon: "smart_toy" });
+                                    tabs.push({
+                                        id: "ai",
+                                        label: qsTr("AI Assistant"),
+                                        icon: "smart_toy"
+                                    });
                                 }
                                 if (GlobalConfig.sidebar.showNews !== false) {
-                                    tabs.push({ id: "news", label: qsTr("News"), icon: "newspaper" });
+                                    tabs.push({
+                                        id: "news",
+                                        label: qsTr("News"),
+                                        icon: "newspaper"
+                                    });
                                 }
                                 return tabs;
                             }
@@ -115,6 +138,7 @@ Item {
 
                                 StateLayer {
                                     id: stateLayer
+
                                     anchors.fill: parent
                                     anchors.margins: 4
                                     radius: Tokens.rounding.medium
@@ -132,7 +156,12 @@ Item {
                                         color: tabBtn.active ? Colours.palette.m3primary : stateLayer.containsMouse ? Colours.palette.m3onSurface : Colours.palette.m3onSurfaceVariant
                                         fontStyle: Tokens.font.icon.small
                                         fill: tabBtn.active ? 1 : 0
-                                        Behavior on fill { Anim { type: Anim.DefaultEffects } }
+
+                                        Behavior on fill {
+                                            Anim {
+                                                type: Anim.DefaultEffects
+                                            }
+                                        }
                                     }
 
                                     StyledText {
@@ -149,17 +178,20 @@ Item {
                     // Sliding Indicator
                     Item {
                         id: indicator
-                        anchors.verticalCenter: parent.bottom
-                        implicitHeight: 6
-                        
+
                         property int activeIndex: {
                             var arr = tabRepeater.model;
                             for (var i = 0; i < arr.length; i++) {
-                                if (arr[i].id === root.activeTab) return i;
+                                if (arr[i].id === root.activeTab)
+                                    return i;
                             }
                             return 0;
                         }
+
                         readonly property real tabWidth: (headerContainer.width - Tokens.padding.medium * 2) / tabRepeater.count
+
+                        anchors.verticalCenter: parent.bottom
+                        implicitHeight: 6
                         width: tabWidth - Tokens.padding.medium * 2
                         x: Tokens.padding.medium + activeIndex * tabWidth + (tabWidth - width) / 2
 
@@ -187,11 +219,11 @@ Item {
 
                 // Content Panel Stack
                 Item {
+                    property int activeIndex: indicator.activeIndex
+
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     clip: true
-
-                    property int activeIndex: indicator.activeIndex
 
                     NotifDock {
                         objectName: "sidebarNotifications"
@@ -203,13 +235,22 @@ Item {
                         visible: opacity > 0
                         props: root.props
                         screenState: root.screenState
-                        
-                        Behavior on x { Anim { type: Anim.DefaultSpatial } }
-                        Behavior on opacity { Anim { type: Anim.DefaultSpatial } }
+
+                        Behavior on x {
+                            Anim {
+                                type: Anim.DefaultSpatial
+                            }
+                        }
+                        Behavior on opacity {
+                            Anim {
+                                type: Anim.DefaultSpatial
+                            }
+                        }
                     }
 
                     AiAssistant {
                         id: aiAssistant
+
                         anchors.top: parent.top
                         anchors.bottom: parent.bottom
                         width: parent.width
@@ -218,14 +259,24 @@ Item {
                         visible: opacity > 0
 
                         Connections {
-                            target: aiAssistant
                             function onIsStreamingChanged() {
                                 root.sidebarStreaming = aiAssistant.isStreaming;
                             }
+
+                            target: aiAssistant
                         }
 
-                        Behavior on x { Anim { type: Anim.DefaultSpatial } }
-                        Behavior on opacity { Anim { type: Anim.DefaultSpatial } }
+                        Behavior on x {
+                            Anim {
+                                type: Anim.DefaultSpatial
+                            }
+                        }
+
+                        Behavior on opacity {
+                            Anim {
+                                type: Anim.DefaultSpatial
+                            }
+                        }
                     }
 
                     News {
@@ -235,9 +286,17 @@ Item {
                         x: root.activeTab === "news" ? 0 : width
                         opacity: root.activeTab === "news" ? 1 : 0
                         visible: opacity > 0
-                        
-                        Behavior on x { Anim { type: Anim.DefaultSpatial } }
-                        Behavior on opacity { Anim { type: Anim.DefaultSpatial } }
+
+                        Behavior on x {
+                            Anim {
+                                type: Anim.DefaultSpatial
+                            }
+                        }
+                        Behavior on opacity {
+                            Anim {
+                                type: Anim.DefaultSpatial
+                            }
+                        }
                     }
                 }
             }
@@ -245,7 +304,7 @@ Item {
 
         // Utilities Separator
         StyledRect {
-            visible: utilities && utilities.offsetScale < 1
+            visible: root.utilities && root.utilities.offsetScale < 1
             Layout.row: Config.bar.position === "bottom" ? 0 : (Config.bar.position === "top" ? 2 : 1)
             Layout.topMargin: Config.bar.position === "bottom" ? 0 : (visible ? 18 : 0)
             Layout.bottomMargin: Config.bar.position === "bottom" ? (visible ? 18 : 0) : 0
@@ -257,7 +316,7 @@ Item {
 
         // Popout Separator
         StyledRect {
-            visible: showPopoutSeparator
+            visible: root.showPopoutSeparator
             Layout.row: Config.bar.position === "bottom" ? 2 : 0
             Layout.topMargin: Config.bar.position === "top" ? 0 : 12
             Layout.bottomMargin: Config.bar.position === "top" ? 12 : 0

@@ -36,12 +36,8 @@ Item {
 
                 StyledText {
                     text: new Date().toLocaleDateString(Qt.locale(), "dddd, MMMM d")
-                    font: Config.dashboard.showWeatherLocation !== false 
-                        ? Tokens.font.body.small 
-                        : Tokens.font.body.builders.large.size(28).weight(Font.DemiBold).build()
-                    color: Config.dashboard.showWeatherLocation !== false 
-                        ? Colours.palette.m3onSurfaceVariant 
-                        : Colours.palette.m3onSurface
+                    font: Config.dashboard.showWeatherLocation !== false ? Tokens.font.body.small : Tokens.font.body.builders.large.size(28).weight(Font.DemiBold).build()
+                    color: Config.dashboard.showWeatherLocation !== false ? Colours.palette.m3onSurfaceVariant : Colours.palette.m3onSurface
                 }
             }
 

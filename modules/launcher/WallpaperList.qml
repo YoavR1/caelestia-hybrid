@@ -4,7 +4,6 @@ import "items"
 import QtQuick
 import Quickshell
 import Caelestia.Config
-import Caelestia
 import qs.components.controls
 import qs.services
 import qs.utils
@@ -105,7 +104,8 @@ PathView {
                 } else {
                     return allWalls.filter(w => {
                         let cat = w.parentDir.slice(baseDir.length + 1);
-                        if (cat.includes("/")) cat = cat.slice(0, cat.indexOf("/"));
+                        if (cat.includes("/"))
+                            cat = cat.slice(0, cat.indexOf("/"));
                         return cat === targetCategory;
                     });
                 }
@@ -125,27 +125,23 @@ PathView {
     Component.onCompleted: currentIndex = Wallpapers.list.findIndex(w => w.path === Wallpapers.actualCurrent)
     Component.onDestruction: Wallpapers.stopPreview()
 
-    Timer {
-        id: previewTimer
-        interval: 100
-        onTriggered: {
-            if (root.currentItem)
-                Wallpapers.preview((root.currentItem as WallpaperItem).modelData.path);
-        }
-    }
-
     onCurrentItemChanged: {
         if (currentItem)
             previewTimer.restart();
     }
 
     implicitWidth: Math.min(numItems, count) * itemWidth
+
     pathItemCount: numItems
+
     cacheItemCount: 4
 
     snapMode: PathView.SnapToItem
+
     preferredHighlightBegin: 0.5
+
     preferredHighlightEnd: 0.5
+
     highlightRangeMode: PathView.StrictlyEnforceRange
 
     delegate: WallpaperItem {
@@ -173,16 +169,26 @@ PathView {
         }
     }
 
-    CustomMouseArea {
-        anchors.fill: parent
-        preventStealing: false
-        acceptedButtons: Qt.NoButton
+    Timer {
+        id: previewTimer
 
+        interval: 100
+        onTriggered: {
+            if (root.currentItem)
+                Wallpapers.preview((root.currentItem as WallpaperItem).modelData.path);
+        }
+    }
+
+    CustomMouseArea {
         function onWheel(event: WheelEvent): void {
             if (event.angleDelta.y > 0 || event.angleDelta.x > 0)
                 root.decrementCurrentIndex();
             else if (event.angleDelta.y < 0 || event.angleDelta.x < 0)
                 root.incrementCurrentIndex();
         }
+
+        anchors.fill: parent
+        preventStealing: false
+        acceptedButtons: Qt.NoButton
     }
 }

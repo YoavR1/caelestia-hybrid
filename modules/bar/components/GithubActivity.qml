@@ -2,12 +2,11 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import Quickshell.Io
+import M3Shapes
 import Caelestia.Config
 import qs.components
-import qs.components.controls
 import qs.services
 import qs.modules.bar.components as BarComponents
-import M3Shapes
 
 StyledRect {
     id: root
@@ -47,6 +46,8 @@ StyledRect {
         }
     ]
 
+    readonly property bool isHorizontal: Config.bar.position === "top" || Config.bar.position === "bottom"
+
     function redact(value: string): string {
         return (value || "").replace(/bearer\s+[A-Za-z0-9_\-.]+/gi, "bearer [redacted]");
     }
@@ -59,15 +60,11 @@ StyledRect {
         console.error("[GitHubWidget] " + msg);
     }
 
-    readonly property bool isHorizontal: Config.bar.position === "top" || Config.bar.position === "bottom"
-
     implicitWidth: isHorizontal ? (cells.implicitWidth + root.padding * 2) : Tokens.sizes.bar.innerWidth
     implicitHeight: isHorizontal ? Tokens.sizes.bar.innerWidth : (cells.implicitHeight + root.padding * 2)
 
     color: Qt.alpha(Colours.tPalette.m3surfaceContainer, Config.bar.github.background ? Colours.tPalette.m3surfaceContainer.a : 0)
     radius: Tokens.rounding.full
-
-
 
     Grid {
         id: cells

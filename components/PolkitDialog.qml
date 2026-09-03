@@ -1,34 +1,36 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Services.Polkit 0.1
+import M3Shapes
 import Caelestia.Config
-import QtQuick.Effects
 import qs.components
 import qs.components.containers
-import qs.components.controls
 import qs.services
-import M3Shapes
 
 StyledWindow {
     id: root
 
     required property PolkitAgent agent
-    required property var screen
 
     property int activeScreenScale: 1
     readonly property real centerScale: Math.max(0.8, Math.min(1, root.height / 1440))
-    readonly property int centerWidth: root.screen ? Tokens.sizes.lock.centerWidth * centerScale : 0
+    // StyledWindow gives contentItem the screen, not the window itself, so reading the
+    // attached Tokens here directly resolves against the global layer and warns. Go through
+    // contentItem, which is where the per-screen tokens actually live.
+    readonly property int centerWidth: root.screen ? root.contentItem.Tokens.sizes.lock.centerWidth * centerScale : 0
     readonly property int passwordMaxWidth: centerWidth * 0.8
-    
-    readonly property string rawMessage: agent.flow ? agent.flow.message : ""
+
+    readonly property string rawMessage: agent.flow ? agent.flow.message : "" // qmllint disable unresolved-type
+
     readonly property var splitMessage: {
         let msg = rawMessage.trim();
         let cmd = "";
-        
+
         let pkexecMatch = msg.match(/Authentication is needed to run `(.+?)' as the super user/);
         if (pkexecMatch) {
             cmd = pkexecMatch[1];
@@ -50,13 +52,18 @@ StyledWindow {
                 msg = msg.replace(backtickMatch[0], "").replace(/\s+/g, " ").trim();
             }
         }
-        
-        return { message: msg, command: cmd };
+
+        return {
+            message: msg,
+            command: cmd
+        };
     }
+
     readonly property string mainMessage: splitMessage.message
     readonly property string commandText: splitMessage.command
 
     property string buffer: ""
+
     readonly property list<int> shapeQueue: {
         const shapes = [MaterialShape.Slanted, MaterialShape.Arch, MaterialShape.Fan, MaterialShape.Arrow, MaterialShape.SemiCircle, MaterialShape.Triangle, MaterialShape.Diamond, MaterialShape.ClamShell, MaterialShape.Pentagon, MaterialShape.Gem, MaterialShape.Sunny, MaterialShape.VerySunny, MaterialShape.Cookie4Sided, MaterialShape.Ghostish, MaterialShape.SoftBurst];
         for (let i = shapes.length - 1; i > 0; i--) {
@@ -66,11 +73,11 @@ StyledWindow {
         return shapes;
     }
 
+    property bool isActive: agent.isActive && agent.flow != null // qmllint disable unresolved-type
+
     name: "polkit"
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
-
-    property bool isActive: agent.isActive && agent.flow != null
     visible: isActive || closeAnim.running
 
     anchors.top: true
@@ -80,29 +87,74 @@ StyledWindow {
 
     onIsActiveChanged: {
         if (isActive) {
-            closeAnim.stop()
-            openAnim.start()
+            closeAnim.stop();
+            openAnim.start();
         } else {
-            openAnim.stop()
-            closeAnim.start()
+            openAnim.stop();
+            closeAnim.start();
         }
     }
 
     ParallelAnimation {
         id: openAnim
+
         SequentialAnimation {
             ParallelAnimation {
-                Anim { target: dialogContainer; property: "opacity"; to: 1; duration: Tokens.anim.durations.small }
-                Anim { target: dialogContainer; property: "scale"; to: 1; type: Anim.Emphasized; duration: 400 }
+                Anim {
+                    target: dialogContainer
+                    property: "opacity"
+                    to: 1
+                    duration: Tokens.anim.durations.small
+                }
+                Anim {
+                    target: dialogContainer
+                    property: "scale"
+                    to: 1
+                    type: Anim.Emphasized
+                    duration: 400
+                }
             }
             // Delegate size expansion to Behaviors so they constantly evaluate layout recalculations
-            PropertyAction { target: dialogContainer; property: "isExpanded"; value: true }
+            PropertyAction {
+                target: dialogContainer
+                property: "isExpanded"
+                value: true
+            }
             ParallelAnimation {
-                Anim { target: lockIcon; property: "scale"; to: 0; type: Anim.Emphasized; duration: 400 }
-                Anim { type: Anim.DefaultEffects; target: lockIcon; property: "opacity"; to: 0; duration: 250 }
-                Anim { type: Anim.DefaultEffects; target: dialogContent; property: "opacity"; to: 1; duration: 500 }
-                Anim { target: dialogContent; property: "scale"; to: 1; type: Anim.Emphasized; duration: 500 }
-                Anim { target: dialogBg; property: "radius"; to: Tokens.rounding.large; duration: 500 }
+                Anim {
+                    target: lockIcon
+                    property: "scale"
+                    to: 0
+                    type: Anim.Emphasized
+                    duration: 400
+                }
+                Anim {
+                    type: Anim.DefaultEffects
+                    target: lockIcon
+                    property: "opacity"
+                    to: 0
+                    duration: 250
+                }
+                Anim {
+                    type: Anim.DefaultEffects
+                    target: dialogContent
+                    property: "opacity"
+                    to: 1
+                    duration: 500
+                }
+                Anim {
+                    target: dialogContent
+                    property: "scale"
+                    to: 1
+                    type: Anim.Emphasized
+                    duration: 500
+                }
+                Anim {
+                    target: dialogBg
+                    property: "radius"
+                    to: Tokens.rounding.large
+                    duration: 500
+                }
             }
         }
     }
@@ -111,7 +163,7 @@ StyledWindow {
         id: nonAnimPlaceholder
 
         text: "Enter your password"
-        font: Tokens.font.body.builders.medium.scale(centerScale).width(110).build()
+        font: Tokens.font.body.builders.medium.scale(root.centerScale).width(110).build()
     }
 
     SequentialAnimation {
@@ -119,17 +171,55 @@ StyledWindow {
 
         ParallelAnimation {
             // Trigger collapse logic via the Behavior state
-            PropertyAction { target: dialogContainer; property: "isExpanded"; value: false }
-            Anim { target: dialogBg; property: "radius"; to: dialogContainer.initialRadius }
-            Anim { target: dialogContent; property: "scale"; to: 0 }
-            Anim { target: dialogContent; property: "opacity"; to: 0; type: Anim.StandardSmall }
-            Anim { target: lockIcon; property: "opacity"; to: 1; type: Anim.StandardLarge }
-            Anim { target: lockIcon; property: "scale"; to: 1; type: Anim.StandardLarge }
+            PropertyAction {
+                target: dialogContainer
+                property: "isExpanded"
+                value: false
+            }
+            Anim {
+                target: dialogBg
+                property: "radius"
+                to: dialogContainer.initialRadius
+            }
+            Anim {
+                target: dialogContent
+                property: "scale"
+                to: 0
+            }
+            Anim {
+                target: dialogContent
+                property: "opacity"
+                to: 0
+                type: Anim.StandardSmall
+            }
+            Anim {
+                target: lockIcon
+                property: "opacity"
+                to: 1
+                type: Anim.StandardLarge
+            }
+            Anim {
+                target: lockIcon
+                property: "scale"
+                to: 1
+                type: Anim.StandardLarge
+            }
 
             SequentialAnimation {
-                PauseAnimation { duration: Tokens.anim.durations.small }
-                Anim { target: dialogContainer; property: "opacity"; to: 0; type: Anim.Standard }
-                PropertyAction { target: dialogContainer; property: "scale"; value: 0 }
+                PauseAnimation {
+                    duration: Tokens.anim.durations.small
+                }
+                Anim {
+                    target: dialogContainer
+                    property: "opacity"
+                    to: 0
+                    type: Anim.Standard
+                }
+                PropertyAction {
+                    target: dialogContainer
+                    property: "scale"
+                    value: 0
+                }
             }
         }
     }
@@ -155,8 +245,19 @@ StyledWindow {
         scale: 0
 
         // This prevents the snapshotting issue by persistently interpolating dynamically updating bindings
-        Behavior on implicitWidth { Anim { type: Anim.Emphasized; duration: 500 } }
-        Behavior on implicitHeight { Anim { type: Anim.Emphasized; duration: 500 } }
+        Behavior on implicitWidth {
+            Anim {
+                type: Anim.Emphasized
+                duration: 500
+            }
+        }
+
+        Behavior on implicitHeight {
+            Anim {
+                type: Anim.Emphasized
+                duration: 500
+            }
+        }
 
         StyledRect {
             id: dialogBg
@@ -164,7 +265,7 @@ StyledWindow {
             anchors.fill: parent
             radius: dialogContainer.initialRadius
             color: Colours.layer(Colours.palette.m3surface, 0)
-            
+
             layer.enabled: true
             layer.effect: MultiEffect {
                 shadowEnabled: true
@@ -199,9 +300,10 @@ StyledWindow {
                 implicitHeight: titleLayout.implicitHeight + Tokens.padding.large * 2
                 color: Colours.layer(Colours.palette.m3surfaceContainer, 1)
                 radius: Tokens.rounding.large
-                
+
                 ColumnLayout {
                     id: titleLayout
+
                     anchors.fill: parent
                     anchors.margins: Tokens.padding.large
                     spacing: 0
@@ -237,9 +339,10 @@ StyledWindow {
                     implicitHeight: commandLabel.implicitHeight + Tokens.padding.small * 2
                     color: Colours.layer(Colours.palette.m3surfaceContainerHigh, 1)
                     radius: Tokens.rounding.small
-                    
+
                     StyledText {
                         id: commandLabel
+
                         anchors.fill: parent
                         anchors.margins: Tokens.padding.small
                         anchors.leftMargin: Tokens.padding.large
@@ -254,9 +357,9 @@ StyledWindow {
 
                 StyledText {
                     width: parent.width
-                    text: agent.flow && agent.flow.supplementaryMessage ? agent.flow.supplementaryMessage : ""
+                    text: root.agent.flow && root.agent.flow.supplementaryMessage ? root.agent.flow.supplementaryMessage : "" // qmllint disable unresolved-type
                     font: Tokens.font.body.small
-                    color: agent.flow && agent.flow.supplementaryIsError ? Colours.palette.m3error : Colours.palette.m3onSurfaceVariant
+                    color: root.agent.flow && root.agent.flow.supplementaryIsError ? Colours.palette.m3error : Colours.palette.m3onSurfaceVariant // qmllint disable unresolved-type
                     visible: text.length > 0
                     wrapMode: Text.WordWrap
                     horizontalAlignment: Text.AlignHCenter
@@ -265,30 +368,25 @@ StyledWindow {
 
             StyledRect {
                 id: passwordRect
+
                 Layout.alignment: Qt.AlignHCenter
+
                 implicitWidth: {
                     const emptyW = nonAnimPlaceholder.width + iconWrapper.implicitWidth + enterButton.implicitWidth + passwordInputLayout.spacing * 2 + Tokens.padding.medium * 2;
                     return root.buffer.length > 0 ? root.passwordMaxWidth : Math.min(root.passwordMaxWidth, emptyW);
                 }
+
                 implicitHeight: passwordInputLayout.implicitHeight + Tokens.padding.small
                 color: Colours.layer(Colours.palette.m3surfaceContainer, 1)
                 radius: Tokens.rounding.full
-                
+
                 focus: true
 
-                Behavior on implicitWidth { Anim {} }
-                    
-                MouseArea {
-                    anchors.fill: parent
-                    cursorShape: Qt.IBeamCursor
-                    onClicked: passwordRect.forceActiveFocus()
-                }
-                
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_Enter || event.key === Qt.Key_Return) {
-                        if (agent.flow && root.buffer) {
-                            agent.flow.submit(root.buffer)
-                            root.buffer = ""
+                        if (root.agent.flow && root.buffer) { // qmllint disable unresolved-type
+                            root.agent.flow.submit(root.buffer); // qmllint disable unresolved-type
+                            root.buffer = "";
                         }
                         event.accepted = true;
                     } else if (event.key === Qt.Key_Backspace) {
@@ -301,10 +399,10 @@ StyledWindow {
                         }
                         event.accepted = true;
                     } else if (event.key === Qt.Key_Escape) {
-                        if (agent.flow) {
-                            agent.flow.cancelAuthenticationRequest()
+                        if (root.agent.flow) { // qmllint disable unresolved-type
+                            root.agent.flow.cancelAuthenticationRequest(); // qmllint disable unresolved-type
                         }
-                        root.buffer = ""
+                        root.buffer = "";
                         event.accepted = true;
                     } else if (event.text.length > 0) {
                         charList.bindImWidth();
@@ -313,15 +411,25 @@ StyledWindow {
                     }
                 }
 
+                Behavior on implicitWidth {
+                    Anim {}
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.IBeamCursor
+                    onClicked: passwordRect.forceActiveFocus()
+                }
+
                 Connections {
                     function onIsActiveChanged() {
-                        if (agent.isActive) {
-                            root.buffer = ""
-                            passwordRect.forceActiveFocus()
+                        if (root.agent.isActive) {
+                            root.buffer = "";
+                            passwordRect.forceActiveFocus();
                         }
                     }
 
-                    target: agent
+                    target: root.agent
                 }
 
                 RowLayout {
@@ -330,20 +438,21 @@ StyledWindow {
                     anchors.fill: parent
                     anchors.margins: Tokens.padding.extraSmall
                     spacing: Tokens.spacing.medium
-                    
+
                     Item {
                         id: iconWrapper
                         Layout.fillHeight: true
+
                         implicitWidth: height
-                        
+
                         MaterialIcon {
                             anchors.centerIn: parent
                             text: "lock"
                             color: Colours.palette.m3onSurfaceVariant
-                            fontStyle: Tokens.font.icon.builders.medium.scale(centerScale).build()
+                            fontStyle: Tokens.font.icon.builders.medium.scale(root.centerScale).build()
                         }
                     }
-                    
+
                     Item {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
@@ -360,7 +469,11 @@ StyledWindow {
                             font: nonAnimPlaceholder.font
                             opacity: root.buffer ? 0 : 1
 
-                            Behavior on opacity { Anim { type: Anim.DefaultEffects } }
+                            Behavior on opacity {
+                                Anim {
+                                    type: Anim.DefaultEffects
+                                }
+                            }
                         }
 
                         ListView {
@@ -397,11 +510,12 @@ StyledWindow {
 
                             Behavior on implicitWidth {
                                 id: imWidthBehavior
+
                                 Anim {}
                             }
                         }
                     }
-                    
+
                     Item {
                         id: enterButton
 
@@ -417,10 +531,16 @@ StyledWindow {
                             shape: root.buffer ? MaterialShape.Arrow : MaterialShape.Circle
                             scale: !root.buffer ? 1 : enterMouse.pressed ? 0.6 : enterMouse.containsMouse ? 0.8 : 0.7
                             rotation: 90
-                            
-                            Behavior on scale { Anim { type: Anim.FastSpatial } }
-                            Behavior on color { CAnim {} }
-                            
+
+                            Behavior on scale {
+                                Anim {
+                                    type: Anim.FastSpatial
+                                }
+                            }
+                            Behavior on color {
+                                CAnim {}
+                            }
+
                             MouseArea {
                                 id: enterMouse
 
@@ -428,9 +548,9 @@ StyledWindow {
                                 hoverEnabled: true
                                 cursorShape: root.buffer ? Qt.PointingHandCursor : Qt.ArrowCursor
                                 onClicked: {
-                                    if (agent.flow && root.buffer) {
-                                        agent.flow.submit(root.buffer)
-                                        root.buffer = ""
+                                    if (root.agent.flow && root.buffer) { // qmllint disable unresolved-type
+                                        root.agent.flow.submit(root.buffer); // qmllint disable unresolved-type
+                                        root.buffer = "";
                                     }
                                 }
                             }
@@ -442,10 +562,14 @@ StyledWindow {
                             anchors.centerIn: parent
                             text: "arrow_forward"
                             color: Colours.palette.m3onSurfaceVariant
-                            fontStyle: Tokens.font.icon.builders.medium.scale(centerScale * 1.2).build()
+                            fontStyle: Tokens.font.icon.builders.medium.scale(root.centerScale * 1.2).build()
                             opacity: root.buffer ? 0 : 1
 
-                            Behavior on opacity { Anim { type: Anim.DefaultEffects } }
+                            Behavior on opacity {
+                                Anim {
+                                    type: Anim.DefaultEffects
+                                }
+                            }
                         }
                     }
                 }

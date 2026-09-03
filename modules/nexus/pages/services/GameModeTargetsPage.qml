@@ -2,27 +2,27 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
-import Caelestia.Config
-import qs.components
-import qs.components.containers
-import qs.components.controls
-import qs.components.images
-import qs.modules.nexus.common
-import qs.services
 import Quickshell
 import Quickshell.Hyprland
 import Quickshell.Widgets
 import Caelestia
+import Caelestia.Config
+import qs.components
+import qs.components.containers
+import qs.components.controls
+import qs.services
+import qs.modules.nexus.common
 
 PageBase {
     id: root
-    
+
     title: qsTr("Target windows")
     isSubPage: true
     scrollable: false
 
     ColumnLayout {
         id: mainLayout
+
         anchors.fill: parent
         anchors.margins: Tokens.padding.large
         spacing: Tokens.spacing.extraSmall / 2
@@ -44,6 +44,7 @@ PageBase {
 
             RowLayout {
                 id: contentRow
+
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
@@ -74,9 +75,10 @@ PageBase {
                     Layout.preferredHeight: 32
                     radius: Tokens.rounding.small
                     color: Colours.layer(Colours.palette.m3surfaceVariant, 2)
-                    
+
                     StyledTextField {
                         id: customInput
+
                         anchors.fill: parent
                         anchors.leftMargin: Tokens.padding.medium
                         anchors.rightMargin: Tokens.padding.medium
@@ -88,7 +90,6 @@ PageBase {
                                 if (!list.includes(text)) {
                                     list.push(text);
                                     GlobalConfig.utilities.gameMode.autoEnableRegexes = list;
-                                    GlobalConfig.save();
                                 }
                                 text = "";
                             }
@@ -106,7 +107,6 @@ PageBase {
                             if (!list.includes(customInput.text)) {
                                 list.push(customInput.text);
                                 GlobalConfig.utilities.gameMode.autoEnableRegexes = list;
-                                GlobalConfig.save();
                             }
                             customInput.text = "";
                         }
@@ -126,7 +126,6 @@ PageBase {
                 if (!list.includes(windowClass)) {
                     list.push(windowClass);
                     GlobalConfig.utilities.gameMode.autoEnableRegexes = list;
-                    GlobalConfig.save();
                 }
             }
         }
@@ -143,6 +142,7 @@ PageBase {
 
             ListView {
                 id: targetList
+
                 anchors.fill: parent
                 anchors.margins: Tokens.padding.medium
                 orientation: ListView.Vertical
@@ -150,11 +150,25 @@ PageBase {
                 model: GlobalConfig.utilities.gameMode.autoEnableRegexes
                 clip: true
 
-                move: Transition { NumberAnimation { properties: "y"; duration: 200; easing.type: Easing.OutCubic } }
-                moveDisplaced: Transition { NumberAnimation { properties: "y"; duration: 200; easing.type: Easing.OutCubic } }
+                move: Transition {
+                    NumberAnimation {
+                        properties: "y"
+                        duration: 200
+                        easing.type: Easing.OutCubic
+                    }
+                }
+
+                moveDisplaced: Transition {
+                    NumberAnimation {
+                        properties: "y"
+                        duration: 200
+                        easing.type: Easing.OutCubic
+                    }
+                }
 
                 delegate: StyledRect {
                     id: delegateRect
+
                     required property string modelData
                     required property int index
 
@@ -165,12 +179,13 @@ PageBase {
 
                     RowLayout {
                         id: itemLayout
+
+                        property bool isRegex: delegateRect.modelData.startsWith("^") && delegateRect.modelData.endsWith("$")
+
                         anchors.fill: parent
                         anchors.leftMargin: Tokens.padding.medium
                         anchors.rightMargin: Tokens.padding.medium
                         spacing: Tokens.spacing.medium
-
-                        property bool isRegex: delegateRect.modelData.startsWith("^") && delegateRect.modelData.endsWith("$")
 
                         IconImage {
                             visible: !itemLayout.isRegex
@@ -206,7 +221,6 @@ PageBase {
                                     let list = Array.from(GlobalConfig.utilities.gameMode.autoEnableRegexes);
                                     list.splice(delegateRect.index, 1);
                                     GlobalConfig.utilities.gameMode.autoEnableRegexes = list;
-                                    GlobalConfig.save();
                                 }
                             }
 
@@ -238,6 +252,7 @@ PageBase {
                 p = p.parent;
             return p?.opacity < 1;
         }
+
         popup.topMovement: Math.max(Tokens.sizes.nexus.minPopupHeight - popupHeight, Tokens.padding.large)
 
         Loader {
@@ -254,15 +269,6 @@ PageBase {
 
                     VerticalFadeListView {
                         id: list
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-
-                        Connections {
-                            target: Hyprland.toplevels
-                            function onValuesChanged() {
-                                list.updateModel();
-                            }
-                        }
 
                         function updateModel() {
                             let toplevels = [];
@@ -273,6 +279,9 @@ PageBase {
                             }
                             list.model = toplevels.sort((a, b) => (a.lastIpcObject?.title ?? "").localeCompare(b.lastIpcObject?.title ?? ""));
                         }
+
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
 
                         Component.onCompleted: updateModel()
 
@@ -285,7 +294,7 @@ PageBase {
                             anchors.fill: undefined
                             anchors.left: list.contentItem.left
                             anchors.right: list.contentItem.right
-                            implicitHeight: itemLayout.implicitHeight + itemLayout.anchors.margins * 2
+                            implicitHeight: dialogItemLayout.implicitHeight + dialogItemLayout.anchors.margins * 2
                             radius: Tokens.rounding.small
 
                             onClicked: {
@@ -294,7 +303,7 @@ PageBase {
                             }
 
                             RowLayout {
-                                id: itemLayout
+                                id: dialogItemLayout
 
                                 anchors.fill: parent
                                 anchors.margins: Tokens.padding.medium
@@ -327,6 +336,14 @@ PageBase {
                                     }
                                 }
                             }
+                        }
+
+                        Connections {
+                            function onValuesChanged() {
+                                list.updateModel();
+                            }
+
+                            target: Hyprland.toplevels
                         }
                     }
                 }

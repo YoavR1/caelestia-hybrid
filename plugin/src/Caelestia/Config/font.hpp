@@ -1,16 +1,18 @@
 #pragma once
 
-#include "fontbuilder.hpp"
-
+#include <qobject.h>
 #include <qqmlintegration.h>
+#include <qvariantmap.h>
+
+#include "settings/objectnode.hpp"
+#include "fontbuilder.hpp"
 
 namespace caelestia::config {
 
-class AppearanceFont;
+// Defined in tokens.hpp; FontTokens binds the mono sizes to it.
 class AppearanceTokens;
-class FontConfig;
-class FontStyleConfig;
-class IconFontStyleConfig;
+
+class AppearanceFont;
 class FontStyleBase;
 class IconFontStyle;
 
@@ -56,10 +58,9 @@ class FontStyleBase : public QObject {
     Q_PROPERTY(QFont small READ small NOTIFY fontsChanged FINAL)
 
 public:
-    explicit FontStyleBase(QObject* parent = nullptr)
-        : QObject(parent) {}
+    explicit FontStyleBase(QObject* parent = nullptr);
 
-    void bind(FontStyleConfig* cfg);
+    virtual void bind(settings::ObjectNode* cfg);
     void setScale(qreal scale);
 
     [[nodiscard]] QFont large() const;
@@ -72,9 +73,9 @@ signals:
 protected:
     virtual void rebuild();
 
-    static QFont buildFont(const FontConfig* cfg, const QString& fallbackFamily, qreal scale);
+    static QFont buildFont(const settings::ObjectNode* cfg, const QString& fallbackFamily, qreal scale);
 
-    FontStyleConfig* m_cfg = nullptr;
+    settings::ObjectNode* m_cfg = nullptr;
     qreal m_scale = 1;
     QFont m_large;
     QFont m_medium;
@@ -108,7 +109,7 @@ public:
 
     Q_INVOKABLE FontBuilder size(int pointSize);
 
-    void bind(IconFontStyleConfig* cfg);
+    void bind(settings::ObjectNode* cfg) override;
 
     [[nodiscard]] QFont extraLarge() const;
     [[nodiscard]] IconFontBuilders* builders() const;

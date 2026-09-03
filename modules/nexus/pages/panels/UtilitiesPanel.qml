@@ -52,7 +52,6 @@ PageBase {
             checked: root.targetConfig.utilities.enabled
             onToggled: {
                 root.targetConfig.utilities.enabled = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -70,7 +69,6 @@ PageBase {
             checked: root.targetConfig.utilities.cards.keepAwake
             onToggled: {
                 root.targetConfig.utilities.cards.keepAwake = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -82,7 +80,6 @@ PageBase {
             checked: root.targetConfig.utilities.cards.recorder
             onToggled: {
                 root.targetConfig.utilities.cards.recorder = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -95,7 +92,6 @@ PageBase {
             checked: root.targetConfig.utilities.cards.quickToggles
             onToggled: {
                 root.targetConfig.utilities.cards.quickToggles = checked;
-                root.targetConfig.save();
             }
         }
 

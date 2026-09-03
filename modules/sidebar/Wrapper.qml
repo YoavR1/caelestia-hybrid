@@ -16,8 +16,11 @@ Item {
     readonly property bool shouldBeActive: screenState.sidebar && Config.sidebar.enabled
     property real offsetScale: shouldBeActive ? 0 : 1
 
-    visible: offsetScale < 0.999
     property real slideAmount: (-implicitWidth - Config.border.thickness - Tokens.spacing.medium) * offsetScale
+
+    property bool isStreaming: false
+
+    visible: offsetScale < 0.999
     anchors.leftMargin: slideAmount
     anchors.rightMargin: slideAmount
     implicitWidth: Tokens.sizes.sidebar.width
@@ -26,8 +29,6 @@ Item {
     Behavior on offsetScale {
         Anim {}
     }
-
-    property bool isStreaming: false
 
     Loader {
         id: content

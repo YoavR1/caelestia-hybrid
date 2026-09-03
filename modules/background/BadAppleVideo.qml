@@ -1,6 +1,9 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtMultimedia
 import Quickshell
+import qs.modules.background
 
 Item {
     id: root
@@ -10,6 +13,8 @@ Item {
 
     readonly property bool playing: BadApplePlayer.shouldPlay
 
+    property VideoOutput videoOutput: loader.item ? loader.item.videoOutput : null // qmllint disable missing-property
+
     function play() {
         BadApplePlayer.play();
     }
@@ -17,8 +22,6 @@ Item {
     function stop() {
         BadApplePlayer.stop();
     }
-
-    property Item videoOutput: loader.item ? loader.item.videoOutput : null
 
     Component.onCompleted: {
         root.isFirstInstance = (BadApplePlayer.firstInstance === null);
@@ -33,6 +36,7 @@ Item {
 
     Loader {
         id: loader
+
         active: BadApplePlayer.shouldPlay
         anchors.fill: parent
         sourceComponent: Component {
@@ -41,6 +45,7 @@ Item {
 
                 MediaPlayer {
                     id: mediaPlayer
+
                     source: `${Quickshell.shellDir}/assets/badapple.mp4`
                     videoOutput: videoOutput
                     audioOutput: audioOut
@@ -49,6 +54,7 @@ Item {
 
                 VideoOutput {
                     id: videoOutput
+
                     anchors.fill: parent
                     fillMode: VideoOutput.Stretch
                     layer.enabled: true
@@ -56,6 +62,7 @@ Item {
 
                 AudioOutput {
                     id: audioOut
+
                     muted: !root.isFirstInstance
                 }
             }

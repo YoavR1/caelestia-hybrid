@@ -11,7 +11,6 @@ CustomMouseArea {
     id: root
 
     required property ShellScreen screen
-    Config.screen: screen.name
     required property BarPopouts.Wrapper popouts
     required property ScreenState screenState
     required property Panels panels
@@ -40,19 +39,19 @@ CustomMouseArea {
 
     function withinPanelHeight(panel: Item, x: real, y: real): bool {
         const panelY = panels.topMargin + panel.y;
-        const panelHeight = panel.content ? panel.content.nonAnimHeight : panel.height;
+        const panelHeight = panel.content ? panel.content.nonAnimHeight : panel.height; // qmllint disable missing-property
         return y >= panelY - Config.border.rounding && y <= panelY + panelHeight + Config.border.rounding;
     }
 
     function withinPanelWidth(panel: Item, x: real, y: real): bool {
         const panelX = panels.leftMargin + panel.x;
-        const panelWidth = panel.content ? panel.content.nonAnimWidth : panel.width;
+        const panelWidth = panel.content ? panel.content.nonAnimWidth : panel.width; // qmllint disable missing-property
         return x >= panelX - Config.border.rounding && x <= panelX + panelWidth + Config.border.rounding;
     }
 
     function inLeftPanel(panel: Item, x: real, y: real): bool {
-        const panelWidth = panel.content ? panel.content.nonAnimWidth : panel.width;
-        const panelHeight = panel.content ? panel.content.nonAnimHeight : panel.height;
+        const panelWidth = panel.content ? panel.content.nonAnimWidth : panel.width; // qmllint disable missing-property
+        const panelHeight = panel.content ? panel.content.nonAnimHeight : panel.height; // qmllint disable missing-property
 
         if (Config.bar.position === "left")
             return x < panels.leftMargin + panel.x + panelWidth && withinPanelHeight(panel, x, y);
@@ -89,11 +88,14 @@ CustomMouseArea {
         }
     }
 
+    Config.screen: screen.name
+
     anchors.fill: parent
     acceptedButtons: fullscreen ? Qt.NoButton : Qt.AllButtons
     hoverEnabled: true
 
     onPressed: event => dragStart = Qt.point(event.x, event.y)
+
     onContainsMouseChanged: {
         if (!containsMouse) {
             // Only hide if not activated by shortcut
@@ -360,7 +362,7 @@ CustomMouseArea {
         function onUtilitiesChanged() {
             if (root.screenState.utilities) {
                 // Utilities became visible, immediately check if this should be shortcut mode
-                const inUtilitiesArea = Config.bar.position === "bottom" ? root.inTopPanel(root.panels.utilities, root.mouseX, root.mouseY) : root.inBottomPanel(root.panels.utilities, root.mouseX, root.mouseY);
+                const inUtilitiesArea = root.Config.bar.position === "bottom" ? root.inTopPanel(root.panels.utilities, root.mouseX, root.mouseY) : root.inBottomPanel(root.panels.utilities, root.mouseX, root.mouseY);
                 if (!inUtilitiesArea) {
                     root.utilitiesShortcutActive = true;
                 }

@@ -8,8 +8,7 @@ import qs.components
 import qs.components.containers
 import qs.components.controls
 import qs.services
-import "items"
-import "services"
+import qs.modules.launcher.services
 
 StyledListView {
     id: root
@@ -17,9 +16,7 @@ StyledListView {
     required property SearchBar search
     required property ScreenState screenState
 
-    readonly property string searchQuery: search?.text?.startsWith(GlobalConfig.launcher.actionPrefix + "animations ")
-        ? search.text.slice((GlobalConfig.launcher.actionPrefix + "animations ").length).toLowerCase().trim()
-        : ""
+    readonly property string searchQuery: search?.text.startsWith(GlobalConfig.launcher.actionPrefix + "animations ") ? search.text.slice((GlobalConfig.launcher.actionPrefix + "animations ").length).toLowerCase().trim() : ""
 
     function refreshModel() {
         if (!search)
@@ -75,6 +72,7 @@ StyledListView {
     highlightRangeMode: ListView.ApplyRange
 
     highlightFollowsCurrentItem: false
+
     highlight: StyledRect {
         radius: Tokens.rounding.large
         color: Colours.palette.m3onSurface
@@ -93,16 +91,17 @@ StyledListView {
 
     delegate: Item {
         id: delegateRoot
-        required property var modelData
 
-        implicitHeight: Tokens.sizes.launcher.itemHeight
-        width: root.width
+        required property var modelData
 
         function clicked() {
             if (!modelData || !modelData.path)
                 return;
             Animations.applyAnimation(modelData.path, root);
         }
+
+        implicitHeight: Tokens.sizes.launcher.itemHeight
+        width: root.width
 
         StateLayer {
             radius: Tokens.rounding.large
@@ -117,6 +116,7 @@ StyledListView {
 
             MaterialIcon {
                 id: icon
+
                 text: "animation"
                 fontStyle: Tokens.font.icon.builders.large.scale(1.3).build()
                 anchors.verticalCenter: parent.verticalCenter
@@ -131,14 +131,14 @@ StyledListView {
                 spacing: 0
 
                 StyledText {
-                    text: modelData ? modelData.name : ""
+                    text: delegateRoot.modelData ? delegateRoot.modelData.name : ""
                     font: Tokens.font.body.medium
                     color: Colours.palette.m3onSurface
                     elide: Text.ElideRight
                 }
 
                 StyledText {
-                    text: modelData ? (modelData.path === "default" ? qsTr("Use default shell animations") : qsTr("Click to apply animation")) : ""
+                    text: delegateRoot.modelData ? (delegateRoot.modelData.path === "default" ? qsTr("Use default shell animations") : qsTr("Click to apply animation")) : ""
                     font: Tokens.font.body.small
                     color: Colours.palette.m3outline
                     elide: Text.ElideRight
@@ -149,15 +149,15 @@ StyledListView {
 
     Connections {
         function onTextChanged() {
-            handleSearchTextChanged();
+            root.handleSearchTextChanged();
         }
 
-        target: search
+        target: root.search
     }
 
     Connections {
         function onLoaded() {
-            refreshModel();
+            root.refreshModel();
         }
 
         target: Animations

@@ -19,26 +19,21 @@ Singleton {
     property string uptime
     readonly property string user: Quickshell.env("USER")
     readonly property string wm: Quickshell.env("XDG_CURRENT_DESKTOP") || Quickshell.env("XDG_SESSION_DESKTOP")
-    readonly property string shell: Quickshell.env("SHELL").split("/").pop()
+    // $SHELL is not always set -- a container, a systemd service, or any session with no
+    // login shell leaves it null, and .split() on null throws. The line above already
+    // guards the same way for XDG_CURRENT_DESKTOP.
+    readonly property string shell: Quickshell.env("SHELL")?.split("/").pop() ?? ""
 
     property string kernel
     property string hostname
     property string firmware
     property string hyprlandSplashText: ""
 
-    Process {
-        running: true
-        command: ["hyprctl", "splash"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                root.hyprlandSplashText = text.trim();
-            }
-        }
-    }
-
     // DMI vendor/model, combined into a single human-readable device name
     property string boardVendor
+
     property string boardName
+
     readonly property string device: {
         if (!boardName)
             return boardVendor;
@@ -52,6 +47,16 @@ Singleton {
         const t = s.trim();
         const junk = ["to be filled by o.e.m.", "system product name", "system manufacturer", "system version", "default string", "o.e.m.", "not specified", "not applicable", "unknown", "none", ""];
         return junk.includes(t.toLowerCase()) ? "" : t;
+    }
+
+    Process {
+        running: true
+        command: ["hyprctl", "splash"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.hyprlandSplashText = text.trim();
+            }
+        }
     }
 
     FileView {

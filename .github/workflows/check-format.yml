@@ -1,0 +1,54 @@
+name: Check formatting
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  check-qml:
+    runs-on: ubuntu-latest
+    # Lowercase literal, not ${{ github.repository_owner }}: Docker rejects an
+    # uppercase registry reference, container.image is resolved before any step
+    # could lowercase it, and GitHub expressions have no toLower(). A fork edits
+    # this one string (and nothing else) to point at its own namespace. See T29.
+    container:
+      image: ghcr.io/yoavr1/shell-arch-env:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check QML format
+        shell: fish {0}
+        run: |
+          /usr/lib/qt6/bin/qmlformat --version
+          for file in (string match -v 'build/*' **.qml)
+            /usr/lib/qt6/bin/qmlformat $file | diff -u $file - || exit 1
+          end
+          python3 scripts/qml-lint-conventions.py
+
+  check-cpp:
+    runs-on: ubuntu-latest
+    # Lowercase literal, not ${{ github.repository_owner }}: Docker rejects an
+    # uppercase registry reference, container.image is resolved before any step
+    # could lowercase it, and GitHub expressions have no toLower(). A fork edits
+    # this one string (and nothing else) to point at its own namespace. See T29.
+    container:
+      image: ghcr.io/yoavr1/shell-arch-env:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check C++ format
+        shell: fish {0}
+        run: |
+          clang-format --version
+          find plugin extras -name '*.cpp' -o -name '*.hpp' \
+            | xargs clang-format --dry-run --Werror

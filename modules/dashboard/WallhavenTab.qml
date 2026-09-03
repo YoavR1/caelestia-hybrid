@@ -2,16 +2,13 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
 import Quickshell.Widgets
 import Caelestia.Config
 import qs.components
 import qs.components.containers
 import qs.components.controls
-import qs.components.effects
 import qs.components.images
 import qs.services
-import qs.utils
 
 Item {
     id: root
@@ -74,7 +71,6 @@ Item {
             sourceComponent: mainContentComponent
         }
     }
-
 
     Component {
         id: mainContentComponent
@@ -198,6 +194,8 @@ Item {
                     }
 
                     delegate: Item {
+                        id: result
+
                         required property var modelData
                         required property int index
                         readonly property real itemMargin: Tokens.spacing.small / 2
@@ -206,19 +204,19 @@ Item {
                         height: resultsGrid.cellHeight
 
                         StateLayer {
-                            onClicked: root.selectWallpaper(index)
+                            onClicked: root.selectWallpaper(result.index)
 
                             anchors.fill: parent
-                            anchors.leftMargin: itemMargin
-                            anchors.rightMargin: itemMargin
-                            anchors.topMargin: itemMargin
-                            anchors.bottomMargin: itemMargin
+                            anchors.leftMargin: result.itemMargin
+                            anchors.rightMargin: result.itemMargin
+                            anchors.topMargin: result.itemMargin
+                            anchors.bottomMargin: result.itemMargin
 
                             radius: Tokens.rounding.medium
 
                             CachingImage {
                                 anchors.fill: parent
-                                source: modelData.thumbs?.large || modelData.thumbs?.small || ""
+                                source: result.modelData.thumbs?.large || result.modelData.thumbs?.small || ""
                                 asynchronous: true
                                 fillMode: Image.PreserveAspectCrop
                             }
@@ -293,7 +291,7 @@ Item {
                     CachingImage {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        anchors.margins: Tokens.padding.large
+                        Layout.margins: Tokens.padding.large
                         source: root.selectedWallpaper?.path || ""
                         asynchronous: true
                         fillMode: Image.PreserveAspectFit
@@ -335,7 +333,7 @@ Item {
 
         interval: Tokens.anim.durations.expressiveDefaultEffects
         onTriggered: {
-            if (!detailPanelOpen)
+            if (!root.detailPanelOpen)
                 root.selectedWallpaper = null;
         }
     }

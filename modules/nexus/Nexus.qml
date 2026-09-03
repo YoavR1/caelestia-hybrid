@@ -16,10 +16,12 @@ Item {
 
         onClose: root.close()
     }
-    Config.screen: nState.targetScreen
+
     property color blobColour: Colours.tPalette.m3surfaceContainerLow
 
     signal close
+
+    Config.screen: nState.targetScreen
 
     implicitWidth: Math.round(implicitHeight * Tokens.sizes.nexus.ratio)
     implicitHeight: Math.round(nState.screen.height * Tokens.sizes.nexus.heightMult)

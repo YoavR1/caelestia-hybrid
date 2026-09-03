@@ -1,7 +1,6 @@
 pragma ComponentBehavior: Bound
 
 import "popouts" as BarPopouts
-import "components"
 import "components/workspaces"
 import QtQuick
 import QtQuick.Layouts
@@ -9,12 +8,12 @@ import Quickshell
 import Caelestia.Config
 import qs.components
 import qs.services
+import qs.modules.bar.components
 
 Item {
     id: root
 
     required property ShellScreen screen
-    Config.screen: screen.name
     required property ScreenState screenState
     required property BarPopouts.Wrapper popouts
     required property bool fullscreen
@@ -72,7 +71,8 @@ Item {
             closeTray();
 
         if (!ch) {
-            if (popouts.hasCurrent && (popouts.currentName === "dockcontext" || popouts.currentName === "dockhover" || popouts.currentName === "activewindow")) return;
+            if (popouts.hasCurrent && (popouts.currentName === "dockcontext" || popouts.currentName === "dockhover" || popouts.currentName === "activewindow"))
+                return;
             popouts.hasCurrent = false;
             return;
         }
@@ -85,7 +85,7 @@ Item {
             const items = (ch.item as StatusIcons).items;
             const icon = items.childAt(isHorizontal ? mapToItem(items, pos, 0).x : items.width / 2, isHorizontal ? items.height / 2 : mapToItem(items, 0, pos).y);
             if (icon) {
-                popouts.currentName = icon.name;
+                popouts.currentName = icon.name; // qmllint disable missing-property
                 popouts.currentCenter = isHorizontal ? icon.mapToItem(null, icon.implicitWidth / 2, 0).x : icon.mapToItem(null, 0, icon.implicitHeight / 2).y;
                 popouts.hasCurrent = true;
             } else {
@@ -125,12 +125,13 @@ Item {
                 popouts.hasCurrent = false;
             }
         } else if (id === "dock") {
-            if (popouts.hasCurrent && (popouts.currentName === "dockcontext" || popouts.currentName === "activewindow")) return;
-            
+            if (popouts.hasCurrent && (popouts.currentName === "dockcontext" || popouts.currentName === "activewindow"))
+                return;
+
             const item = ch.item;
-            if (item && typeof item.handleHover === "function") {
+            if (item && typeof item.handleHover === "function") { // qmllint disable missing-property
                 const relPos = pos - top;
-                item.handleHover(relPos, isHorizontal, popouts);
+                item.handleHover(relPos, isHorizontal, popouts); // qmllint disable missing-property
                 return;
             }
             popouts.hasCurrent = false;
@@ -195,23 +196,7 @@ Item {
         }
     }
 
-    EntrySection {
-        id: startSection
-
-        values: root.Config.bar.entries.start.values
-    }
-
-    EntrySection {
-        id: centerSection
-
-        values: root.Config.bar.entries.center.values
-    }
-
-    EntrySection {
-        id: endSection
-
-        values: root.Config.bar.entries.end.values
-    }
+    Config.screen: screen.name
 
     states: [
         State {
@@ -234,14 +219,12 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
             }
             PropertyChanges {
-                target: startSection
-                anchors.leftMargin: root.vPadding
-                anchors.topMargin: 0
+                startSection.anchors.leftMargin: root.vPadding
+                startSection.anchors.topMargin: 0
             }
             PropertyChanges {
-                target: endSection
-                anchors.rightMargin: root.vPadding
-                anchors.bottomMargin: 0
+                endSection.anchors.rightMargin: root.vPadding
+                endSection.anchors.bottomMargin: 0
             }
         },
         State {
@@ -264,17 +247,33 @@ Item {
                 anchors.horizontalCenter: parent.horizontalCenter
             }
             PropertyChanges {
-                target: startSection
-                anchors.topMargin: root.vPadding
-                anchors.leftMargin: 0
+                startSection.anchors.topMargin: root.vPadding
+                startSection.anchors.leftMargin: 0
             }
             PropertyChanges {
-                target: endSection
-                anchors.bottomMargin: root.vPadding
-                anchors.rightMargin: 0
+                endSection.anchors.bottomMargin: root.vPadding
+                endSection.anchors.rightMargin: 0
             }
         }
     ]
+
+    EntrySection {
+        id: startSection
+
+        values: root.Config.bar.entries.start.values
+    }
+
+    EntrySection {
+        id: centerSection
+
+        values: root.Config.bar.entries.center.values
+    }
+
+    EntrySection {
+        id: endSection
+
+        values: root.Config.bar.entries.end.values
+    }
 
     component EntrySection: GridLayout {
         id: section
@@ -298,7 +297,7 @@ Item {
             id: repeater
 
             model: ScriptModel {
-                values: section.values.filter(e => e.enabled)
+                values: section.values.filter(e => e.enabled && (e.id !== "dock" || GlobalConfig.hybrid.features.dock))
             }
 
             delegate: EntryChooser {}
@@ -338,6 +337,7 @@ Item {
             delegate: EntryWrapper {
                 Layout.fillWidth: true
                 visible: !root.fullscreen
+
                 Dock {
                     bar: root
                 }
@@ -381,6 +381,7 @@ Item {
             roleValue: "github"
             delegate: EntryWrapper {
                 visible: enabled && !root.fullscreen && GithubStore.available
+
                 GithubActivity {
                     popouts: root.popouts
                 }
@@ -390,6 +391,7 @@ Item {
             roleValue: "spotify"
             delegate: EntryWrapper {
                 visible: enabled && !root.fullscreen && (!Config.bar.spotify.autoHide || Players.list.length > 0)
+
                 Spotify {
                     objectName: "taskbarSpotify"
                     popouts: root.popouts

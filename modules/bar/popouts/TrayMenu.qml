@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls
-import QtQuick.Layouts
 import Quickshell
 import Quickshell.Widgets
 import Caelestia.Config
@@ -46,6 +45,28 @@ StackView {
         property bool isSubMenu
         property bool shown
 
+        property var itemGroups: []
+
+        function updateGroups() {
+            let groups = [];
+            let currentGroup = [];
+            for (let i = 0; i < groupInstantiator.count; ++i) {
+                let obj = groupInstantiator.objectAt(i);
+                if (obj && obj.isSeparator) { // qmllint disable missing-property
+                    if (currentGroup.length > 0) {
+                        groups.push(currentGroup);
+                        currentGroup = [];
+                    }
+                } else if (obj) {
+                    currentGroup.push(obj.entry); // qmllint disable missing-property
+                }
+            }
+            if (currentGroup.length > 0) {
+                groups.push(currentGroup);
+            }
+            itemGroups = groups;
+        }
+
         padding: Tokens.padding.small
         spacing: Tokens.spacing.small
 
@@ -69,45 +90,27 @@ StackView {
 
         QsMenuOpener {
             id: menuOpener
+
             menu: menu.handle
-        }
-
-        property var itemGroups: []
-
-        function updateGroups() {
-            let groups = [];
-            let currentGroup = [];
-            for (let i = 0; i < groupInstantiator.count; ++i) {
-                let obj = groupInstantiator.objectAt(i);
-                if (obj && obj.isSeparator) {
-                    if (currentGroup.length > 0) {
-                        groups.push(currentGroup);
-                        currentGroup = [];
-                    }
-                } else if (obj) {
-                    currentGroup.push(obj.entry);
-                }
-            }
-            if (currentGroup.length > 0) {
-                groups.push(currentGroup);
-            }
-            itemGroups = groups;
         }
 
         Instantiator {
             id: groupInstantiator
+
             model: menuOpener.children
-            
+
+            onObjectAdded: menu.updateGroups()
+
+            onObjectRemoved: menu.updateGroups()
+
+            // In case the model itself changes completely
+            onModelChanged: menu.updateGroups()
+
             Item {
                 required property QsMenuEntry modelData
                 property bool isSeparator: modelData.isSeparator
                 property var entry: modelData
             }
-
-            onObjectAdded: menu.updateGroups()
-            onObjectRemoved: menu.updateGroups()
-            // In case the model itself changes completely
-            onModelChanged: menu.updateGroups()
         }
 
         Repeater {
@@ -155,6 +158,10 @@ StackView {
                                 anchors.right: parent.right
 
                                 sourceComponent: Item {
+                                    id: entryRow
+
+                                    property int trayMenuWidth: Tokens.sizes.bar.trayMenuWidth
+
                                     implicitHeight: label.implicitHeight
 
                                     StateLayer {
@@ -205,7 +212,6 @@ StackView {
                                         color: item.modelData.enabled ? Colours.palette.m3onSurface : Colours.palette.m3outline
                                     }
 
-                                    property int trayMenuWidth: Tokens.sizes.bar.trayMenuWidth
                                     TextMetrics {
                                         id: labelMetrics
 
@@ -213,7 +219,7 @@ StackView {
                                         font: label.font
 
                                         elide: Text.ElideRight
-                                        elideWidth: root.popouts.isHorizontal ? trayMenuWidth - (icon.active ? icon.implicitWidth + label.anchors.leftMargin : 0) - (expand.active ? expand.implicitWidth + Tokens.spacing.medium : 0) : 200
+                                        elideWidth: root.popouts.isHorizontal ? entryRow.trayMenuWidth - (icon.active ? icon.implicitWidth + label.anchors.leftMargin : 0) - (expand.active ? expand.implicitWidth + Tokens.spacing.medium : 0) : 200
                                     }
 
                                     Loader {

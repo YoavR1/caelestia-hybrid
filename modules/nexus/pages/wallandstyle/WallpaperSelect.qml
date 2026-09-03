@@ -3,9 +3,9 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Caelestia
 import Caelestia.Components
 import Caelestia.Config
+import Caelestia.Images
 import Caelestia.Models
 import qs.components
 import qs.components.controls
@@ -17,12 +17,12 @@ import qs.modules.nexus.common
 PageBase {
     id: root
 
-    title: qsTr("Select wallpaper")
-    isSubPage: true
-
     property color sortColor: "transparent"
+
     property var colorDistances: ({})
+
     property int sortVersion: 0
+
     property var wallpaperColors: ({})
 
     readonly property var sortColors: ["#e53935" // Red
@@ -63,6 +63,9 @@ PageBase {
         root.colorDistances = newDistances;
         root.sortVersion++;
     }
+
+    title: qsTr("Select wallpaper")
+    isSubPage: true
 
     onSortColorChanged: {
         if (sortColor === "transparent") {
@@ -110,6 +113,8 @@ PageBase {
             }
 
             IconTextButton {
+                visible: GlobalConfig.hybrid.features.wallhaven
+
                 icon: "image_search"
                 text: qsTr("Wallhaven")
                 font: Tokens.font.body.large
@@ -383,34 +388,42 @@ PageBase {
                 menuItems: [
                     MenuItem {
                         property string filterValue: "all"
+
                         text: qsTr("All")
                         icon: "collections"
                         onClicked: {
-                            if (root.nState) root.nState.wallpaperFilterType = "all"
+                            if (root.nState)
+                                root.nState.wallpaperFilterType = "all";
                         }
                     },
                     MenuItem {
                         property string filterValue: "image"
+
                         text: qsTr("Images")
                         icon: "image"
                         onClicked: {
-                            if (root.nState) root.nState.wallpaperFilterType = "image"
+                            if (root.nState)
+                                root.nState.wallpaperFilterType = "image";
                         }
                     },
                     MenuItem {
                         property string filterValue: "gif"
+
                         text: qsTr("GIFs")
                         icon: "gif"
                         onClicked: {
-                            if (root.nState) root.nState.wallpaperFilterType = "gif"
+                            if (root.nState)
+                                root.nState.wallpaperFilterType = "gif";
                         }
                     },
                     MenuItem {
                         property string filterValue: "video"
+
                         text: qsTr("Videos")
                         icon: "movie"
                         onClicked: {
-                            if (root.nState) root.nState.wallpaperFilterType = "video"
+                            if (root.nState)
+                                root.nState.wallpaperFilterType = "video";
                         }
                     }
                 ]

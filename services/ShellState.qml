@@ -20,12 +20,17 @@ Singleton {
         return null;
     }
 
+    // Hypr.focusedMonitor is null whenever Hyprland is not answering -- during startup
+    // before a monitor is focused, across hotplug, and for the whole run under any other
+    // compositor. With exactly one screen there is still only one answer to "the active
+    // screen", so return it rather than null; with several and nothing focused there is no
+    // honest answer and null stands.
     function forActive(): ScreenState {
         const mon = Hypr.focusedMonitor;
         for (const s of states.instances)
             if (Hypr.monitorFor(s.modelData) === mon)
                 return s;
-        return null;
+        return states.instances.length === 1 ? states.instances[0] : null;
     }
 
     function componentsFor(screen: ShellScreen): Components {
@@ -35,12 +40,13 @@ Singleton {
         return null;
     }
 
+    // Same reasoning as forActive above.
     function componentsForActive(): Components {
         const mon = Hypr.focusedMonitor;
         for (const c of components.instances)
             if (Hypr.monitorFor(c.modelData) === mon)
                 return c;
-        return null;
+        return components.instances.length === 1 ? components.instances[0] : null;
     }
 
     Variants {

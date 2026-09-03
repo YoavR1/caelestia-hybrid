@@ -4,11 +4,9 @@ import QtQuick
 import QtCore
 import Quickshell
 import Quickshell.Hyprland
-import Quickshell.Services.UPower
 import Quickshell.Io
+import Quickshell.Services.UPower
 import Caelestia.Config
-
-import qs.services
 import qs.utils
 
 Singleton {
@@ -19,29 +17,18 @@ Singleton {
     property bool pauseOnWindowOverlap: true
     property string hwDecoder: "none"
 
-    Settings {
-        id: pauserSettings
-        location: `${Paths.state}/wallpaper/pauser.ini`
-        category: "WallpaperPauser"
-        property alias manualPause: root.manualPause
-        property alias pauseOnBattery: root.pauseOnBattery
-        property alias pauseOnWindowOverlap: root.pauseOnWindowOverlap
-        property alias hwDecoder: root.hwDecoder
-    }
     property bool paused: false
-    property bool _loaded: false
-    property string pauseReason: "None"
 
-    Process {
-        id: saveHwDecoderProcess
-    }
+    property bool _loaded: false
+
+    property string pauseReason: "None"
 
     function recalculate() {
         let newPaused = false;
         let reason = "None";
 
         // Rule #0 — Manual / Config Pause
-        if ((typeof Config !== "undefined" && Config.background && Config.background.videoWallpaperPaused) || manualPause) {
+        if (GlobalConfig.background.videoWallpaperPaused || manualPause) {
             newPaused = true;
             reason = "Manual / Config Pause";
         } else if (pauseOnBattery && UPower.onBattery) {
@@ -86,51 +73,6 @@ Singleton {
         root.pauseReason = reason;
     }
 
-    Connections {
-        target: Hyprland
-        function onFocusedWorkspaceChanged() {
-            root.recalculate();
-        }
-        function onFocusedMonitorChanged() {
-            root.recalculate();
-        }
-        function onRawEvent(event) {
-            const n = event.name;
-            if (n.startsWith("workspace") || n.startsWith("activewindow") || n.startsWith("createworkspace") || n.startsWith("destroyworkspace") || ["fullscreen", "changefloatingmode", "minimize", "movewindow", "openwindow", "closewindow", "moveworkspace", "focusedmon"].includes(n)) {
-                recalcTimer.restart();
-            }
-        }
-    }
-
-    Connections {
-        target: UPower
-        function onOnBatteryChanged() {
-            recalcTimer.restart();
-        }
-    }
-
-    Timer {
-        id: recalcTimer
-        interval: 50
-        onTriggered: root.recalculate()
-    }
-
-    // Startup timer to ensure we catch the asynchronously loaded Hyprland and Quickshell state
-    Timer {
-        id: startupTimer
-        interval: 1000
-        repeat: true
-        running: true
-        property int attempts: 0
-        onTriggered: {
-            root.recalculate();
-            attempts++;
-            if (attempts >= 5) {
-                running = false;
-            }
-        }
-    }
-
     onManualPauseChanged: {
         recalculate();
     }
@@ -147,7 +89,9 @@ Singleton {
         // We still need to sync this to a text file because the python CLI needs to read it
         // BEFORE the Qt application starts in order to inject the environment variables.
         if (root._loaded) {
-            saveHwDecoderProcess.command = ["sh", "-c", "echo '" + root.hwDecoder + "' > ~/.cache/caelestia/hwDecoder.txt && nohup sh -c 'sleep 0.5 && caelestia shell -d' >/dev/null 2>&1 & caelestia shell -k"];
+            // $1 is the decoder name, which comes from config. $HOME replaces ~ because ~
+            // does not expand inside the quoted redirect target.
+            saveHwDecoderProcess.command = ["sh", "-c", 'printf "%s\\n" "$1" > "$HOME/.cache/caelestia/hwDecoder.txt" && nohup sh -c "sleep 0.5 && caelestia shell -d" >/dev/null 2>&1 & caelestia shell -k', "sh", root.hwDecoder];
             saveHwDecoderProcess.running = true;
         }
     }
@@ -155,5 +99,77 @@ Singleton {
     Component.onCompleted: {
         root._loaded = true;
         recalculate();
+    }
+
+    Settings {
+        id: pauserSettings
+
+        property alias manualPause: root.manualPause
+
+        property alias pauseOnBattery: root.pauseOnBattery
+
+        property alias pauseOnWindowOverlap: root.pauseOnWindowOverlap
+
+        property alias hwDecoder: root.hwDecoder
+
+        location: `${Paths.state}/wallpaper/pauser.ini`
+        category: "WallpaperPauser"
+    }
+
+    Process {
+        id: saveHwDecoderProcess
+    }
+
+    Connections {
+        function onFocusedWorkspaceChanged() {
+            root.recalculate();
+        }
+
+        function onFocusedMonitorChanged() {
+            root.recalculate();
+        }
+
+        function onRawEvent(event) {
+            const n = event.name;
+            if (n.startsWith("workspace") || n.startsWith("activewindow") || n.startsWith("createworkspace") || n.startsWith("destroyworkspace") || ["fullscreen", "changefloatingmode", "minimize", "movewindow", "openwindow", "closewindow", "moveworkspace", "focusedmon"].includes(n)) {
+                recalcTimer.restart();
+            }
+        }
+
+        target: Hyprland
+    }
+
+    Connections {
+        function onOnBatteryChanged() {
+            recalcTimer.restart();
+        }
+
+        target: UPower
+    }
+
+    Timer {
+        id: recalcTimer
+
+        interval: 50
+        onTriggered: root.recalculate()
+    }
+
+    // Startup timer to ensure we catch the asynchronously loaded Hyprland and Quickshell state
+    Timer {
+        id: startupTimer
+
+        property int attempts: 0
+
+        interval: 1000
+        repeat: true
+        running: true
+
+        onTriggered: {
+            root.recalculate();
+            attempts++;
+            if (attempts >= 5) {
+                running = false;
+            }
+        }
     }
 }

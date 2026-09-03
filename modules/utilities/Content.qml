@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 import "cards"
 import QtQuick
 import QtQuick.Layouts
-import QtQuick.Controls as QQC2
 import Caelestia.Config
 import qs.components
 import qs.services
@@ -19,15 +18,17 @@ Item {
 
     readonly property bool mediaActive: Config.utilities.cards.recorder || QuickShare.isEnabled
     readonly property int enabledCards: (idleInhibit.active ? 1 : 0) + (mediaActive ? 1 : 0) + (toggles.active ? 1 : 0)
-    
+
     // Calculate nonAnimHeight
     // For mediaLoader, we take the nonAnimHeight of the active SwipeView page, or its implicitHeight, plus the indicator height
     readonly property real nonAnimHeight: {
         let h = 0;
-        if (idleInhibit.active) h += (idleInhibit.item as IdleInhibit)?.nonAnimHeight ?? 0;
-        if (toggles.active) h += (toggles.item as Toggles)?.implicitHeight ?? 0;
+        if (idleInhibit.active)
+            h += (idleInhibit.item as IdleInhibit)?.nonAnimHeight ?? 0;
+        if (toggles.active)
+            h += (toggles.item as Toggles)?.implicitHeight ?? 0;
         if (mediaActive && mediaLoader.item) {
-            h += mediaLoader.item.nonAnimHeight;
+            h += mediaLoader.item.nonAnimHeight; // qmllint disable missing-property
         }
         h += layout.spacing * Math.max(0, enabledCards - 1);
         return h;
@@ -65,46 +66,48 @@ Item {
 
             sourceComponent: ColumnLayout {
                 id: mediaLayout
-                spacing: Tokens.spacing.small
 
                 property int currentIndex: 0
+
                 property bool animEnabled: false
-                
+
+                property real lastValidItemHeight: 0
+
+                property real nonAnimHeight: {
+                    const swipeItem = mediaFlickable.currentItem ? mediaFlickable.currentItem.item : null; // qmllint disable missing-property
+                    const itemHeight = swipeItem ? (swipeItem.nonAnimHeight ?? swipeItem.implicitHeight) : lastValidItemHeight;
+                    return itemHeight + (mediaRepeater.count > 1 ? bgRow.implicitHeight + spacing : 0);
+                }
+
+                spacing: Tokens.spacing.small
+
                 onCurrentIndexChanged: {
                     animEnabled = true;
                     animDisableTimer.restart();
                 }
 
-                Timer {
-                    id: animDisableTimer
-                    interval: 400
-                    onTriggered: mediaLayout.animEnabled = false
-                }
-
-                property real lastValidItemHeight: 0
-                property real nonAnimHeight: {
-                    const swipeItem = mediaFlickable.currentItem ? mediaFlickable.currentItem.item : null;
-                    const itemHeight = swipeItem ? (swipeItem.nonAnimHeight ?? swipeItem.implicitHeight) : lastValidItemHeight;
-                    return itemHeight + (mediaRepeater.count > 1 ? bgRow.implicitHeight + spacing : 0);
-                }
-                
                 onNonAnimHeightChanged: {
-                    const swipeItem = mediaFlickable.currentItem ? mediaFlickable.currentItem.item : null;
+                    const swipeItem = mediaFlickable.currentItem ? mediaFlickable.currentItem.item : null; // qmllint disable missing-property
                     if (swipeItem) {
                         lastValidItemHeight = (swipeItem.nonAnimHeight ?? swipeItem.implicitHeight);
                     }
                 }
-                
+
+                Timer {
+                    id: animDisableTimer
+
+                    interval: 400
+                    onTriggered: mediaLayout.animEnabled = false
+                }
+
                 Behavior on nonAnimHeight {
                     enabled: mediaLayout.animEnabled
+
                     Anim {}
                 }
 
                 Flickable {
                     id: mediaFlickable
-                    Layout.fillWidth: true
-                    clip: true
-                    interactive: mediaRepeater.count > 1
 
                     readonly property Item currentItem: {
                         mediaRepeater.count;
@@ -112,21 +115,30 @@ Item {
                         return mediaRepeater.itemAt(mediaLayout.currentIndex);
                     }
 
-                    flickableDirection: Flickable.HorizontalFlick
-
                     property real lastValidImplicitHeight: 0
-                    implicitHeight: currentItem ? currentItem.implicitHeight : lastValidImplicitHeight
-                    onImplicitHeightChanged: {
-                        if (currentItem) lastValidImplicitHeight = currentItem.implicitHeight;
-                    }
 
                     property real lastValidContentX: 0
+
+                    Layout.fillWidth: true
+
+                    clip: true
+                    interactive: mediaRepeater.count > 1
+
+                    flickableDirection: Flickable.HorizontalFlick
+                    implicitHeight: currentItem ? currentItem.implicitHeight : lastValidImplicitHeight
+
+                    onImplicitHeightChanged: {
+                        if (currentItem)
+                            lastValidImplicitHeight = currentItem.implicitHeight;
+                    }
+
                     contentX: currentItem ? currentItem.x : lastValidContentX
                     contentWidth: mediaRow.implicitWidth
                     contentHeight: mediaRow.implicitHeight
 
                     onContentXChanged: {
-                        if (currentItem && !moving) lastValidContentX = contentX;
+                        if (currentItem && !moving)
+                            lastValidContentX = contentX;
 
                         if (!moving || !currentItem)
                             return;
@@ -153,31 +165,37 @@ Item {
 
                     Row {
                         id: mediaRow
+
                         spacing: Tokens.spacing.medium
 
                         Repeater {
                             id: mediaRepeater
-                            
+
+                            property int dummy: 0
+
                             onCountChanged: {
                                 mediaLayout.animEnabled = true;
                                 animDisableTimer.restart();
                             }
-                            
-                            property int dummy: 0
+
                             onItemAdded: dummy++
+
                             model: {
                                 const pages = [];
-                                if (Config.utilities.cards.recorder) pages.push("record");
-                                if (QuickShare.isEnabled) pages.push("quickShare");
+                                if (Config.utilities.cards.recorder)
+                                    pages.push("record");
+                                if (QuickShare.isEnabled)
+                                    pages.push("quickShare");
                                 return pages;
                             }
 
                             Loader {
                                 required property int index
                                 required property string modelData
+
                                 active: true
                                 sourceComponent: modelData === "record" ? recordComp : quickShareComp
-                                
+
                                 width: mediaFlickable.width
                             }
                         }
@@ -189,6 +207,7 @@ Item {
 
                     Behavior on implicitHeight {
                         enabled: mediaLayout.animEnabled
+
                         Anim {}
                     }
                 }
@@ -196,22 +215,26 @@ Item {
                 Item {
                     id: indicatorRow
                     Layout.alignment: Qt.AlignHCenter
+
                     implicitWidth: bgRow.implicitWidth
                     implicitHeight: mediaRepeater.count > 1 ? bgRow.implicitHeight : 0
                     opacity: mediaRepeater.count > 1 ? 1 : 0
                     visible: implicitHeight > 0
-                    
+
                     Behavior on implicitHeight {
                         enabled: mediaLayout.animEnabled
+
                         Anim {}
                     }
                     Behavior on opacity {
                         enabled: mediaLayout.animEnabled
+
                         Anim {}
                     }
 
                     Row {
                         id: bgRow
+
                         spacing: Tokens.spacing.small
 
                         Repeater {
@@ -219,6 +242,7 @@ Item {
 
                             StyledRect {
                                 required property int index
+
                                 width: Tokens.spacing.medium
                                 height: Tokens.spacing.small
                                 radius: Tokens.rounding.full
@@ -233,8 +257,12 @@ Item {
                         radius: Tokens.rounding.full
                         color: Colours.palette.m3primary
                         x: mediaLayout.currentIndex * (Tokens.spacing.medium + Tokens.spacing.small)
-                        
-                        Behavior on x { Anim { type: Anim.DefaultEffects } }
+
+                        Behavior on x {
+                            Anim {
+                                type: Anim.DefaultEffects
+                            }
+                        }
                     }
                 }
             }
@@ -258,6 +286,7 @@ Item {
 
     Component {
         id: recordComp
+
         Record {
             objectName: "utilitiesScreenRecorder"
             props: root.props
@@ -267,6 +296,7 @@ Item {
 
     Component {
         id: quickShareComp
+
         QuickShareList {
             objectName: "utilitiesQuickShare"
             props: root.props

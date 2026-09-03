@@ -44,6 +44,7 @@ Singleton {
 
     Process {
         id: sunsetProc
+
         command: ["hyprsunset", "--temperature", props.temperature.toString()]
         running: props.active
 

@@ -6,26 +6,41 @@ pragma ComponentBehavior: Bound
 //@ pragma DefaultEnv QSG_RENDER_LOOP=threaded
 //@ pragma DefaultEnv QT_QUICK_FLICKABLE_WHEEL_DECELERATION=10000
 
-import QtQml
-import Quickshell
-import Caelestia.Config
-import qs.components.containers
-import qs.utils
-import qs.services
 import "modules"
 import "modules/drawers"
 import "modules/background"
 import "modules/shimeji"
 import "modules/areapicker"
 import "modules/lock"
-import QtQuick
 import "modules/polkit"
+import QtQuick
+import QtQml
+import Quickshell
 import Quickshell.Services.SystemTray
+import Caelestia.Config
+import qs.services
+import qs.utils
 
 ShellRoot {
     id: root
 
+    // Force service initialization
+    property var _arpcInit: DiscordRPC
+
+    property var _gameModeInit: GameMode
+
+    property var _pipInit: PipManager
+
+    property var _systemTrayInit: SystemTray
+
     settings.watchFiles: true
+
+    Component.onCompleted: {
+        Qt.callLater(() => {
+            Weather.reload();
+            PastafarianCalendar.reload();
+        });
+    }
 
     Binding {
         target: ShellState
@@ -42,37 +57,26 @@ ShellRoot {
 
     Drawers {}
     AreaPicker {}
+
     Lock {
         id: lock
     }
+
     PolkitModule {}
 
     Variants {
-        model: Quickshell.screens.filter(s => (GlobalConfig.shimeji?.enabled ?? false) && (GlobalConfig.shimeji?.path?.length ?? 0) > 0 && !Strings.testRegexList(GlobalConfig.shimeji?.excludedScreens ?? [], s.name))
+        model: Quickshell.screens.filter(s => GlobalConfig.hybrid.features.shimeji && (GlobalConfig.shimeji?.enabled ?? false) && (GlobalConfig.shimeji?.directory.length ?? 0) > 0 && !Strings.testRegexList(GlobalConfig.shimeji?.excludedScreens ?? [], s.name))
 
         Shimeji {
             shimejiCount: GlobalConfig.shimeji?.count ?? 1
         }
     }
-
-    ConfigToasts {}
     Shortcuts {}
-
-    Component.onCompleted: {
-        Qt.callLater(() => {
-            Weather.reload();
-            PastafarianCalendar.reload();
-        });
-    }
     BatteryMonitor {}
+
     IdleMonitors {
         lock: lock
     }
-    BluetoothReconnect {}
 
-    // Force service initialization
-    property var _arpcInit: DiscordRPC
-    property var _gameModeInit: GameMode
-    property var _pipInit: PipManager
-    property var _systemTrayInit: SystemTray
+    BluetoothReconnect {}
 }

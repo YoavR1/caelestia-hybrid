@@ -11,8 +11,6 @@ QtObject {
     property var keybinds: []
     property bool initialized: false
 
-    signal loaded
-
     property Process luaReader: Process {
         running: false
         command: ["lua", Quickshell.shellDir + "/assets/scripts/parse_keybinds.lua"]
@@ -21,8 +19,8 @@ QtObject {
                 try {
                     const parsed = JSON.parse(text);
                     if (Array.isArray(parsed)) {
-                        keybinds = parsed;
-                        initialized = true;
+                        root.keybinds = parsed;
+                        root.initialized = true;
                         root.loaded();
                         return;
                     }
@@ -30,8 +28,8 @@ QtObject {
                     console.error("Failed to parse lua keybinds: " + e);
                 }
                 // If Lua parsing failed or returned invalid data, try fallback
-                if (!initialized && !fallbackReader.running) {
-                    fallbackReader.running = true;
+                if (!root.initialized && !root.fallbackReader.running) {
+                    root.fallbackReader.running = true;
                 }
             }
         }
@@ -49,14 +47,18 @@ QtObject {
                     for (const b of binds) {
                         const action = b.dispatcher + (b.arg ? " " + b.arg : "");
                         const description = (b.has_description !== undefined && b.has_description && b.description) ? b.description : action;
-                        
+
                         let mods = [];
                         const m = b.modmask;
-                        if (m & 64) mods.push("Super");
-                        if (m & 8) mods.push("Alt");
-                        if (m & 4) mods.push("Ctrl");
-                        if (m & 1) mods.push("Shift");
-                        
+                        if (m & 64)
+                            mods.push("Super");
+                        if (m & 8)
+                            mods.push("Alt");
+                        if (m & 4)
+                            mods.push("Ctrl");
+                        if (m & 1)
+                            mods.push("Shift");
+
                         let keyText = b.key;
                         if (keyText === "") {
                             if (b.catch_all) {
@@ -67,7 +69,8 @@ QtObject {
                         }
 
                         let bindText = mods.join(" + ");
-                        if (bindText !== "") bindText += " + ";
+                        if (bindText !== "")
+                            bindText += " + ";
                         bindText += keyText;
 
                         formattedBinds.push({
@@ -76,9 +79,9 @@ QtObject {
                             description: description
                         });
                     }
-                    
-                    keybinds = formattedBinds;
-                    initialized = true;
+
+                    root.keybinds = formattedBinds;
+                    root.initialized = true;
                     root.loaded();
                 } catch (e) {
                     console.error("Failed to parse hyprctl binds -j: " + e);
@@ -86,6 +89,8 @@ QtObject {
             }
         }
     }
+
+    signal loaded
 
     function loadKeybinds() {
         if (initialized && keybinds.length > 0) {
@@ -115,11 +120,7 @@ QtObject {
             return keybinds;
 
         const queryText = searchText.toLowerCase().trim();
-        return keybinds.filter(k => 
-            (k.bind && k.bind.toLowerCase().includes(queryText)) ||
-            (k.description && k.description.toLowerCase().includes(queryText)) ||
-            (k.action && k.action.toLowerCase().includes(queryText))
-        );
+        return keybinds.filter(k => (k.bind && k.bind.toLowerCase().includes(queryText)) || (k.description && k.description.toLowerCase().includes(queryText)) || (k.action && k.action.toLowerCase().includes(queryText)));
     }
 
     function execute(item) {

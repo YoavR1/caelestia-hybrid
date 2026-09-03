@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git status:*)",
+      "Bash(git log:*)",
+      "Bash(git diff:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git remote -v)",
+      "Bash(git merge-base:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(git rev-list:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(git ls-files:*)",
+      "Bash(git shortlog:*)",
+      "Bash(git for-each-ref:*)",
+      "Bash(git worktree list)",
+      "Bash(git fetch:*)",
+      "Bash(cmake -B build:*)",
+      "Bash(cmake --build:*)",
+      "Bash(ninja -C build:*)",
+      "Bash(qmllint:*)",
+      "Bash(qmlformat --check:*)",
+      "Bash(clang-format --dry-run:*)",
+      "Bash(./hybrid/tools/upstream-status.sh:*)",
+      "Bash(./hybrid/tools/smoke-matrix.sh:*)",
+      "Bash(bash hybrid/tools/upstream-status.sh:*)",
+      "Bash(bash hybrid/tools/smoke-matrix.sh:*)"
+    ],
+    "deny": [
+      "Bash(killall:*)",
+      "Bash(pkill:*)",
+      "Bash(./install.sh:*)",
+      "Bash(bash install.sh:*)",
+      "Bash(sh install.sh:*)",
+      "Bash(rm -rf /*)",
+      "Bash(rm -rf ~/*)",
+      "Bash(rm -rf $HOME/*)",
+      "Bash(cmake --install:*)",
+      "Bash(sudo:*)"
+    ]
+  }
+}

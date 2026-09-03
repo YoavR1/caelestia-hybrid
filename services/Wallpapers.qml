@@ -15,7 +15,7 @@ Searcher {
 
     readonly property string currentNamePath: `${Paths.state}/wallpaper/path.txt`
     readonly property list<string> smartArg: GlobalConfig.services.smartScheme ? [] : ["--no-smart"]
-    readonly property string fallback: Quickshell.shellPath("assets/wallpaper.webp")
+    readonly property string fallback: Quickshell.shellPath("assets/wallpapers/Gravitation.png")
 
     property bool showPreview: false
     property bool enableAnimation: true
@@ -31,29 +31,82 @@ Searcher {
     property string rollbackPath: ""
     property string rollbackMode: ""
     property bool isTrackingRollback: false
-    
+
     // Track and restore the last used wallpaper per mode using low-overhead execution
     property string lastStatic: ""
+
     property string lastAnimated: ""
 
     property var _hashCache: ({})
 
-    Timer {
-        id: colorReleaseTimer
-        interval: 180 
-        repeat: false
-        onTriggered: {
-            // Safety check: only clear the preview if no new lock has been engaged
-            if (!previewColourLock && pendingPreviewClear) {
-                Colours.showPreview = false;
-                pendingPreviewClear = false;
+    readonly property var categories: {
+        let dummy = root.list;
+        const baseDir = Paths.wallsdir;
+        let cats = [];
+        for (let i = 0; i < root.list.length; i++) {
+            let p = root.list[i].parentDir;
+            if (p.includes("steamapps/workshop/content/431960")) {
+                let cat = "Wallpaper Engine";
+                if (!cats.includes(cat))
+                    cats.push(cat);
+                continue;
+            }
+            if (p !== baseDir) {
+                let cat = p.slice(baseDir.length + 1);
+                if (cat.includes("/"))
+                    cat = cat.slice(0, cat.indexOf("/"));
+                if (!cats.includes(cat))
+                    cats.push(cat);
             }
         }
+        return ["Main"].concat(cats.sort());
     }
 
+    readonly property var grouped: {
+        let dummy = root.list;
+        const baseDir = Paths.wallsdir;
+        let grp = {
+            "Main": []
+        };
+        for (let i = 0; i < root.list.length; i++) {
+            let w = root.list[i];
+            let p = w.parentDir;
+            if (p.includes("steamapps/workshop/content/431960")) {
+                let cat = "Wallpaper Engine";
+                if (!grp[cat])
+                    grp[cat] = [];
+                grp[cat].push(w);
+                continue;
+            }
+            if (p === baseDir) {
+                grp["Main"].push(w);
+            } else {
+                let cat = p.slice(baseDir.length + 1);
+                if (cat.includes("/"))
+                    cat = cat.slice(0, cat.indexOf("/"));
+                if (!grp[cat])
+                    grp[cat] = [];
+                grp[cat].push(w);
+            }
+        }
+        return grp;
+    }
+
+    property alias weVolume: weSettings.volume
+
+    property alias weSilent: weSettings.silent
+
+    property bool _refreshing: false
+
+    property bool restoreWallpaperMode: false
+
+    property var itemBusters: ({})
+
     function djb2_hash(s) {
-        if (!s) return "0";
-        if (_hashCache[s] !== undefined) return _hashCache[s];
+        if (!s)
+            return "0";
+        if (_hashCache[s] !== undefined)
+            return _hashCache[s];
 
         let h = 5381;
         for (let i = 0; i < s.length; i++) {
@@ -67,62 +120,19 @@ Searcher {
 
     function getWallpaperThumb(path, buster) {
         let clean = String(path || "").split(/[?#]/)[0];
-        if (clean.indexOf("file://") === 0) clean = clean.substring(7);
+        if (clean.indexOf("file://") === 0)
+            clean = clean.substring(7);
         let b = buster !== undefined ? buster : cacheBuster;
         return Paths.cache + "/videothumbs/" + djb2_hash(clean) + ".jpg" + (b ? "?v=" + b : "");
     }
 
     function isVideo(path: string): bool {
-        if (!path) return false;
+        if (!path)
+            return false;
         const clean = String(path).split(/[?#]/)[0].toLowerCase();
         const index = clean.lastIndexOf(".");
         const ext = index >= 0 ? clean.slice(index + 1) : "";
         return validVideoExtensions.includes(ext);
-    }
-
-    readonly property var categories: {
-        let dummy = root.list;
-        const baseDir = Paths.wallsdir;
-        let cats = [];
-        for (let i = 0; i < root.list.length; i++) {
-            let p = root.list[i].parentDir;
-            if (p.includes("steamapps/workshop/content/431960")) {
-                let cat = "Wallpaper Engine";
-                if (!cats.includes(cat)) cats.push(cat);
-                continue;
-            }
-            if (p !== baseDir) {
-                let cat = p.slice(baseDir.length + 1);
-                if (cat.includes("/")) cat = cat.slice(0, cat.indexOf("/"));
-                if (!cats.includes(cat)) cats.push(cat);
-            }
-        }
-        return ["Main"].concat(cats.sort());
-    }
-
-    readonly property var grouped: {
-        let dummy = root.list;
-        const baseDir = Paths.wallsdir;
-        let grp = { "Main": [] };
-        for (let i = 0; i < root.list.length; i++) {
-            let w = root.list[i];
-            let p = w.parentDir;
-            if (p.includes("steamapps/workshop/content/431960")) {
-                let cat = "Wallpaper Engine";
-                if (!grp[cat]) grp[cat] = [];
-                grp[cat].push(w);
-                continue;
-            }
-            if (p === baseDir) {
-                grp["Main"].push(w);
-            } else {
-                let cat = p.slice(baseDir.length + 1);
-                if (cat.includes("/")) cat = cat.slice(0, cat.indexOf("/"));
-                if (!grp[cat]) grp[cat] = [];
-                grp[cat].push(w);
-            }
-        }
-        return grp;
     }
 
     function getCategoryFor(w: FileSystemEntry): string {
@@ -147,38 +157,16 @@ Searcher {
         }
     }
 
-    onWallpaperModeChanged: {
-        captureRollbackState();
-        
-        const target = wallpaperMode === "animated" ? lastAnimated : lastStatic;
-
-        if (target !== "") {
-            actualCurrent = target;
-            if (showPreview) {
-                previewPath = target;
-                if (String(Colours.scheme).startsWith("dynamic")) {
-                    if (!getPreviewColoursProc.running) {
-                        getPreviewColoursProc.startFor(target);
-                    }
-                }
-            } else {
-                Quickshell.execDetached(["caelestia", "wallpaper", "-f", target, ...smartArg]);
-            }
-        }
-    }
-
-    onEnableAnimationChanged: {
-        Quickshell.execDetached(["sh", "-c", "mkdir -p '" + Paths.state + "/wallpaper' && echo '" + (enableAnimation ? "1" : "0") + "' > '" + Paths.state + "/wallpaper/enable_animation.txt'"]);
-    }
-
     function setRandom(): void {
         Quickshell.execDetached(["caelestia", "wallpaper", "-r", ...smartArg]);
     }
 
     function setWallpaper(path: string): void {
         let clean = String(path || "").split(/[?#]/)[0];
-        if (clean.indexOf("file://") === 0) clean = clean.substring(7);
-        if (!clean) return;
+        if (clean.indexOf("file://") === 0)
+            clean = clean.substring(7);
+        if (!clean)
+            return;
 
         let targetPath = clean;
         if (path.endsWith("project.json")) {
@@ -202,11 +190,11 @@ Searcher {
         if (isVideo(targetPath)) {
             lastAnimated = targetPath;
             wallpaperMode = "animated";
-            Quickshell.execDetached(["sh", "-c", "mkdir -p '" + Paths.state + "/wallpaper' && echo '" + targetPath + "' > '" + Paths.state + "/wallpaper/last_animated.txt'"]);
+            Quickshell.execDetached(["sh", "-c", 'mkdir -p "$1" && printf "%s\\n" "$2" > "$3"', "sh", `${Paths.state}/wallpaper`, targetPath, `${Paths.state}/wallpaper/last_animated.txt`]);
         } else {
             lastStatic = targetPath;
             wallpaperMode = "static";
-            Quickshell.execDetached(["sh", "-c", "mkdir -p '" + Paths.state + "/wallpaper' && echo '" + targetPath + "' > '" + Paths.state + "/wallpaper/last_static.txt'"]);
+            Quickshell.execDetached(["sh", "-c", 'mkdir -p "$1" && printf "%s\\n" "$2" > "$3"', "sh", `${Paths.state}/wallpaper`, targetPath, `${Paths.state}/wallpaper/last_static.txt`]);
         }
 
         stopPreview();
@@ -218,10 +206,13 @@ Searcher {
         captureRollbackState();
 
         let clean = String(path || "").split(/[?#]/)[0];
-        if (clean.indexOf("file://") === 0) clean = clean.substring(7);
-        if (!clean) return;
+        if (clean.indexOf("file://") === 0)
+            clean = clean.substring(7);
+        if (!clean)
+            return;
 
-        if (previewPath === clean && showPreview) return;
+        if (previewPath === clean && showPreview)
+            return;
 
         previewPath = clean;
         showPreview = true;
@@ -235,7 +226,7 @@ Searcher {
 
     function stopPreview(): void {
         showPreview = false;
-        
+
         if (getPreviewColoursProc.running) {
             getPreviewColoursProc.running = false;
         }
@@ -244,7 +235,7 @@ Searcher {
             wallpaperMode = rollbackMode;
             actualCurrent = rollbackPath;
             isTrackingRollback = false;
-            
+
             Quickshell.execDetached(["caelestia", "wallpaper", "-f", rollbackPath, ...smartArg]);
         }
 
@@ -275,6 +266,49 @@ Searcher {
         return path;
     }
 
+    function updateCombinedList() {
+        let arr = [];
+        for (let i = 0; i < wallpapers.entries.length; i++) {
+            arr.push(wallpapers.entries[i]);
+        }
+        for (let i = 0; i < weWallpapers.entries.length; i++) {
+            arr.push(weWallpapers.entries[i]);
+        }
+        root.list = arr;
+    }
+
+    function refreshAnimatedThumbs() {
+        if (_refreshing)
+            return;
+        itemBusters = {};
+        _refreshing = true;
+        _extractThumbsProc.running = true;
+    }
+
+    onWallpaperModeChanged: {
+        captureRollbackState();
+
+        const target = wallpaperMode === "animated" ? lastAnimated : lastStatic;
+
+        if (target !== "") {
+            actualCurrent = target;
+            if (showPreview) {
+                previewPath = target;
+                if (String(Colours.scheme).startsWith("dynamic")) {
+                    if (!getPreviewColoursProc.running) {
+                        getPreviewColoursProc.startFor(target);
+                    }
+                }
+            } else {
+                Quickshell.execDetached(["caelestia", "wallpaper", "-f", target, ...smartArg]);
+            }
+        }
+    }
+
+    onEnableAnimationChanged: {
+        Quickshell.execDetached(["sh", "-c", 'mkdir -p "$1" && printf "%s\\n" "$2" > "$3"', "sh", `${Paths.state}/wallpaper`, enableAnimation ? "1" : "0", `${Paths.state}/wallpaper/enable_animation.txt`]);
+    }
+
     onPreviewColourLockChanged: {
         if (!previewColourLock && pendingPreviewClear) {
             colorReleaseTimer.restart();
@@ -282,11 +316,28 @@ Searcher {
     }
 
     list: wallpapers.entries
+
     key: "relativePath"
+
     useFuzzy: GlobalConfig.launcher.useFuzzy.wallpapers
+
     extraOpts: useFuzzy ? ({}) : ({
             forward: false
         })
+
+    Timer {
+        id: colorReleaseTimer
+
+        interval: 180
+        repeat: false
+        onTriggered: {
+            // Safety check: only clear the preview if no new lock has been engaged
+            if (!root.previewColourLock && root.pendingPreviewClear) {
+                Colours.showPreview = false;
+                root.pendingPreviewClear = false;
+            }
+        }
+    }
 
     IpcHandler {
         function get(): string {
@@ -309,8 +360,10 @@ Searcher {
         printErrors: false
         onLoaded: {
             const val = text().trim();
-            if (val === "0") root.enableAnimation = false;
-            else if (val === "1") root.enableAnimation = true;
+            if (val === "0")
+                root.enableAnimation = false;
+            else if (val === "1")
+                root.enableAnimation = true;
         }
     }
 
@@ -329,11 +382,13 @@ Searcher {
             root.previewColourLock = false;
 
             if (root.isVideo(root.actualCurrent)) {
-                wallpaperMode = "animated";
-                if (!root.lastAnimated) root.lastAnimated = wall;
+                root.wallpaperMode = "animated";
+                if (!root.lastAnimated)
+                    root.lastAnimated = wall;
             } else {
-                wallpaperMode = "static";
-                if (!root.lastStatic) root.lastStatic = wall;
+                root.wallpaperMode = "static";
+                if (!root.lastStatic)
+                    root.lastStatic = wall;
             }
         }
         onLoadFailed: {
@@ -348,7 +403,8 @@ Searcher {
         printErrors: false
         onLoaded: {
             const val = text().trim();
-            if (val) root.lastStatic = val;
+            if (val)
+                root.lastStatic = val;
         }
     }
 
@@ -357,32 +413,21 @@ Searcher {
         printErrors: false
         onLoaded: {
             const val = text().trim();
-            if (val) root.lastAnimated = val;
+            if (val)
+                root.lastAnimated = val;
         }
     }
 
-    function updateCombinedList() {
-        let arr = [];
-        for (let i = 0; i < wallpapers.entries.length; i++) {
-            arr.push(wallpapers.entries[i]);
-        }
-        for (let i = 0; i < weWallpapers.entries.length; i++) {
-            arr.push(weWallpapers.entries[i]);
-        }
-        root.list = arr;
-    }
-
-    property alias weVolume: weSettings.volume
-    property alias weSilent: weSettings.silent
-    
     Settings {
         id: weSettings
+
         property real volume: 0.15
         property bool silent: false
     }
 
     FileSystemModel {
         id: wallpapers
+
         recursive: true
         path: Paths.wallsdir
         filter: FileSystemModel.Files
@@ -392,6 +437,7 @@ Searcher {
 
     FileSystemModel {
         id: weWallpapers
+
         recursive: true
         path: Quickshell.env("HOME") + "/.local/share/Steam/steamapps/workshop/content/431960"
         filter: FileSystemModel.Files
@@ -404,17 +450,19 @@ Searcher {
 
         property string currentProcessingPath: ""
 
-        command: ["caelestia", "wallpaper", "-p", currentProcessingPath, ...root.smartArg]
-
         function startFor(path) {
-            if (!path) return;
+            if (!path)
+                return;
             currentProcessingPath = path;
             running = true;
         }
 
+        command: ["caelestia", "wallpaper", "-p", currentProcessingPath, ...root.smartArg]
+
         stdout: StdioCollector {
             onStreamFinished: {
-                if (!root.showPreview) return;
+                if (!root.showPreview)
+                    return;
 
                 const raw = text ? text.trim() : "";
                 if (raw) {
@@ -434,18 +482,15 @@ Searcher {
         }
     }
 
-    property bool _refreshing: false
-    property bool restoreWallpaperMode: false
-    property var itemBusters: ({})
-
     FileView {
         path: "/tmp/caelestia_thumb_ready.txt"
         watchChanges: true
         printErrors: false
         onLoaded: {
             const raw = text().trim();
-            if (!raw) return;
-            
+            if (!raw)
+                return;
+
             const lines = raw.split("\n");
             let busters = Object.assign({}, root.itemBusters);
             let changed = false;
@@ -453,7 +498,8 @@ Searcher {
 
             for (let i = 0; i < lines.length; i++) {
                 let line = lines[i].trim();
-                if (line.indexOf("file://") === 0) line = line.substring(7);
+                if (line.indexOf("file://") === 0)
+                    line = line.substring(7);
                 if (line && !busters[line]) {
                     busters[line] = now;
                     busters["file://" + line] = now;
@@ -466,18 +512,11 @@ Searcher {
         }
     }
 
-    function refreshAnimatedThumbs() {
-        if (_refreshing) return;
-        itemBusters = {};
-        _refreshing = true;
-        _extractThumbsProc.running = true;
-    }
-
     Process {
         id: _extractThumbsProc
 
         command: ["caelestia", "wallpaper", "--extract-thumbs"]
-        onExited: (exitCode, exitStatus) => {
+        onExited: (exitCode, exitStatus) => { // qmllint disable signal-handler-parameters
             root._refreshing = false;
             root.cacheBuster = Date.now().toString();
             root.restoreWallpaperMode = true;

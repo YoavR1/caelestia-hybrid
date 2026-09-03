@@ -1,20 +1,23 @@
 #pragma once
 
-#include "configobject.hpp"
-
+#include <qlocale.h>
 #include <qstring.h>
 #include <qstringlist.h>
 #include <qvariant.h>
 
+#include "settings/objectnode.hpp"
+#include "common.hpp"
+#include "enums.hpp"
+
 namespace caelestia::config {
 
 using Qt::StringLiterals::operator""_s;
+using settings::vmap;
 
-class ServiceConfig : public ConfigObject {
-    Q_OBJECT
-    QML_ANONYMOUS
+class ServiceConfig : public settings::ObjectNode {
+    CONFIG_NODE(ServiceConfig, settings::ObjectNode)
 
-    CONFIG_GLOBAL_PROPERTY(QString, weatherLocation)
+    CONFIG_GLOBAL_PROPERTY(QString, weatherLocation, QString())
     // Guess based on locale
     CONFIG_GLOBAL_PROPERTY(bool, useFahrenheit,
         QLocale().measurementSystem() == QLocale::ImperialUSSystem ||
@@ -24,7 +27,7 @@ class ServiceConfig : public ConfigObject {
     // Attempt to guess based on locale
     CONFIG_GLOBAL_PROPERTY(
         bool, useTwelveHourClock, QLocale().timeFormat(QLocale::ShortFormat).toLower().contains(u"a"_s))
-    CONFIG_GLOBAL_PROPERTY(QString, gpuType)
+    CONFIG_GLOBAL_ENUM_PROPERTY(GpuType, gpuType, GpuType::Auto)
     CONFIG_GLOBAL_PROPERTY(int, visualiserBars, 60)
     CONFIG_GLOBAL_PROPERTY(qreal, audioIncrement, 0.1)
     CONFIG_GLOBAL_PROPERTY(qreal, brightnessIncrement, 0.1)
@@ -33,8 +36,8 @@ class ServiceConfig : public ConfigObject {
     CONFIG_GLOBAL_PROPERTY(QString, defaultPlayer, u"Spotify"_s)
     CONFIG_GLOBAL_PROPERTY(QVariantList, playerAliases,
         { vmap({ { u"from"_s, u"com.github.th_ch.youtube_music"_s }, { u"to"_s, u"YT Music"_s } }) })
-    CONFIG_GLOBAL_PROPERTY(QString, lyricsBackend, u"Auto"_s)
-    CONFIG_GLOBAL_PROPERTY(QStringList, bluetoothAutoReconnectDevices)
+    CONFIG_GLOBAL_ENUM_PROPERTY(LyricsBackend, lyricsBackend, LyricsBackend::Auto)
+    CONFIG_GLOBAL_PROPERTY(QStringList, bluetoothAutoReconnectDevices, {})
 
     // Discord ARPC Settings
     CONFIG_GLOBAL_PROPERTY(bool, arpcEnabled, false)
@@ -45,8 +48,8 @@ class ServiceConfig : public ConfigObject {
     CONFIG_GLOBAL_PROPERTY(QString, arpcLargeImage, u""_s)
     CONFIG_GLOBAL_PROPERTY(QString, arpcSmallImage, u""_s)
     CONFIG_GLOBAL_PROPERTY(bool, arpcSteamAutoDetect, false)
-    CONFIG_GLOBAL_PROPERTY(QStringList, arpcSteamBlacklist)
-    CONFIG_GLOBAL_PROPERTY(QStringList, arpcTargetWindows)
+    CONFIG_GLOBAL_PROPERTY(QStringList, arpcSteamBlacklist, {})
+    CONFIG_GLOBAL_PROPERTY(QStringList, arpcTargetWindows, {})
     CONFIG_GLOBAL_PROPERTY(bool, arpcCaelestiaInfo, false)
     CONFIG_GLOBAL_PROPERTY(bool, arpcManualOverride, false)
 
@@ -57,10 +60,6 @@ class ServiceConfig : public ConfigObject {
 
     // QuickShare Settings
     CONFIG_GLOBAL_PROPERTY(bool, quickShareAutoStart, false)
-
-public:
-    explicit ServiceConfig(QObject* parent = nullptr)
-        : ConfigObject(parent) {}
 };
 
 } // namespace caelestia::config

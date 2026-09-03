@@ -2,19 +2,27 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
+import Quickshell.Io
 import Caelestia.Config
 import qs.components
 import qs.components.controls
-import qs.modules.nexus.common
 import qs.services
-import Quickshell
-import Quickshell.Io
+import qs.modules.nexus.common
 
 PageBase {
     id: root
 
-    title: qsTr("GitHub")
-    isSubPage: true
+    property Process readTokenProc: Process {
+        id: readTokenProc
+
+        command: ["secret-tool", "lookup", "service", "caelestia-shell", "account", "github"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                tokenInput.text = text.trim();
+            }
+        }
+    }
 
     function saveToken(token) {
         if (!token) {
@@ -24,15 +32,8 @@ PageBase {
         }
     }
 
-    property Process readTokenProc: Process {
-        id: readTokenProc
-        command: ["secret-tool", "lookup", "service", "caelestia-shell", "account", "github"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                tokenInput.text = text.trim();
-            }
-        }
-    }
+    title: qsTr("GitHub")
+    isSubPage: true
 
     Component.onCompleted: readTokenProc.running = true
 
@@ -57,7 +58,6 @@ PageBase {
             checked: root.targetConfig.bar.github.background
             onToggled: {
                 root.targetConfig.bar.github.background = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -67,12 +67,14 @@ PageBase {
 
             ConnectedRect {
                 id: bg
+
                 anchors.fill: parent
                 last: true
             }
 
             RowLayout {
                 id: contentRow
+
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
@@ -103,9 +105,10 @@ PageBase {
                     Layout.preferredHeight: 32
                     radius: Tokens.rounding.small
                     color: Colours.layer(Colours.palette.m3surfaceVariant, 2)
-                    
+
                     StyledTextField {
                         id: tokenInput
+
                         anchors.fill: parent
                         anchors.leftMargin: Tokens.padding.medium
                         anchors.rightMargin: Tokens.padding.medium
@@ -129,8 +132,8 @@ PageBase {
                     Layout.preferredHeight: 32
                     icon: "close"
                     onClicked: {
-                        tokenInput.text = ""
-                        root.saveToken("")
+                        tokenInput.text = "";
+                        root.saveToken("");
                     }
                 }
             }

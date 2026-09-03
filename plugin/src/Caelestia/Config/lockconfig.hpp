@@ -1,12 +1,12 @@
 #pragma once
 
-#include "configobject.hpp"
+#include "settings/objectnode.hpp"
+#include "common.hpp"
 
 namespace caelestia::config {
 
-class LockConfig : public ConfigObject {
-    Q_OBJECT
-    QML_ANONYMOUS
+class LockConfig : public settings::ObjectNode {
+    CONFIG_NODE(LockConfig, settings::ObjectNode)
 
     CONFIG_PROPERTY(bool, enabled, true)
     CONFIG_PROPERTY(bool, useWallpaper, false)
@@ -19,10 +19,6 @@ class LockConfig : public ConfigObject {
     CONFIG_GLOBAL_PROPERTY(bool, triggerHowdyOnWake, true)
     CONFIG_PROPERTY(bool, hideNotifs, false)
     CONFIG_GLOBAL_PROPERTY(bool, lockOnStartup, false)
-
-public:
-    explicit LockConfig(QObject* parent = nullptr)
-        : ConfigObject(parent) {}
 };
 
 } // namespace caelestia::config

@@ -1,11 +1,12 @@
+import "../../../components/controls"
 import QtQuick
 import QtQuick.Layouts
+import Caelestia
 import Caelestia.Blobs
 import Caelestia.Config
 import Caelestia.Services
 import qs.components
 import qs.services
-import "../../../components/controls"
 
 Item {
     id: root
@@ -149,7 +150,7 @@ Item {
                 opacity: 0
 
                 StyledText {
-                    text: qsTr("Backend: %1").arg(LyricsBackend.toString(Lyrics.backend))
+                    text: qsTr("Backend: %1").arg(CUtils.enumToString(Lyrics, "backend"))
                     color: Colours.palette.m3onSurfaceVariant
                     animate: true
                 }

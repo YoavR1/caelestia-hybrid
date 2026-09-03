@@ -1,45 +1,39 @@
 #pragma once
 
-#include "configlist.hpp"
-#include "configobject.hpp"
-
+#include <qjsonarray.h>
+#include <qjsonobject.h>
+#include <qmap.h>
 #include <qstring.h>
 #include <qstringlist.h>
-#include <qvariant.h>
+#include <qvariantlist.h>
+
+#include "settings/objectnode.hpp"
+#include "common.hpp"
+#include "enums.hpp"
 
 namespace caelestia::config {
 
 using Qt::StringLiterals::operator""_s;
+using settings::vmap;
 
-class BarScrollActions : public ConfigObject {
-    Q_OBJECT
-    QML_ANONYMOUS
+class BarScrollActions : public settings::ObjectNode {
+    CONFIG_NODE(BarScrollActions, settings::ObjectNode)
 
     CONFIG_PROPERTY(bool, workspaces, true)
     CONFIG_PROPERTY(bool, volume, true)
     CONFIG_PROPERTY(bool, brightness, true)
-
-public:
-    explicit BarScrollActions(QObject* parent = nullptr)
-        : ConfigObject(parent) {}
 };
 
-class BarPopouts : public ConfigObject {
-    Q_OBJECT
-    QML_ANONYMOUS
+class BarPopouts : public settings::ObjectNode {
+    CONFIG_NODE(BarPopouts, settings::ObjectNode)
 
     CONFIG_PROPERTY(bool, activeWindow, true)
     CONFIG_PROPERTY(bool, tray, true)
     CONFIG_PROPERTY(bool, statusIcons, true)
-
-public:
-    explicit BarPopouts(QObject* parent = nullptr)
-        : ConfigObject(parent) {}
 };
 
-class BarWorkspaces : public ConfigObject {
-    Q_OBJECT
-    QML_ANONYMOUS
+class BarWorkspaces : public settings::ObjectNode {
+    CONFIG_NODE(BarWorkspaces, settings::ObjectNode)
 
     CONFIG_PROPERTY(int, shown, 5)
     CONFIG_PROPERTY(bool, activeIndicator, true)
@@ -49,91 +43,72 @@ class BarWorkspaces : public ConfigObject {
     CONFIG_PROPERTY(int, maxWindowIcons, 5)
     CONFIG_PROPERTY(bool, activeTrail, false)
     CONFIG_GLOBAL_PROPERTY(bool, perMonitorWorkspaces, true)
+    // MiDnight renders workspaces itself (modules/bar/components/workspaces/Workspace.qml),
+    // so `useIcon` and a plain-string `capitalisation` stay instead of upstream's
+    // BarWorkspaceDisplay / BarWorkspaceCapitalisation enums. Converging on the enums means
+    // taking upstream's Workspace.qml too -- see hybrid/docs/phase2-upstream-catchup.md.
     CONFIG_PROPERTY(bool, useIcon, true)
-    CONFIG_PROPERTY(QString, label, u" "_s)
+    CONFIG_PROPERTY(QString, label, u" "_s)
     CONFIG_PROPERTY(QString, occupiedLabel, u" 󰮯"_s)
     CONFIG_PROPERTY(QString, activeLabel, u" 󰮯"_s)
     CONFIG_PROPERTY(QString, capitalisation, u"preserve"_s)
-    CONFIG_GLOBAL_PROPERTY(QVariantList, specialWorkspaceIcons)
+    CONFIG_GLOBAL_PROPERTY(QVariantList, specialWorkspaceIcons, {})
+    CONFIG_GLOBAL_PROPERTY(QStringList, ignoredTags,
+        DEFAULT_ARG({
+            u"hide_in_bar"_s,
+            u"xwl_popup"_s,
+        }))
     CONFIG_GLOBAL_PROPERTY(QVariantList, windowIcons,
-        { vmap({
-            { u"regex"_s, u"steam(_app_(default|[0-9]+))?"_s },
-            { u"icon"_s, u"sports_esports"_s },
-        }) })
-    CONFIG_GLOBAL_PROPERTY(QVariantList, wsIcons)
-
-public:
-    explicit BarWorkspaces(QObject* parent = nullptr)
-        : ConfigObject(parent) {}
+        DEFAULT_ARG({
+            vmap({
+                { u"regex"_s, u"steam(_app_(default|[0-9]+))?"_s },
+                { u"icon"_s, u"sports_esports"_s },
+            }),
+        }))
+    CONFIG_GLOBAL_PROPERTY(QVariantList, wsIcons, {})
 };
 
-class BarActiveWindow : public ConfigObject {
-    Q_OBJECT
-    QML_ANONYMOUS
+class BarActiveWindow : public settings::ObjectNode {
+    CONFIG_NODE(BarActiveWindow, settings::ObjectNode)
 
     CONFIG_PROPERTY(bool, compact, false)
     CONFIG_PROPERTY(bool, inverted, false)
     CONFIG_PROPERTY(bool, showOnHover, true)
-
-public:
-    explicit BarActiveWindow(QObject* parent = nullptr)
-        : ConfigObject(parent) {}
 };
 
-class BarTray : public ConfigObject {
-    Q_OBJECT
-    QML_ANONYMOUS
+class BarTray : public settings::ObjectNode {
+    CONFIG_NODE(BarTray, settings::ObjectNode)
 
     CONFIG_PROPERTY(bool, background, false)
     CONFIG_PROPERTY(bool, recolour, false)
     CONFIG_PROPERTY(bool, compact, false)
-    CONFIG_GLOBAL_PROPERTY(QVariantList, iconSubs)
-    CONFIG_GLOBAL_PROPERTY(QStringList, hiddenIcons)
-
-public:
-    explicit BarTray(QObject* parent = nullptr)
-        : ConfigObject(parent) {}
+    CONFIG_GLOBAL_PROPERTY(QVariantList, iconSubs, {})
+    CONFIG_GLOBAL_PROPERTY(QStringList, hiddenIcons, {})
 };
 
-class BarClock : public ConfigObject {
-    Q_OBJECT
-    QML_ANONYMOUS
+class BarClock : public settings::ObjectNode {
+    CONFIG_NODE(BarClock, settings::ObjectNode)
 
     CONFIG_PROPERTY(bool, background, false)
     CONFIG_PROPERTY(bool, showDate, false)
     CONFIG_PROPERTY(bool, showIcon, true)
-
-public:
-    explicit BarClock(QObject* parent = nullptr)
-        : ConfigObject(parent) {}
 };
 
-class BarDock : public ConfigObject {
-    Q_OBJECT
-    QML_ANONYMOUS
+class BarDock : public settings::ObjectNode {
+    CONFIG_NODE(BarDock, settings::ObjectNode)
 
     CONFIG_PROPERTY(bool, monitorCenter, true)
     CONFIG_PROPERTY(bool, recolourIcons, false)
-
-public:
-    explicit BarDock(QObject* parent = nullptr)
-        : ConfigObject(parent) {}
 };
 
-class BarGithub : public ConfigObject {
-    Q_OBJECT
-    QML_ANONYMOUS
+class BarGithub : public settings::ObjectNode {
+    CONFIG_NODE(BarGithub, settings::ObjectNode)
 
     CONFIG_PROPERTY(bool, background, false)
-
-public:
-    explicit BarGithub(QObject* parent = nullptr)
-        : ConfigObject(parent) {}
 };
 
-class BarSpotify : public ConfigObject {
-    Q_OBJECT
-    QML_ANONYMOUS
+class BarSpotify : public settings::ObjectNode {
+    CONFIG_NODE(BarSpotify, settings::ObjectNode)
 
     CONFIG_PROPERTY(bool, background, false)
     CONFIG_PROPERTY(bool, showVisualiser, true)
@@ -141,94 +116,81 @@ class BarSpotify : public ConfigObject {
     CONFIG_PROPERTY(bool, inverted, false)
     CONFIG_PROPERTY(bool, horizontalVolume, false)
     CONFIG_PROPERTY(bool, autoHide, false)
-
-public:
-    explicit BarSpotify(QObject* parent = nullptr)
-        : ConfigObject(parent) {}
 };
 
 // Bar entries split into three anchored sections. `start` hugs the top/left edge,
 // `center` sits at the monitor centre and `end` hugs the bottom/right edge.
-class BarSections : public ConfigObject {
-    Q_OBJECT
-    QML_ANONYMOUS
+class BarSections : public settings::ObjectNode {
+    CONFIG_NODE(BarSections, settings::ObjectNode)
 
-    CONFIG_SUBOBJECT(EntryList, start)
-    CONFIG_SUBOBJECT(EntryList, center)
-    CONFIG_SUBOBJECT(EntryList, end)
+    CONFIG_LIST(EntryList, start,
+        DEFAULT_ARG({
+            LIST_ENTRY(logo, true),
+            LIST_ENTRY(workspaces, true),
+        }))
+    CONFIG_LIST(EntryList, center,
+        DEFAULT_ARG({
+            LIST_ENTRY(activeWindow, true),
+        }))
+    CONFIG_LIST(EntryList, end,
+        DEFAULT_ARG({
+            LIST_ENTRY(tray, true),
+            LIST_ENTRY(clock, true),
+            LIST_ENTRY(statusIcons, true),
+            LIST_ENTRY(power, true),
+        }))
 
 public:
-    explicit BarSections(QObject* parent = nullptr)
-        : ConfigObject(parent)
-        , m_start(new EntryList(this, defaults({
-              LIST_ENTRY(logo, true),
-              LIST_ENTRY(workspaces, true),
-          })))
-        , m_center(new EntryList(this, defaults({
-              LIST_ENTRY(activeWindow, true),
-          })))
-        , m_end(new EntryList(this, defaults({
-              LIST_ENTRY(tray, true),
-              LIST_ENTRY(clock, true),
-              LIST_ENTRY(statusIcons, true),
-              LIST_ENTRY(power, true),
-          }))) {}
-
-    void loadFromJson(const QJsonValue& json) override;
-
-private:
-    static QVariantList defaults(const QVariantList& entries) { return entries; }
+    bool syncJson(const QJsonValue& json, QList<settings::Diagnostic>& diagnostics) override;
 };
 
 // Migrates the legacy flat `bar.entries` array into the three section lists. Only
 // components part of the new default layout are kept, preserving their enabled state.
-inline void BarSections::loadFromJson(const QJsonValue& json) {
-    if (!json.isArray()) {
-        ConfigObject::loadFromJson(json);
-        return;
-    }
+// Rewritten onto settings::ObjectNode::syncJson: rather than loading each list by hand and
+// marking it visited, build the object the base class would have been given and delegate.
+inline bool BarSections::syncJson(const QJsonValue& json, QList<settings::Diagnostic>& diagnostics) {
+    if (!json.isArray())
+        return settings::ObjectNode::syncJson(json, diagnostics);
 
     QMap<QString, bool> enabledById;
-    for (const auto& value : json.toArray()) {
+    const QJsonArray legacyEntries = json.toArray();
+    for (const auto& value : legacyEntries) {
         const auto obj = value.toObject();
-        enabledById.insert(obj.value(QStringLiteral("id")).toString(),
-            obj.value(QStringLiteral("enabled")).toBool());
+        enabledById.insert(obj.value(u"id"_s).toString(), obj.value(u"enabled"_s).toBool());
     }
 
     const auto migrated = [&enabledById](const QVariantList& entries) {
         QVariantList result;
         for (const auto& value : entries) {
             auto props = value.toMap();
-            const auto id = props.value(QStringLiteral("id")).toString();
+            const auto id = props.value(u"id"_s).toString();
             if (enabledById.contains(id))
-                props.insert(QStringLiteral("enabled"), enabledById.value(id));
+                props.insert(u"enabled"_s, enabledById.value(id));
             result.append(props);
         }
         return result;
     };
 
-    m_start->loadFromJson(QJsonArray::fromVariantList(migrated(defaults({
-        LIST_ENTRY(logo, true),
-        LIST_ENTRY(workspaces, true),
-    }))));
-    m_center->loadFromJson(QJsonArray::fromVariantList(migrated(defaults({
-        LIST_ENTRY(activeWindow, true),
-    }))));
-    m_end->loadFromJson(QJsonArray::fromVariantList(migrated(defaults({
-        LIST_ENTRY(tray, true),
-        LIST_ENTRY(clock, true),
-        LIST_ENTRY(statusIcons, true),
-        LIST_ENTRY(power, true),
-    }))));
+    QJsonObject sections;
+    sections.insert(u"start"_s, QJsonArray::fromVariantList(migrated({
+                                    LIST_ENTRY(logo, true),
+                                    LIST_ENTRY(workspaces, true),
+                                })));
+    sections.insert(u"center"_s, QJsonArray::fromVariantList(migrated({
+                                     LIST_ENTRY(activeWindow, true),
+                                 })));
+    sections.insert(u"end"_s, QJsonArray::fromVariantList(migrated({
+                                  LIST_ENTRY(tray, true),
+                                  LIST_ENTRY(clock, true),
+                                  LIST_ENTRY(statusIcons, true),
+                                  LIST_ENTRY(power, true),
+                              })));
 
-    markPropertyLoaded(QStringLiteral("start"));
-    markPropertyLoaded(QStringLiteral("center"));
-    markPropertyLoaded(QStringLiteral("end"));
+    return settings::ObjectNode::syncJson(sections, diagnostics);
 }
 
-class BarConfig : public ConfigObject {
-    Q_OBJECT
-    QML_ANONYMOUS
+class BarConfig : public settings::ObjectNode {
+    CONFIG_NODE(BarConfig, settings::ObjectNode)
 
     CONFIG_PROPERTY(bool, persistent, true)
     CONFIG_PROPERTY(bool, showOnHover, true)
@@ -244,7 +206,7 @@ class BarConfig : public ConfigObject {
     CONFIG_SUBOBJECT(BarGithub, github)
     CONFIG_SUBOBJECT(BarSpotify, spotify)
     CONFIG_LIST(EntryList, statusIcons,
-        {
+        DEFAULT_ARG({
             LIST_ENTRY(lockStatus, true),
             LIST_ENTRY(audio, false),
             LIST_ENTRY(microphone, false),
@@ -254,24 +216,12 @@ class BarConfig : public ConfigObject {
             LIST_ENTRY(battery, true),
             LIST_ENTRY(peripheralBattery, false),
             LIST_ENTRY(notifications, true),
-        })
+        }))
+    // MiDnight splits the bar into start/center/end sections; BarSections::syncJson
+    // migrates upstream's flat `bar.entries` array into them.
     CONFIG_SUBOBJECT(BarSections, entries)
-    CONFIG_PROPERTY(QStringList, excludedScreens)
-    CONFIG_PROPERTY(QStringList, peripheralBatteryExcluded)
-
-public:
-    explicit BarConfig(QObject* parent = nullptr)
-        : ConfigObject(parent)
-        , m_scrollActions(new BarScrollActions(this))
-        , m_popouts(new BarPopouts(this))
-        , m_workspaces(new BarWorkspaces(this))
-        , m_activeWindow(new BarActiveWindow(this))
-        , m_tray(new BarTray(this))
-        , m_clock(new BarClock(this))
-        , m_dock(new BarDock(this))
-        , m_github(new BarGithub(this))
-        , m_spotify(new BarSpotify(this))
-        , m_entries(new BarSections(this)) {}
+    CONFIG_PROPERTY(QStringList, excludedScreens, {})
+    CONFIG_PROPERTY(QStringList, peripheralBatteryExcluded, {})
 };
 
 } // namespace caelestia::config

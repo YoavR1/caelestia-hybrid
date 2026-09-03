@@ -3,8 +3,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Layouts
 import Caelestia.Config
-import qs.components
-import qs.services
 import qs.modules.nexus.common
 
 PageBase {
@@ -86,15 +84,12 @@ PageBase {
             values: sectionEditor.targetList.values
             onItemMoved: (from, to) => {
                 sectionEditor.targetList.move(from, to);
-                root.targetConfig.save();
             }
             onItemRemoved: index => {
                 sectionEditor.targetList.remove(index);
-                root.targetConfig.save();
             }
             onItemToggled: (index, checked) => {
                 sectionEditor.targetList.at(index).enabled = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -121,7 +116,6 @@ PageBase {
                     id: selectedItem,
                     enabled: true
                 });
-                root.targetConfig.save();
             }
         }
     }

@@ -4,3 +4,7 @@
 build/
 .cache/
 logs
+.smoke-logs/
+*.bak
+tidy-build/
+.verify/

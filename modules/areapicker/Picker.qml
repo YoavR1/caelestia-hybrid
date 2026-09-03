@@ -38,10 +38,15 @@ MouseArea {
         if (!mon)
             return [];
 
-        const special = mon.lastIpcObject.specialWorkspace;
-        const wsId = special.name ? special.id : mon.activeWorkspace.id;
+        // A monitor object can exist with an empty lastIpcObject -- during startup before
+        // the first IPC reply, and for the whole run under a compositor that is not
+        // Hyprland. The `!mon` check above does not cover that.
+        const special = mon.lastIpcObject?.specialWorkspace;
+        const wsId = special?.name ? special.id : mon.activeWorkspace?.id;
+        if (wsId === undefined || wsId === null)
+            return [];
 
-        return Hypr.toplevels.values.filter(c => c.workspace?.id === wsId).sort((a, b) => {
+        return Hypr.toplevelsForWs(wsId).sort((a, b) => {
             // Pinned first, then fullscreen, then floating, then any other
             const ac = a.lastIpcObject;
             const bc = b.lastIpcObject;
@@ -73,9 +78,7 @@ MouseArea {
 
     function save(): void {
         const isSearch = root.loader.searchMode;
-        const tmpfile = isSearch
-            ? Qt.resolvedUrl("/tmp/caelestia-search.png")
-            : Qt.resolvedUrl(`/tmp/caelestia-picker-${Quickshell.processId}-${Date.now()}.png`);
+        const tmpfile = isSearch ? Qt.resolvedUrl("/tmp/caelestia-search.png") : Qt.resolvedUrl(`/tmp/caelestia-picker-${Quickshell.processId}-${Date.now()}.png`);
         CUtils.saveItem(screencopy, tmpfile, Qt.rect(Math.ceil(rsx), Math.ceil(rsy), Math.floor(sw), Math.floor(sh)), path => {
             if (isSearch) {
                 Quickshell.execDetached(["touch", "/tmp/caelestia-search.done"]);
@@ -221,7 +224,6 @@ MouseArea {
             onHasContentChanged: {
                 if (hasContent && !root.loader.freeze) {
                     overlay.visible = border.visible = true;
-                    root.save();
                 }
             }
         }

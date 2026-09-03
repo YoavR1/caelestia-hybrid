@@ -4,17 +4,13 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell.Services.Mpris
 import Quickshell.Services.Pipewire
-import Caelestia
 import Caelestia.Components
 import Caelestia.Config
-import Caelestia.Services
 import qs.components
 import qs.components.controls
 import qs.components.effects
-import qs.components.widgets
 import qs.components.images
 import qs.services
-import qs.utils
 
 ColumnLayout {
     id: root
@@ -27,7 +23,8 @@ ColumnLayout {
     readonly property PwNode playerStream: Audio.streams.find(s => {
         const identity = root.player?.identity?.toLowerCase() ?? "";
         const entry = (root.player?.entry ?? "").toString().toLowerCase();
-        if (!identity && !entry) return false;
+        if (!identity && !entry)
+            return false;
         const streamName = Audio.getStreamName(s).toLowerCase();
         const binary = (s.properties["application.process.binary"] ?? "").toString().toLowerCase();
         const appName = (s.properties["app.name"] ?? "").toString().toLowerCase();
@@ -35,6 +32,7 @@ ColumnLayout {
         const streamNames = [streamName, binary, appName].filter(n => n);
         return streamNames.some(sn => playerNames.some(pn => sn.includes(pn) || pn.includes(sn)));
     }) || null
+
     readonly property real currentVolume: (Players.supportsAppVolume(root.player) && typeof root.player?.volume !== "undefined" && root.player?.volume !== null) ? root.player.volume : (root.playerStream ? Audio.getStreamVolume(root.playerStream) : Audio.volume)
 
     readonly property bool isHorizontalVolume: Config.bar.spotify.horizontalVolume
@@ -137,15 +135,17 @@ ColumnLayout {
             Item {
                 id: verticalSlider
 
-                width: 24
-                height: parent.height
-                anchors.centerIn: parent
-
                 readonly property color fgColour: Colours.palette.m3primary
+
                 readonly property color bgColour: Colours.palette.m3secondaryContainer
+
                 readonly property real pos: Math.max(0, Math.min(1, root.currentVolume))
 
                 readonly property real filledHeight: Math.max(0, (height - handle.implicitHeight - handle.anchors.bottomMargin) * pos)
+
+                width: 24
+                height: parent.height
+                anchors.centerIn: parent
 
                 StyledRect {
                     id: remaining
@@ -318,7 +318,8 @@ ColumnLayout {
                 checked: root.player?.shuffle ?? false
                 font: Tokens.font.icon.builders.medium.weight(Font.Medium).build()
                 disabled: !root.player?.shuffleSupported
-                onClicked: if (root.player) root.player.shuffle = !root.player.shuffle
+                onClicked: if (root.player)
+                    root.player.shuffle = !root.player.shuffle
                 implicitWidth: Math.round(implicitHeight * 0.9)
             }
 
@@ -368,7 +369,8 @@ ColumnLayout {
                 font: Tokens.font.icon.builders.medium.weight(Font.Medium).build()
                 disabled: !root.player?.loopSupported
                 onClicked: {
-                    if (!root.player) return;
+                    if (!root.player)
+                        return;
                     const state = root.player.loopState;
                     if (state === MprisLoopState.None)
                         root.player.loopState = MprisLoopState.Track;

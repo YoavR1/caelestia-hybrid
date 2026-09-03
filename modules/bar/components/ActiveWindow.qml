@@ -65,7 +65,7 @@ Item {
                     popouts.hasCurrent = false;
                 } else if (Hypr.activeToplevel) {
                     popouts.currentName = "activewindow";
-                    popouts.currentCenter = bar.isHorizontal ? root.mapToItem(null, root.implicitWidth / 2, 0).x : root.mapToItem(null, 0, root.implicitHeight / 2).y;
+                    popouts.currentCenter = root.bar.isHorizontal ? root.mapToItem(null, root.implicitWidth / 2, 0).x : root.mapToItem(null, 0, root.implicitHeight / 2).y;
                     popouts.hasCurrent = true;
                 }
             }
@@ -75,8 +75,8 @@ Item {
     MaterialIcon {
         id: icon
 
-        anchors.horizontalCenter: bar.isHorizontal ? undefined : parent.horizontalCenter
-        anchors.verticalCenter: bar.isHorizontal ? parent.verticalCenter : undefined
+        anchors.horizontalCenter: root.bar.isHorizontal ? undefined : parent.horizontalCenter
+        anchors.verticalCenter: root.bar.isHorizontal ? parent.verticalCenter : undefined
 
         animate: true
         text: Icons.getAppCategoryIcon(Hypr.activeToplevel?.lastIpcObject.class, "desktop_windows")
@@ -108,7 +108,7 @@ Item {
     }
 
     Behavior on implicitHeight {
-        enabled: !bar.isHorizontal
+        enabled: !root.bar.isHorizontal
 
         Anim {
             type: Anim.DefaultSpatial
@@ -116,7 +116,7 @@ Item {
     }
 
     Behavior on implicitWidth {
-        enabled: bar.isHorizontal
+        enabled: root.bar.isHorizontal
 
         Anim {
             type: Anim.DefaultSpatial
@@ -128,15 +128,15 @@ Item {
 
         property alias text: styledText.text
 
-        width: bar.isHorizontal ? styledText.implicitWidth : styledText.implicitHeight
-        height: bar.isHorizontal ? styledText.implicitHeight : styledText.implicitWidth
+        width: root.bar.isHorizontal ? styledText.implicitWidth : styledText.implicitHeight
+        height: root.bar.isHorizontal ? styledText.implicitHeight : styledText.implicitWidth
 
-        anchors.horizontalCenter: bar.isHorizontal ? undefined : icon.horizontalCenter
-        anchors.verticalCenter: bar.isHorizontal ? icon.verticalCenter : undefined
-        anchors.top: bar.isHorizontal ? undefined : icon.bottom
-        anchors.topMargin: bar.isHorizontal ? 0 : Tokens.spacing.small
-        anchors.left: bar.isHorizontal ? icon.right : undefined
-        anchors.leftMargin: bar.isHorizontal ? Tokens.spacing.small : 0
+        anchors.horizontalCenter: root.bar.isHorizontal ? undefined : icon.horizontalCenter
+        anchors.verticalCenter: root.bar.isHorizontal ? icon.verticalCenter : undefined
+        anchors.top: root.bar.isHorizontal ? undefined : icon.bottom
+        anchors.topMargin: root.bar.isHorizontal ? 0 : Tokens.spacing.small
+        anchors.left: root.bar.isHorizontal ? icon.right : undefined
+        anchors.leftMargin: root.bar.isHorizontal ? Tokens.spacing.small : 0
 
         // Custom Title component does not have font/color directly, StyledText child does
         opacity: root.current === this ? 1 : 0
@@ -150,7 +150,7 @@ Item {
             font.family: metrics.font.family
             color: root.colour
 
-            rotation: bar.isHorizontal ? 0 : (root.Config.bar.activeWindow.inverted ? 270 : 90)
+            rotation: root.bar.isHorizontal ? 0 : (root.Config.bar.activeWindow.inverted ? 270 : 90)
         }
 
         Behavior on opacity {

@@ -10,8 +10,8 @@ Scope {
     property var attemptedDevices: ({})
 
     // Monitor the adapter status, devices list, and config list
-    readonly property bool adapterEnabled: Bluetooth.defaultAdapter ? Bluetooth.defaultAdapter.enabled : false
-    readonly property var devicesList: Bluetooth.devices.values
+    readonly property bool adapterEnabled: Bluetooth.defaultAdapter ? Bluetooth.defaultAdapter.enabled : false // qmllint disable unresolved-type
+    readonly property var devicesList: Bluetooth.devices.values // qmllint disable unresolved-type
     readonly property var autoReconnectList: GlobalConfig.services.bluetoothAutoReconnectDevices
 
     function checkAndReconnect() {

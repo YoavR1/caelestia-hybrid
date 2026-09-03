@@ -24,7 +24,6 @@ PageBase {
             checked: root.targetConfig.bar.clock.background
             onToggled: {
                 root.targetConfig.bar.clock.background = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -35,7 +34,6 @@ PageBase {
             checked: root.targetConfig.bar.clock.showDate
             onToggled: {
                 root.targetConfig.bar.clock.showDate = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -47,7 +45,6 @@ PageBase {
             checked: root.targetConfig.bar.clock.showIcon
             onToggled: {
                 root.targetConfig.bar.clock.showIcon = checked;
-                root.targetConfig.save();
             }
         }
     }

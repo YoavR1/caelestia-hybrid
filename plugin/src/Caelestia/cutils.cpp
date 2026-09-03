@@ -1,43 +1,34 @@
 #include "cutils.hpp"
 
-#include <QtConcurrent/qtconcurrentrun.h>
 #include <qcryptographichash.h>
-#include <QtQuick/qquickitemgrabresult.h>
-#include <QtQuick/qquickwindow.h>
 #include <qdir.h>
 #include <qfile.h>
 #include <qfileinfo.h>
-#include <qfuturewatcher.h>
 #include <qloggingcategory.h>
+#include <qmetaobject.h>
 #include <qqmlengine.h>
-#include <QStandardPaths>
+#include <qquickitemgrabresult.h>
+#include <qquickwindow.h>
 #include <qregularexpression.h>
+#include <qtconcurrentrun.h>
+#include <qtextstream.h>
+
+#include "util/metaenum.hpp"
+
+namespace {
 
 Q_LOGGING_CATEGORY(lcCUtils, "caelestia.cutils", QtInfoMsg)
 
+} // namespace
+
 namespace caelestia {
 
-void CUtils::saveItem(QQuickItem* target, const QUrl& path) {
-    this->saveItem(target, path, QRect(), QJSValue(), QJSValue());
-}
-
-void CUtils::saveItem(QQuickItem* target, const QUrl& path, const QRect& rect) {
-    this->saveItem(target, path, rect, QJSValue(), QJSValue());
-}
-
-void CUtils::saveItem(QQuickItem* target, const QUrl& path, QJSValue onSaved) {
-    this->saveItem(target, path, QRect(), onSaved, QJSValue());
-}
-
-void CUtils::saveItem(QQuickItem* target, const QUrl& path, QJSValue onSaved, QJSValue onFailed) {
+void CUtils::saveItem(QQuickItem* target, const QUrl& path, const QJSValue& onSaved, const QJSValue& onFailed) {
     this->saveItem(target, path, QRect(), onSaved, onFailed);
 }
 
-void CUtils::saveItem(QQuickItem* target, const QUrl& path, const QRect& rect, QJSValue onSaved) {
-    this->saveItem(target, path, rect, onSaved, QJSValue());
-}
-
-void CUtils::saveItem(QQuickItem* target, const QUrl& path, const QRect& rect, QJSValue onSaved, QJSValue onFailed) {
+void CUtils::saveItem(
+    QQuickItem* target, const QUrl& path, const QRect& rect, const QJSValue& onSaved, const QJSValue& onFailed) {
     if (!target) {
         qCWarning(lcCUtils) << "saveItem: a target is required";
         return;
@@ -54,53 +45,31 @@ void CUtils::saveItem(QQuickItem* target, const QUrl& path, const QRect& rect, Q
     }
 
     auto scaledRect = rect;
-    const qreal scale = target->window()->devicePixelRatio();
+    const auto scale = target->window()->devicePixelRatio();
     if (rect.isValid() && !qFuzzyCompare(scale + 1.0, 2.0)) {
         scaledRect =
             QRectF(rect.left() * scale, rect.top() * scale, rect.width() * scale, rect.height() * scale).toRect();
     }
 
-    const QSharedPointer<const QQuickItemGrabResult> grabResult = target->grabToImage();
+    const auto grabResult = target->grabToImage();
 
-    QObject::connect(grabResult.data(), &QQuickItemGrabResult::ready, this,
-        [grabResult, scaledRect, path, onSaved, onFailed, this]() {
-            const auto future = QtConcurrent::run([=]() {
-                QImage image = grabResult->image();
-
-                if (scaledRect.isValid()) {
+    QObject::connect(
+        grabResult.data(), &QQuickItemGrabResult::ready, this, [grabResult, scaledRect, path, onSaved, onFailed, this] {
+            QtConcurrent::run([grabResult, scaledRect, file = path.toLocalFile()] {
+                auto image = grabResult->image();
+                if (scaledRect.isValid())
                     image = image.copy(scaledRect);
-                }
 
-                const QString file = path.toLocalFile();
-                const QString parent = QFileInfo(file).absolutePath();
+                const auto parent = QFileInfo(file).absolutePath();
                 return QDir().mkpath(parent) && image.save(file);
-            });
-
-            auto* watcher = new QFutureWatcher<bool>(this);
-            auto* engine = qmlEngine(this);
-
-            QObject::connect(watcher, &QFutureWatcher<bool>::finished, this, [=]() {
-                if (watcher->result()) {
-                    if (onSaved.isCallable()) {
-                        QJSValueList args = { QJSValue(path.toLocalFile()) };
-                        if (engine) {
-                            args << engine->toScriptValue(QVariant::fromValue(path));
-                        }
-                        onSaved.call(args);
-                    }
-                } else {
+            }).then(this, [path, onSaved, onFailed](bool ok) {
+                const auto* cb = ok ? &onSaved : &onFailed;
+                if (!ok)
                     qCWarning(lcCUtils) << "saveItem: failed to save" << path;
-                    if (onFailed.isCallable()) {
-                        if (engine) {
-                            onFailed.call({ engine->toScriptValue(QVariant::fromValue(path)) });
-                        } else {
-                            onFailed.call();
-                        }
-                    }
-                }
-                watcher->deleteLater();
+
+                if (cb->isCallable())
+                    cb->call({ path.toLocalFile() });
             });
-            watcher->setFuture(future);
         });
 }
 
@@ -136,7 +105,7 @@ bool CUtils::deleteFile(const QUrl& path) {
 QString CUtils::toLocalFile(const QUrl& url) {
     if (!url.isLocalFile()) {
         qCWarning(lcCUtils) << "toLocalFile: given url is not a local file" << url;
-        return QString();
+        return {};
     }
 
     return url.toLocalFile();
@@ -146,14 +115,14 @@ QString CUtils::sha256(const QString& path) {
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly)) {
         qCWarning(lcCUtils) << "sha256: failed to open" << path;
-        return QString();
+        return {};
     }
 
     QCryptographicHash hash(QCryptographicHash::Sha256);
     hash.addData(&file);
     file.close();
 
-    return hash.result().toHex();
+    return QString::fromLatin1(hash.result().toHex());
 }
 
 bool CUtils::fileExists(const QString& path) {
@@ -164,7 +133,7 @@ QString CUtils::readFile(const QString& path) {
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qCWarning(lcCUtils) << "readFile: failed to open" << path;
-        return QString();
+        return {};
     }
     return QString::fromUtf8(file.readAll());
 }
@@ -183,6 +152,37 @@ bool CUtils::writeFile(const QString& path, const QString& content) {
 
 qreal CUtils::clamp(qreal value, qreal min, qreal max) {
     return qBound(min, value, max);
+}
+
+QString CUtils::enumToString(QObject* target, const QString& property, const QVariant& value) {
+    if (!target) {
+        qCWarning(lcCUtils) << "enumToString: a target is required";
+        return {};
+    }
+
+    const auto* meta = target->metaObject();
+    const auto index = meta->indexOfProperty(property.toUtf8().constData());
+    if (index < 0) {
+        qCWarning(lcCUtils) << "enumToString:" << target << "has no property" << property;
+        return {};
+    }
+
+    const auto prop = meta->property(index);
+    const auto metaEnum = prop.isEnumType() ? prop.enumerator() : util::metaEnumFor(prop.metaType());
+    if (!metaEnum.isValid() || metaEnum.is64Bit()) {
+        qCWarning(lcCUtils) << "enumToString: property" << property << "of" << target << "is not a supported enum";
+        return {};
+    }
+
+    const auto val = value.isValid() ? value : prop.read(target);
+    const auto* key = util::enumKeyFor(metaEnum, val);
+    if (!key) {
+        qCWarning(lcCUtils, "enumToString: no enumerator of %s::%s has the value %lld", metaEnum.scope(),
+            metaEnum.name(), val.toLongLong());
+        return {};
+    }
+
+    return QString::fromUtf8(key);
 }
 
 namespace {
@@ -256,11 +256,11 @@ QList<QQuickItem*> CUtils::findChildrenMatching(QQuickItem* root, const QString&
 #define CAELESTIA_VERSION ""
 #endif
 
-QString CUtils::version() const {
+QString CUtils::version() {
     return QStringLiteral(CAELESTIA_VERSION);
 }
 
-QString CUtils::qtVersion() const {
+QString CUtils::qtVersion() {
     return QStringLiteral(QT_VERSION_STR);
 }
 

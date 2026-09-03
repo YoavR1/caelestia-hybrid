@@ -25,7 +25,7 @@ StyledRect {
         id: horizontalLayout
 
         anchors.centerIn: parent
-        visible: isHorizontal
+        visible: root.isHorizontal
         spacing: Tokens.spacing.extraSmall
 
         Loader {
@@ -104,7 +104,7 @@ StyledRect {
         id: verticalLayout
 
         anchors.centerIn: parent
-        visible: !isHorizontal
+        visible: !root.isHorizontal
         spacing: Tokens.spacing.extraSmall
 
         Loader {
@@ -126,7 +126,7 @@ StyledRect {
             visible: active
 
             sourceComponent: ColumnLayout {
-                spacing: layout.spacing - 4
+                spacing: verticalLayout.spacing - 4
 
                 StyledText {
                     Layout.alignment: Qt.AlignHCenter

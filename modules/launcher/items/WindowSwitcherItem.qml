@@ -1,13 +1,7 @@
 import QtQuick
-import Quickshell
 import Quickshell.Hyprland
-import Quickshell.Wayland
-import Caelestia
 import Caelestia.Config
-import Caelestia.Models
 import qs.components
-import qs.components.images
-import qs.components.controls
 import qs.services
 
 Item {
@@ -28,7 +22,7 @@ Item {
 
     scale: 0.5
     opacity: 0
-    z: PathView.z ?? 0
+    z: PathView.z ?? 0 // qmllint disable missing-property
 
     implicitWidth: previewBox.width + Tokens.padding.largeIncreased * 2
     implicitHeight: previewBox.height + label.height + Tokens.spacing.small / 2 + Tokens.padding.large + Tokens.padding.medium
@@ -66,14 +60,19 @@ Item {
             anchors.fill: parent
             captureSource: {
                 const win = root.modelData;
-                if (!win || !win.wayland) return null;
+                if (!win || !win.wayland)
+                    return null;
                 const ipc = win.lastIpcObject;
                 if (ipc) {
-                    if (ipc.mapped === false || ipc.hidden) return null;
-                    if (ipc.size && (ipc.size[0] <= 0 || ipc.size[1] <= 0)) return null;
+                    if (ipc.mapped === false || ipc.hidden)
+                        return null;
+                    if (ipc.size && (ipc.size[0] <= 0 || ipc.size[1] <= 0))
+                        return null;
                 } else {
-                    if (win.mapped === false || win.hidden) return null;
-                    if (win.size && (win.size[0] <= 0 || win.size[1] <= 0)) return null;
+                    if (win.mapped === false || win.hidden)
+                        return null;
+                    if (win.size && (win.size[0] <= 0 || win.size[1] <= 0))
+                        return null;
                 }
                 return win.wayland;
             }

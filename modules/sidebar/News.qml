@@ -1,8 +1,8 @@
+pragma ComponentBehavior: Bound
+
 import QtQuick
-import QtQuick.Layouts
 import QtQuick.Controls
-import Quickshell
-import Caelestia
+import QtQuick.Layouts
 import Caelestia.Config
 import qs.components
 import qs.components.controls
@@ -13,30 +13,41 @@ Item {
 
     property bool isFetching: false
     property string errorMessage: ""
-    
+
     // Bind colors at the root to avoid delegate scope resolution issues
     readonly property color cBgHigh: Colours.tPalette.m3surfaceContainerHigh
+
     readonly property color cBgHighest: Colours.tPalette.m3surfaceContainerHighest
     readonly property color cOnSurface: Colours.palette.m3onSurface
     readonly property color cOnSurfaceVariant: Colours.palette.m3onSurfaceVariant
     readonly property color cError: Colours.palette.m3error
 
-    Component.onCompleted: fetchNews()
-
     function fetchNews() {
-        if (isFetching) return;
+        if (isFetching)
+            return;
         isFetching = true;
         errorMessage = "";
-        
+
         var xhr = new XMLHttpRequest();
         xhr.open("GET", "https://archlinux.org/feeds/news/");
-        xhr.onreadystatechange = function() {
+        // Everything in here must go through `root`. A plain function() has its own scope,
+        // so the component's properties are not visible and a bare `isFetching = false` is
+        // a write to a *global*, which QML rejects at runtime:
+        //   Error: Invalid write to global property "isFetching"
+        // The assignments in fetchNews' own body above are fine -- a QML function body does
+        // resolve against the component.
+        xhr.onreadystatechange = function () {
+            // The request outlives the component: the sidebar can be closed, and this Item
+            // destroyed, while the fetch is still in flight. `root` is then null and every
+            // line below it throws. Nothing to update in that case -- just stop.
+            if (!root)
+                return;
             if (xhr.readyState === XMLHttpRequest.DONE) {
-                isFetching = false;
+                root.isFetching = false;
                 if (xhr.status === 200) {
-                    parseNews(xhr.responseText);
+                    root.parseNews(xhr.responseText);
                 } else {
-                    errorMessage = qsTr("Failed to fetch news (Status: %1)").arg(xhr.status);
+                    root.errorMessage = qsTr("Failed to fetch news (Status: %1)").arg(xhr.status);
                 }
             }
         };
@@ -45,30 +56,31 @@ Item {
 
     function parseNews(xmlString) {
         newsModel.clear();
-        
+
         var itemRegex = /<item>([\s\S]*?)<\/item>/g;
         var titleRegex = /<title>(.*?)<\/title>/;
         var linkRegex = /<link>(.*?)<\/link>/;
         var dateRegex = /<pubDate>(.*?)<\/pubDate>/;
-        
+
         var match;
         while ((match = itemRegex.exec(xmlString)) !== null) {
             var itemContent = match[1];
-            
+
             var titleMatch = titleRegex.exec(itemContent);
             var linkMatch = linkRegex.exec(itemContent);
             var dateMatch = dateRegex.exec(itemContent);
-            
+
             if (titleMatch && linkMatch && dateMatch) {
                 // Remove CDATA if present or unescape basic HTML entities
                 var title = titleMatch[1].replace(/<!\[CDATA\[(.*?)\]\]>/g, "$1").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, "\"").replace(/&#039;/g, "'");
                 var dateStr = dateMatch[1];
-                
+
                 // Format date nicely
                 var dateObj = new Date(dateStr);
                 var formattedDate = dateObj.toLocaleDateString();
-                if (formattedDate === "Invalid Date") formattedDate = dateStr;
-                
+                if (formattedDate === "Invalid Date")
+                    formattedDate = dateStr;
+
                 newsModel.append({
                     "title": title,
                     "link": linkMatch[1],
@@ -76,11 +88,13 @@ Item {
                 });
             }
         }
-        
+
         if (newsModel.count === 0) {
             errorMessage = qsTr("No news articles found.");
         }
     }
+
+    Component.onCompleted: fetchNews()
 
     ListModel {
         id: newsModel
@@ -102,10 +116,10 @@ Item {
                 font: Tokens.font.title.medium
                 color: root.cOnSurface
             }
-            
+
             IconButton {
                 icon: "refresh"
-                onClicked: fetchNews()
+                onClicked: root.fetchNews()
             }
         }
 
@@ -141,8 +155,10 @@ Item {
             spacing: Tokens.spacing.small
             clip: true
             visible: !root.isFetching || newsModel.count > 0
-            
-            ScrollBar.vertical: StyledScrollBar { flickable: newsListView }
+
+            ScrollBar.vertical: StyledScrollBar {
+                flickable: newsListView
+            }
 
             delegate: StyledRect {
                 id: delegateItem
@@ -154,7 +170,7 @@ Item {
                 width: ListView.view.width
                 implicitHeight: col.implicitHeight + Tokens.padding.medium * 2
                 radius: Tokens.rounding.medium
-                
+
                 color: ma.containsMouse ? root.cBgHighest : root.cBgHigh
 
                 MouseArea {

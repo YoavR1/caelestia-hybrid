@@ -42,8 +42,8 @@ GridLayout {
     }
 
     Item {
-        implicitWidth: isHorizontal ? Math.round(root.capsSize) : capslockIcon.implicitWidth
-        implicitHeight: isHorizontal ? capslockIcon.implicitHeight : Math.round(root.capsSize)
+        implicitWidth: root.isHorizontal ? Math.round(root.capsSize) : capslockIcon.implicitWidth
+        implicitHeight: root.isHorizontal ? capslockIcon.implicitHeight : Math.round(root.capsSize)
 
         MaterialIcon {
             id: capslockIcon
@@ -71,8 +71,8 @@ GridLayout {
     }
 
     Item {
-        implicitWidth: isHorizontal ? Math.round(root.numSize) : numlockIcon.implicitWidth
-        implicitHeight: isHorizontal ? numlockIcon.implicitHeight : Math.round(root.numSize)
+        implicitWidth: root.isHorizontal ? Math.round(root.numSize) : numlockIcon.implicitWidth
+        implicitHeight: root.isHorizontal ? numlockIcon.implicitHeight : Math.round(root.numSize)
 
         MaterialIcon {
             id: numlockIcon

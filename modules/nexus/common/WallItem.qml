@@ -75,7 +75,8 @@ Item {
 
                 source: {
                     const target = root.realPath || root.source;
-                    if (!target) return "";
+                    if (!target)
+                        return "";
 
                     if (Wallpapers.isVideo(target)) {
                         const thumb = Wallpapers.getWallpaperThumb(target, Wallpapers.cacheBuster);

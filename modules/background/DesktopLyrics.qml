@@ -4,7 +4,6 @@ import QtQuick
 import QtQuick.Effects
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Hyprland
 import Caelestia.Config
 import Caelestia.Services
 import qs.components
@@ -32,7 +31,7 @@ Item {
     readonly property int alignment: Config.background.desktopLyrics.alignment
     readonly property bool autoHideFullscreen: Config.background.desktopLyrics.autoHideFullscreen
     readonly property bool autoHideTiled: Config.background.desktopLyrics.autoHideTiled
-    
+
     readonly property bool hasFullscreen: Hypr.monitorFor(screen)?.activeWorkspace?.toplevels?.values.some(t => t.lastIpcObject?.fullscreen !== 0) ?? false
     readonly property bool hasTiled: Hypr.monitorFor(screen)?.activeWorkspace?.toplevels?.values.some(t => !t.lastIpcObject?.floating && t.lastIpcObject?.fullscreen === 0) ?? false
 
@@ -67,13 +66,13 @@ Item {
         if (Lyrics.hasLyrics) {
             currentLyricIndex = Lyrics.indexForTime(Players.active?.position ?? 0);
             if (currentLyricIndex >= 0) {
-                displayedLyric = (Lyrics.lyrics[currentLyricIndex] ?? "").replace(/\u00A0/g, " ");
-                previousLyricText = currentLyricIndex > 0 ? (Lyrics.lyrics[currentLyricIndex - 1] ?? "").replace(/\u00A0/g, " ") : "";
-                nextLyricText = currentLyricIndex < Lyrics.lyrics.length - 1 ? (Lyrics.lyrics[currentLyricIndex + 1] ?? "").replace(/\u00A0/g, " ") : "";
+                displayedLyric = String(Lyrics.lyrics[currentLyricIndex] ?? "").replace(/\u00A0/g, " ");
+                previousLyricText = currentLyricIndex > 0 ? String(Lyrics.lyrics[currentLyricIndex - 1] ?? "").replace(/\u00A0/g, " ") : "";
+                nextLyricText = currentLyricIndex < Lyrics.lyrics.length - 1 ? String(Lyrics.lyrics[currentLyricIndex + 1] ?? "").replace(/\u00A0/g, " ") : "";
             } else {
                 displayedLyric = "";
                 previousLyricText = "";
-                nextLyricText = (Lyrics.lyrics[0] ?? "").replace(/\u00A0/g, " ");
+                nextLyricText = String(Lyrics.lyrics[0] ?? "").replace(/\u00A0/g, " ");
             }
             lyricSlide.running = true;
         } else {
@@ -87,13 +86,13 @@ Item {
     onCurrentLyricIndexChanged: {
         if (Lyrics.hasLyrics) {
             if (currentLyricIndex >= 0) {
-                displayedLyric = (Lyrics.lyrics[currentLyricIndex] ?? "").replace(/\u00A0/g, " ");
-                previousLyricText = currentLyricIndex > 0 ? (Lyrics.lyrics[currentLyricIndex - 1] ?? "").replace(/\u00A0/g, " ") : "";
-                nextLyricText = currentLyricIndex < Lyrics.lyrics.length - 1 ? (Lyrics.lyrics[currentLyricIndex + 1] ?? "").replace(/\u00A0/g, " ") : "";
+                displayedLyric = String(Lyrics.lyrics[currentLyricIndex] ?? "").replace(/\u00A0/g, " ");
+                previousLyricText = currentLyricIndex > 0 ? String(Lyrics.lyrics[currentLyricIndex - 1] ?? "").replace(/\u00A0/g, " ") : "";
+                nextLyricText = currentLyricIndex < Lyrics.lyrics.length - 1 ? String(Lyrics.lyrics[currentLyricIndex + 1] ?? "").replace(/\u00A0/g, " ") : "";
             } else {
                 displayedLyric = "";
                 previousLyricText = "";
-                nextLyricText = (Lyrics.lyrics[0] ?? "").replace(/\u00A0/g, " ");
+                nextLyricText = String(Lyrics.lyrics[0] ?? "").replace(/\u00A0/g, " ");
             }
             lyricSlide.running = true;
         } else {
@@ -180,7 +179,7 @@ Item {
         onTriggered: {
             if (!Players.active)
                 return;
-            currentLyricIndex = Lyrics.indexForTime(Players.active.position);
+            root.currentLyricIndex = Lyrics.indexForTime(Players.active.position);
             Players.active?.positionChanged();
         }
     }

@@ -4,7 +4,6 @@ import QtQuick
 import QtQuick.Effects
 import QtQuick.Shapes
 import qs.components
-import qs.services
 
 Item {
     id: root

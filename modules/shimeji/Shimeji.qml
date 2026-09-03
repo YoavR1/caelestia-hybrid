@@ -1,11 +1,9 @@
 import QtQuick
 import Quickshell
-import Quickshell.Wayland
 import Quickshell.Io
+import Quickshell.Wayland
 import Caelestia.Config
-import Caelestia.Internal
 import qs.components.containers
-import qs.components
 import qs.services
 import qs.utils
 
@@ -30,17 +28,17 @@ StyledWindow {
     readonly property real borderThickness: modelData ? contentItem.Config.border.thickness : 0
 
     readonly property var barWrapper: (() => {
-        let name = root.screen ? root.screen.name : undefined;
-        let bar = name ? Visibilities.bars.get(name) : undefined;
-        return bar;
-    })()
+            let name = root.screen ? root.screen.name : undefined;
+            let bar = name ? Visibilities.bars.get(name) : undefined;
+            return bar;
+        })()
 
-    readonly property real floorOffset: Config.bar.position === "bottom" ? (barWrapper?.exclusiveZone ?? (Tokens.sizes.bar.innerWidth + Math.max(Tokens.padding.small, Config.border.thickness))) : 0
+    readonly property real floorOffset: contentItem.Config.bar.position === "bottom" ? (barWrapper?.exclusiveZone ?? (contentItem.Tokens.sizes.bar.innerWidth + Math.max(contentItem.Tokens.padding.small, contentItem.Config.border.thickness))) : 0
 
     function getImgPath(): string {
         if (!modelData)
             return "";
-        let path = Paths.absolutePath(String(contentItem.Config.shimeji.path));
+        let path = Paths.absolutePath(String(contentItem.Config.shimeji.directory));
         if (!path)
             return "";
 

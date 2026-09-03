@@ -2,17 +2,15 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
 import Quickshell.Bluetooth
 import Caelestia.Components
 import Caelestia.Config
 import qs.components
 import qs.components.controls
 import qs.services
-import qs.utils
+import qs.modules.background
 import qs.modules.nexus
 import qs.modules.bar.popouts as BarPopouts
-import "../../background"
 
 StyledRect {
     id: root
@@ -185,6 +183,8 @@ StyledRect {
                         onClicked: {
                             Visibilities.launcherInitialSearch = `${GlobalConfig.launcher.actionPrefix}wallpaper `;
                             const visibilities = Visibilities.getForActive();
+                            if (!visibilities)
+                                return;
                             visibilities.launcher = true;
                         }
                     }

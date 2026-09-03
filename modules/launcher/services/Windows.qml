@@ -38,7 +38,7 @@ QtObject {
         let results = items;
         if (GlobalConfig.launcher.windowSwitcherActiveWorkspaceOnly) {
             const monitor = Hyprland.focusedMonitor;
-            const specialWs = monitor?.lastIpcObject?.specialWorkspace?.name;
+            const specialWs = monitor?.lastIpcObject.specialWorkspace?.name;
             if (specialWs) {
                 results = results.filter(w => w.workspace === specialWs);
             } else {
@@ -48,7 +48,7 @@ QtObject {
                 }
             }
         }
-        
+
         if (!search)
             return results;
         const lower = search.toLowerCase();
@@ -61,6 +61,6 @@ QtObject {
 
     Component.onCompleted: {
         updateItems();
-        Hyprland.toplevels.onValuesChanged.connect(updateItems);
+        Hyprland.toplevels.onValuesChanged.connect(updateItems); // qmllint disable missing-property
     }
 }

@@ -1,0 +1,66 @@
+# Additional noise suppressed ONLY under `--compositor sway` -- the headless backend, which
+# is how CI runs the matrix. Never applied to a Hyprland run, where every one of these
+# would be a real signal.
+#
+# Sway is wlroots and implements wlr-layer-shell, which is all PanelWindow needs, but it
+# advertises none of the hyprland-* protocols and speaks no Hyprland IPC. Anything the
+# shell reaches for through those is unavailable there by construction.
+#
+# Adding to this file narrows an already narrower gate. Prefer fixing, or running the
+# Hyprland matrix locally, over appending here.
+
+The active compositor does not support hyprland_global_shortcuts_v1
+GlobalShortcut will not work\.
+Compositor does not support hyprland-toplevel-mapping-v1
+
+# No Hyprland instance to talk to. Everything behind Hypr.* is inert under sway; that is
+# the coverage this backend trades away, and it is the reason Hyprland stays the default
+# wherever it can run.
+\$HYPRLAND_INSTANCE_SIGNATURE is unset
+Unable to connect to Hyprland socket
+Cannot connect to hyprland
+
+# A headless wlroots output has no DRM render node, so Quickshell cannot negotiate dmabuf
+# and falls back to shared memory. CI containers have no GPU at all and land here too.
+Failed to find render device: no render or primary node found
+Render format initialization failed\. All buffers will fall back to SHM
+
+# No audio server. A CI container has neither PipeWire nor PulseAudio, so the notification
+# sound player has no device to open.
+Failed to connect pipewire context\. Errno: 112
+PulseAudioService: pa_context_connect\(\) failed
+QSoundEffect: playback of this format is not supported on the selected audio device
+
+# =============================================================================
+# A CI CONTAINER, as opposed to a nested compositor on a real desktop. There is no
+# session bus, no system bus, no logind session, and none of the hardware tools. Each
+# of these is a *real* signal under Hyprland on a workstation, which is why they live
+# here rather than in the main list -- this file is only read with --compositor sway.
+# =============================================================================
+
+# No D-Bus at all. Every service that needs it says so once and degrades.
+Could not connect to DBus\.
+Failed to connect to system bus
+failed to create subject for listener: No session for pid [0-9]+
+
+# Hardware and network tools the image does not ship. The shell probes for them and
+# carries on; a missing binary is not a defect in the shell.
+Process failed to start, likely because the binary could not be found\. Command: QList\("(ddcutil|nmcli|hyprctl|lm_sensors|upower)"
+
+# sway is not Hyprland, so the Hyprland-only protocols are absent. Quickshell says so once
+# per surface that wanted one, and follows each with an advertisement for Hyprland.
+The active compositor does not support the hyprland_focus_grab_v1 protocol
+HyprlandFocusGrab will not work\.
+Learn why \$XDG_CURRENT_DESKTOP sucks
+
+# No PipeWire in the container, so the audio worker cannot open a stream.
+caelestia\.services\.ac\.worker: init: failed to connect stream
+
+# No icon theme is installed. The shell asks for a themed icon, gets nothing, and draws its
+# own fallback -- which is the behaviour, not a defect.
+Could not load icon "[^"]*" at size QSize\([0-9]+, [0-9]+\) from request
+
+# cliphist is not installed in the container. The clipboard launcher probes for it and shows
+# nothing; a missing optional binary is not a defect in the shell.
+Command: QList\("cliphist"
+

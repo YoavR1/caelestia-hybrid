@@ -9,7 +9,6 @@ import qs.components
 import qs.components.controls
 import qs.components.effects
 import qs.services
-import qs.modules.drawers
 
 MouseArea {
     id: root
@@ -39,9 +38,9 @@ MouseArea {
     parent: {
         let node = root.attachTo;
         let interactionsNode = null;
-        
+
         while (node && node.parent) {
-            if (node.utilitiesShortcutActive !== undefined) {
+            if (node.utilitiesShortcutActive !== undefined) { // qmllint disable missing-property
                 interactionsNode = node;
             }
             node = node.parent;
@@ -147,81 +146,81 @@ MouseArea {
 
                         model: root.items
 
-                    StyledRect {
-                        id: item
+                        StyledRect {
+                            id: item
 
-                        required property int index
-                        required property MenuItem modelData
-                        readonly property bool active: modelData === root?.active
+                            required property int index
+                            required property MenuItem modelData
+                            readonly property bool active: modelData === root?.active
 
-                        Layout.fillWidth: true
-                        implicitWidth: menuOptionRow.implicitWidth + Tokens.padding.medium * 2
-                        implicitHeight: menuOptionRow.implicitHeight + Tokens.padding.medium * 2
+                            Layout.fillWidth: true
+                            implicitWidth: menuOptionRow.implicitWidth + Tokens.padding.medium * 2
+                            implicitHeight: menuOptionRow.implicitHeight + Tokens.padding.medium * 2
 
-                        radius: active ? Tokens.rounding.medium : Tokens.rounding.extraSmall
-                        topLeftRadius: index === 0 ? Tokens.rounding.medium : radius
-                        topRightRadius: index === 0 ? Tokens.rounding.medium : radius
-                        bottomLeftRadius: index === repeater?.count - 1 ? Tokens.rounding.medium : radius
-                        bottomRightRadius: index === repeater?.count - 1 ? Tokens.rounding.medium : radius
+                            radius: active ? Tokens.rounding.medium : Tokens.rounding.extraSmall
+                            topLeftRadius: index === 0 ? Tokens.rounding.medium : radius
+                            topRightRadius: index === 0 ? Tokens.rounding.medium : radius
+                            bottomLeftRadius: index === repeater?.count - 1 ? Tokens.rounding.medium : radius
+                            bottomRightRadius: index === repeater?.count - 1 ? Tokens.rounding.medium : radius
 
-                        color: Qt.alpha(Colours.palette.m3tertiaryContainer, active ? 1 : 0)
+                            color: Qt.alpha(Colours.palette.m3tertiaryContainer, active ? 1 : 0)
 
-                        Behavior on radius {
-                            Anim {}
-                        }
-
-                        StateLayer {
-                            topLeftRadius: parent.topLeftRadius
-                            topRightRadius: parent.topRightRadius
-                            bottomLeftRadius: parent.bottomLeftRadius
-                            bottomRightRadius: parent.bottomRightRadius
-
-                            color: item.active ? Colours.palette.m3onTertiaryContainer : Colours.palette.m3onSurface
-                            disabled: !root.expanded
-                            onClicked: {
-                                root.itemSelected(item.modelData);
-                                root.active = item.modelData;
-                                item.modelData.clicked();
-                                root.expanded = false;
-                            }
-                        }
-
-                        RowLayout {
-                            id: menuOptionRow
-
-                            anchors.fill: parent
-                            anchors.margins: Tokens.padding.medium
-                            spacing: Tokens.spacing.small
-
-                            MaterialIcon {
-                                Layout.alignment: Qt.AlignVCenter
-                                text: item.modelData?.icon ?? ""
-                                color: item.active ? Colours.palette.m3onTertiaryContainer : Colours.palette.m3onSurfaceVariant
+                            Behavior on radius {
+                                Anim {}
                             }
 
-                            StyledText {
-                                Layout.alignment: Qt.AlignVCenter
-                                Layout.fillWidth: true
-                                text: item.modelData?.text ?? ""
+                            StateLayer {
+                                topLeftRadius: parent.topLeftRadius
+                                topRightRadius: parent.topRightRadius
+                                bottomLeftRadius: parent.bottomLeftRadius
+                                bottomRightRadius: parent.bottomRightRadius
+
                                 color: item.active ? Colours.palette.m3onTertiaryContainer : Colours.palette.m3onSurface
+                                disabled: !root.expanded
+                                onClicked: {
+                                    root.itemSelected(item.modelData);
+                                    root.active = item.modelData;
+                                    item.modelData.clicked();
+                                    root.expanded = false;
+                                }
                             }
 
-                            Loader {
-                                asynchronous: true
-                                Layout.alignment: Qt.AlignVCenter
-                                active: item.modelData?.trailingIcon.length > 0
-                                visible: active
+                            RowLayout {
+                                id: menuOptionRow
 
-                                sourceComponent: MaterialIcon {
-                                    text: item.modelData.trailingIcon
+                                anchors.fill: parent
+                                anchors.margins: Tokens.padding.medium
+                                spacing: Tokens.spacing.small
+
+                                MaterialIcon {
+                                    Layout.alignment: Qt.AlignVCenter
+                                    text: item.modelData?.icon ?? ""
                                     color: item.active ? Colours.palette.m3onTertiaryContainer : Colours.palette.m3onSurfaceVariant
+                                }
+
+                                StyledText {
+                                    Layout.alignment: Qt.AlignVCenter
+                                    Layout.fillWidth: true
+                                    text: item.modelData?.text ?? ""
+                                    color: item.active ? Colours.palette.m3onTertiaryContainer : Colours.palette.m3onSurface
+                                }
+
+                                Loader {
+                                    asynchronous: true
+                                    Layout.alignment: Qt.AlignVCenter
+                                    active: item.modelData?.trailingIcon.length > 0
+                                    visible: active
+
+                                    sourceComponent: MaterialIcon {
+                                        text: item.modelData.trailingIcon
+                                        color: item.active ? Colours.palette.m3onTertiaryContainer : Colours.palette.m3onSurfaceVariant
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-        }
         }
     }
 }

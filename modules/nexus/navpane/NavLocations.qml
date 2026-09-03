@@ -55,15 +55,19 @@ VerticalFadeFlickable {
                 required property var modelData
                 required property int index
 
-                clip: true
-
                 readonly property bool isCurrentPage: modelData.originalIndex === root.nState.currentPageIdx
+
                 readonly property bool isCategoryStart: index === 0 || list.model[index - 1].category !== modelData.category
+
                 readonly property bool isCategoryEnd: index === list.model.length - 1 || list.model[index + 1].category !== modelData.category
 
                 property real animHeight: 1
+
                 property real animSlide: 1
+
                 property bool isUnlocking: false
+
+                clip: true
 
                 Component.onCompleted: {
                     if (modelData.originalIndex === 2 && root.nState.justUnlockedDevMode) {
@@ -79,14 +83,41 @@ VerticalFadeFlickable {
                     }
                 }
 
+                Layout.fillWidth: true
+                Layout.topMargin: (index !== 0 && isCategoryStart ? Tokens.spacing.medium : 0) * animHeight
+
+                implicitHeight: {
+                    const h = layout.implicitHeight + layout.anchors.margins * 2;
+                    const targetH = h % 2 === 0 ? h : h + 1;
+                    return targetH * animHeight;
+                }
+
+                opacity: modelData.originalIndex === 2 ? animSlide : 1.0
+
+                transform: Translate {
+                    y: item.modelData.originalIndex === 2 ? (1 - item.animSlide) * -40 : 0
+                }
+
+                color: isCurrentPage ? Colours.palette.m3secondaryContainer : Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
+
+                topLeftRadius: stateLayer.pressed ? Tokens.rounding.medium : isCurrentPage ? Tokens.rounding.extraLargeIncreased : (isUnlocking && modelData.originalIndex === 2) ? Tokens.rounding.extraLarge : isCategoryStart ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
+
+                topRightRadius: stateLayer.pressed ? Tokens.rounding.medium : isCurrentPage ? Tokens.rounding.extraLargeIncreased : (isUnlocking && modelData.originalIndex === 2) ? Tokens.rounding.extraLarge : isCategoryStart ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
+
+                bottomLeftRadius: stateLayer.pressed ? Tokens.rounding.medium : isCurrentPage ? Tokens.rounding.extraLargeIncreased : (isUnlocking && modelData.originalIndex === 1) ? Tokens.rounding.extraLarge : isCategoryEnd ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
+
+                bottomRightRadius: stateLayer.pressed ? Tokens.rounding.medium : isCurrentPage ? Tokens.rounding.extraLargeIncreased : (isUnlocking && modelData.originalIndex === 1) ? Tokens.rounding.extraLarge : isCategoryEnd ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
+
                 Timer {
                     id: unlockTimer
+
                     interval: 20
                     onTriggered: item.isUnlocking = false
                 }
 
                 NumberAnimation {
                     id: heightAnim
+
                     target: item
                     property: "animHeight"
                     to: 1
@@ -98,6 +129,7 @@ VerticalFadeFlickable {
 
                 NumberAnimation {
                     id: slideAnim
+
                     target: item
                     property: "animSlide"
                     to: 1
@@ -105,26 +137,6 @@ VerticalFadeFlickable {
                     easing.type: Easing.OutBack
                     easing.overshoot: 1.2
                 }
-
-                Layout.fillWidth: true
-                Layout.topMargin: (index !== 0 && isCategoryStart ? Tokens.spacing.medium : 0) * animHeight
-                implicitHeight: {
-                    const h = layout.implicitHeight + layout.anchors.margins * 2;
-                    const targetH = h % 2 === 0 ? h : h + 1;
-                    return targetH * animHeight;
-                }
-                opacity: modelData.originalIndex === 2 ? animSlide : 1.0
-
-                transform: Translate {
-                    y: modelData.originalIndex === 2 ? (1 - item.animSlide) * -40 : 0
-                }
-
-                color: isCurrentPage ? Colours.palette.m3secondaryContainer : Colours.layer(Colours.palette.m3surfaceContainerHigh, 2)
-
-                topLeftRadius: stateLayer.pressed ? Tokens.rounding.medium : isCurrentPage ? Tokens.rounding.extraLargeIncreased : (isUnlocking && modelData.originalIndex === 2) ? Tokens.rounding.extraLarge : isCategoryStart ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
-                topRightRadius: stateLayer.pressed ? Tokens.rounding.medium : isCurrentPage ? Tokens.rounding.extraLargeIncreased : (isUnlocking && modelData.originalIndex === 2) ? Tokens.rounding.extraLarge : isCategoryStart ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
-                bottomLeftRadius: stateLayer.pressed ? Tokens.rounding.medium : isCurrentPage ? Tokens.rounding.extraLargeIncreased : (isUnlocking && modelData.originalIndex === 1) ? Tokens.rounding.extraLarge : isCategoryEnd ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
-                bottomRightRadius: stateLayer.pressed ? Tokens.rounding.medium : isCurrentPage ? Tokens.rounding.extraLargeIncreased : (isUnlocking && modelData.originalIndex === 1) ? Tokens.rounding.extraLarge : isCategoryEnd ? Tokens.rounding.extraLarge : Tokens.rounding.extraSmall
 
                 RadiusBehavior on topLeftRadius {}
                 RadiusBehavior on topRightRadius {}
@@ -152,7 +164,7 @@ VerticalFadeFlickable {
                     anchors.margins: Tokens.padding.large
                     spacing: Tokens.spacing.medium
 
-                    opacity: modelData.originalIndex === 2 ? item.animSlide : 1.0
+                    opacity: item.modelData.originalIndex === 2 ? item.animSlide : 1.0
 
                     StyledRect {
                         Layout.fillHeight: true

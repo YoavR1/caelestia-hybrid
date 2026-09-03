@@ -1,54 +1,58 @@
 #include "iutils.hpp"
 
-#include "cachingimageprovider.hpp"
-
 #include <qfileinfo.h>
+
+#include "cachingimageprovider.hpp"
 
 namespace caelestia::images {
 
+using Qt::StringLiterals::operator""_s;
+
 namespace {
 
-IUtils* s_instance = nullptr;
+IUtils* g_instance = nullptr;
 
 } // namespace
 
+IUtils::IUtils(QObject* parent)
+    : QObject(parent) {}
+
 IUtils* IUtils::getInstance() {
-    return s_instance;
+    return g_instance;
 }
 
 IUtils* IUtils::create(QQmlEngine* engine, QJSEngine* jsEngine) {
     Q_UNUSED(jsEngine);
 
-    engine->addImageProvider(QStringLiteral("ccache"), new CachingImageProvider(CachingImageProvider::FillMode::Crop));
-    engine->addImageProvider(QStringLiteral("fcache"), new CachingImageProvider(CachingImageProvider::FillMode::Fit));
-    engine->addImageProvider(
-        QStringLiteral("scache"), new CachingImageProvider(CachingImageProvider::FillMode::Stretch));
+    engine->addImageProvider(u"ccache"_s, new CachingImageProvider(CachingImageProvider::FillMode::Crop));
+    engine->addImageProvider(u"fcache"_s, new CachingImageProvider(CachingImageProvider::FillMode::Fit));
+    engine->addImageProvider(u"scache"_s, new CachingImageProvider(CachingImageProvider::FillMode::Stretch));
 
-    s_instance = new IUtils(engine);
-    return s_instance;
+    g_instance = new IUtils(engine);
+    return g_instance;
 }
 
 QUrl IUtils::urlForPath(const QString& path, int fillMode) {
     if (path.isEmpty())
-        return QUrl();
+        return {};
 
     QString prefix;
     switch (fillMode) {
     case 1: // Image.PreserveAspectFit
-        prefix = QStringLiteral("fcache");
+        prefix = u"fcache"_s;
         break;
     case 2: // Image.PreserveAspectCrop
-        prefix = QStringLiteral("ccache");
+        prefix = u"ccache"_s;
         break;
     default: // Image.Stretch or any other ones
-        prefix = QStringLiteral("scache");
+        prefix = u"scache"_s;
         break;
     }
 
     QUrl url;
-    url.setScheme(QStringLiteral("image"));
+    url.setScheme(u"image"_s);
     url.setHost(prefix);
-    url.setPath(path.startsWith(QLatin1Char('/')) ? path : QLatin1Char('/') + path);
+    url.setPath(path.startsWith(u'/') ? path : u'/' + path);
     return url;
 }
 
@@ -56,25 +60,26 @@ QUrl IUtils::animatedUrlForPath(const QString& path) {
     return QUrl::fromLocalFile(path);
 }
 
-bool IUtils::fileExists(const QString& path) const {
+bool IUtils::fileExists(const QString& path) {
     return QFileInfo::exists(path);
 }
 
 bool IUtils::isGif(const QString& path) {
     if (path.isEmpty())
         return false;
-    
+
     const QString suffix = QFileInfo(path).suffix().toLower();
-    return suffix == QStringLiteral("gif");
+    return suffix == u"gif"_s;
 }
 
 bool IUtils::isVideo(const QString& path) {
     if (path.isEmpty())
         return false;
-    
+
     const QString suffix = QFileInfo(path).suffix().toLower();
-    static const QStringList videoExtensions = { "mp4", "webm", "mkv", "avi", "mov", "wmv", "flv" };
-    return videoExtensions.contains(suffix);
+    static const QStringList k_videoExtensions = { u"mp4"_s, u"webm"_s, u"mkv"_s, u"avi"_s, u"mov"_s, u"wmv"_s,
+        u"flv"_s };
+    return k_videoExtensions.contains(suffix);
 }
 
 } // namespace caelestia::images

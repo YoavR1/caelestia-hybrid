@@ -12,20 +12,27 @@ ConnectedRect {
     id: root
 
     property bool showDelete: false
-    signal deleted()
 
     property bool showReset: false
-    signal reset()
 
     property var configNode
+
     property string propertyName: ""
 
     property alias label: label.text
+
     property string subtext
+
     property real value
+
     property real from: 0
+
     property real to: 99
+
     property real stepSize: 1
+
+    signal deleted
+    signal reset
 
     signal moved(value: real)
 
@@ -51,6 +58,7 @@ ConnectedRect {
 
                 StyledText {
                     id: label
+
                     text: root.label
                     font: Tokens.font.body.small
                     elide: Text.ElideRight

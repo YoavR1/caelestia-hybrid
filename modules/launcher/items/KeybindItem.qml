@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import Quickshell
 import Caelestia.Config
 import qs.components
 import qs.services
@@ -53,7 +52,7 @@ Item {
 
             StyledText {
                 Layout.fillWidth: true
-                text: (modelData && modelData.bind) ? modelData.bind : qsTr("No keybinds")
+                text: (root.modelData && root.modelData.bind) ? root.modelData.bind : qsTr("No keybinds")
                 font: Tokens.font.body.medium
                 color: Colours.palette.m3onSurface
                 elide: Text.ElideRight
@@ -61,7 +60,7 @@ Item {
 
             StyledText {
                 Layout.fillWidth: true
-                text: (modelData && modelData.description) ? modelData.description : ((modelData && modelData.action) ? modelData.action : "")
+                text: (root.modelData && root.modelData.description) ? root.modelData.description : ((root.modelData && root.modelData.action) ? root.modelData.action : "")
                 font: Tokens.font.body.small
                 color: Colours.palette.m3outline
                 elide: Text.ElideRight

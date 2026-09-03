@@ -9,6 +9,12 @@ protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS
     QuickShare/proto/wire_format.proto
 )
 
+# protoc's output is not ours to lint. CI builds with -Werror, and generated code trips
+# warnings that vary with the protoc and compiler version -- clang's -Wnullability-extension
+# broke the clazy leg on code no one here wrote. Silencing warnings for exactly these files
+# keeps -Werror meaningful for every file that is ours.
+set_source_files_properties(${PROTO_SRCS} PROPERTIES COMPILE_OPTIONS "-w")
+
 qml_module(caelestia-services
     URI Caelestia.Services
     SOURCES
@@ -29,23 +35,19 @@ qml_module(caelestia-services
         lyriccandidate.cpp
         lyrics.cpp
         sessionmanager.cpp
-        sessionmanager.hpp
         discordipc.cpp
-        discordipc.hpp
         QuickShare/QuickShareDiscovery.cpp
-        QuickShare/QuickShareDiscovery.hpp
         QuickShare/QuickShareCrypto.cpp
-        QuickShare/QuickShareCrypto.hpp
         QuickShare/QuickShareConnection.cpp
-        QuickShare/QuickShareConnection.hpp
         QuickShare/quickshare_service.cpp
-        QuickShare/quickshare_service.hpp
         QuickShare/QuickShareBle.cpp
-        QuickShare/QuickShareBle.hpp
+        networkusage.cpp
+        hyprdevices.cpp
+        hyprextras.cpp
         ${PROTO_SRCS}
     LIBRARIES
-        Qt6::DBus
-        Qt6::Network
+        Qt::DBus
+        Qt::Network
         PkgConfig::Pipewire
         PkgConfig::Aubio
         PkgConfig::Cava
@@ -55,7 +57,9 @@ qml_module(caelestia-services
         OpenSSL::SSL
         caelestia-core
         caelestia-config
-        caelestia-internal
+    DEPENDENCIES
+        Caelestia
+        Caelestia.Config
 )
 
 target_include_directories(caelestia-services PRIVATE QuickShare ${CMAKE_CURRENT_BINARY_DIR})

@@ -1,5 +1,6 @@
 pragma ComponentBehavior: Bound
 
+import "items"
 import QtQuick
 import Quickshell
 import Caelestia.Config
@@ -7,8 +8,7 @@ import qs.components
 import qs.components.containers
 import qs.components.controls
 import qs.services
-import "items"
-import "services"
+import qs.modules.launcher.services
 
 StyledListView {
     id: root
@@ -16,9 +16,7 @@ StyledListView {
     required property SearchBar search
     required property ScreenState screenState
 
-    readonly property string searchQuery: search?.text?.startsWith(GlobalConfig.launcher.actionPrefix + "keybinds ")
-        ? search.text.slice((GlobalConfig.launcher.actionPrefix + "keybinds ").length).toLowerCase()
-        : ""
+    readonly property string searchQuery: search?.text.startsWith(GlobalConfig.launcher.actionPrefix + "keybinds ") ? search.text.slice((GlobalConfig.launcher.actionPrefix + "keybinds ").length).toLowerCase() : ""
 
     function refreshModel() {
         if (!search)
@@ -141,7 +139,7 @@ StyledListView {
 
     Connections {
         function onLoaded() {
-            handleKeybindsLoaded();
+            root.handleKeybindsLoaded();
         }
 
         target: Keybinds
@@ -149,9 +147,9 @@ StyledListView {
 
     Connections {
         function onTextChanged() {
-            handleSearchTextChanged();
+            root.handleSearchTextChanged();
         }
 
-        target: search
+        target: root.search
     }
 }

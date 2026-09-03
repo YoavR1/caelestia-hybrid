@@ -4,7 +4,6 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Hyprland
-import Quickshell.Wayland
 import Caelestia.Config
 import qs.components
 import qs.services
@@ -70,17 +69,20 @@ Item {
 
             captureSource: {
                 const client = root.client;
-                if (!client || !client.wayland) return null; // qmllint disable unresolved-type
+                if (!client || !client.wayland) // qmllint disable unresolved-type
+                    return null;
                 const ipc = client.lastIpcObject;
                 if (ipc) {
-                    if (ipc.mapped === false || ipc.hidden) return null;
-                    if (ipc.size && (ipc.size[0] <= 0 || ipc.size[1] <= 0)) return null;
+                    if (ipc.mapped === false || ipc.hidden)
+                        return null;
+                    if (ipc.size && (ipc.size[0] <= 0 || ipc.size[1] <= 0))
+                        return null;
                 }
-                return client.wayland;
+                return client.wayland; // qmllint disable unresolved-type
             }
             live: visible
 
-            constraintSize.width: (root.client && root.client.lastIpcObject?.size && root.client.lastIpcObject.size[1] > 0) ? parent.height * Math.min(root.screen.width / root.screen.height, root.client.lastIpcObject.size[0] / root.client.lastIpcObject.size[1]) : parent.height
+            constraintSize.width: (root.client && root.client.lastIpcObject.size && root.client.lastIpcObject.size[1] > 0) ? parent.height * Math.min(root.screen.width / root.screen.height, root.client.lastIpcObject.size[0] / root.client.lastIpcObject.size[1]) : parent.height
             constraintSize.height: parent.height
         }
     }

@@ -1,0 +1,68 @@
+name: Update Docker CI image
+
+# Upstream's image, ghcr.io/caelestia-dots/shell-arch-env, is private to that org: an
+# anonymous manifest fetch returns 401 and GHCR issues no pull token, so every containerised
+# job in a fork dies at "Initialize containers" with `denied` before running a single step.
+# This builds the same environment into the *fork owner's* namespace instead, which is why
+# the tag and the other workflows both use ${{ github.repository_owner }} rather than a name.
+#
+# It also adds three packages upstream's image does not carry, because upstream's tree has
+# neither QuickShare nor video wallpaper:
+#
+#   protobuf         the six generated .pb.cc
+#   lm_sensors       the libsensors that Sensors::Sensors resolves to in sensorslib.cmake
+#   qt6-multimedia   MediaPlayer and SoundEffect. Without it qmllint cannot resolve the
+#                    types and reports "SoundEffect was not found" plus a cascade of
+#                    unqualified-access warnings in VideoWallpaper.qml -- which looks like
+#                    a code problem and is a missing package.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * 0"
+
+permissions:
+  packages: write
+
+jobs:
+  build-image:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Write Dockerfile
+        run: |
+          cat > /tmp/Dockerfile <<EOF
+          FROM archlinux:latest
+          RUN pacman -Syu --needed --noconfirm sudo base-devel cmake ninja fish git clazy qt6-declarative qt6-shadertools qt6-multimedia python libpipewire aubio libqalculate protobuf lm_sensors openssl && \
+              useradd -m builder && \
+              echo 'builder ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers && \
+              sudo -u builder git clone https://aur.archlinux.org/yay-bin.git /home/builder/yay-bin && \
+              cd /home/builder/yay-bin && \
+              sudo -u builder makepkg -si --noconfirm && \
+              sudo -u builder yay -S --noconfirm quickshell-git libcava qt6-m3shapes-git && \
+              sudo -u builder yay -Yc --noconfirm && \
+              pacman -Rns --noconfirm yay-bin && \
+              sed -i '/builder ALL=(ALL) NOPASSWD:ALL/d' /etc/sudoers && \
+              userdel -r builder && \
+              pacman -Scc --noconfirm
+          EOF
+
+      # ${{ github.repository_owner }} preserves case and Docker refuses an uppercase
+      # reference, so the tag is lowercased here rather than hardcoded. The consuming
+      # workflows cannot do this -- see the comment on their container: blocks.
+      - name: Lowercase the owner for the tag
+        run: echo "IMAGE_OWNER=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: /tmp/Dockerfile
+          push: true
+          tags: ghcr.io/${{ env.IMAGE_OWNER }}/shell-arch-env:latest

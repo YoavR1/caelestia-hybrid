@@ -2,65 +2,73 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
-import Caelestia.Config
 import M3Shapes
-import qs.components
+import Caelestia.Config
 import qs.components.controls
 import qs.modules.nexus.common
 
 PageBase {
     id: root
 
-    title: qsTr("Dashboard")
-    isSubPage: true
-
     readonly property list<MenuItem> dashboardShapeItems: [
         MenuItem {
             property int value: MaterialShape.Circle
+
             text: qsTr("Circle")
         },
         MenuItem {
             property int value: MaterialShape.Square
+
             text: qsTr("Square")
         },
         MenuItem {
             property int value: MaterialShape.Pill
+
             text: qsTr("Pill")
         },
         MenuItem {
             property int value: MaterialShape.Diamond
+
             text: qsTr("Diamond")
         },
         MenuItem {
             property int value: MaterialShape.ClamShell
+
             text: qsTr("Clam Shell")
         },
         MenuItem {
             property int value: MaterialShape.Pentagon
+
             text: qsTr("Pentagon")
         },
         MenuItem {
             property int value: MaterialShape.Gem
+
             text: qsTr("Gem")
         },
         MenuItem {
             property int value: MaterialShape.Cookie4Sided
+
             text: qsTr("Cookie 4-Sided")
         },
         MenuItem {
             property int value: MaterialShape.Cookie6Sided
+
             text: qsTr("Cookie 6-Sided")
         },
         MenuItem {
             property int value: MaterialShape.Cookie7Sided
+
             text: qsTr("Cookie 7-Sided")
         },
         MenuItem {
             property int value: MaterialShape.Cookie9Sided
+
             text: qsTr("Cookie 9-Sided")
         },
         MenuItem {
             property int value: MaterialShape.Cookie12Sided
+
             text: qsTr("Cookie 12-Sided")
         }
     ]
@@ -68,53 +76,68 @@ PageBase {
     readonly property list<MenuItem> lockShapeItems: [
         MenuItem {
             property int value: MaterialShape.Circle
+
             text: qsTr("Circle")
         },
         MenuItem {
             property int value: MaterialShape.Square
+
             text: qsTr("Square")
         },
         MenuItem {
             property int value: MaterialShape.Pill
+
             text: qsTr("Pill")
         },
         MenuItem {
             property int value: MaterialShape.Diamond
+
             text: qsTr("Diamond")
         },
         MenuItem {
             property int value: MaterialShape.ClamShell
+
             text: qsTr("Clam Shell")
         },
         MenuItem {
             property int value: MaterialShape.Pentagon
+
             text: qsTr("Pentagon")
         },
         MenuItem {
             property int value: MaterialShape.Gem
+
             text: qsTr("Gem")
         },
         MenuItem {
             property int value: MaterialShape.Cookie4Sided
+
             text: qsTr("Cookie 4-Sided")
         },
         MenuItem {
             property int value: MaterialShape.Cookie6Sided
+
             text: qsTr("Cookie 6-Sided")
         },
         MenuItem {
             property int value: MaterialShape.Cookie7Sided
+
             text: qsTr("Cookie 7-Sided")
         },
         MenuItem {
             property int value: MaterialShape.Cookie9Sided
+
             text: qsTr("Cookie 9-Sided")
         },
         MenuItem {
             property int value: MaterialShape.Cookie12Sided
+
             text: qsTr("Cookie 12-Sided")
         }
     ]
+
+    title: qsTr("Dashboard")
+    isSubPage: true
 
     ColumnLayout {
         anchors.horizontalCenter: parent.horizontalCenter
@@ -136,7 +159,6 @@ PageBase {
             checked: root.targetConfig.dashboard.enabled
             onToggled: {
                 root.targetConfig.dashboard.enabled = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -149,7 +171,6 @@ PageBase {
             checked: root.targetConfig.dashboard.showOnHover
             onToggled: {
                 root.targetConfig.dashboard.showOnHover = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -162,16 +183,15 @@ PageBase {
             fallbackIcon: "person"
             fallbackText: qsTr("Pill")
             active: {
-                for (let i = 0; i < dashboardShapeItems.length; i++) {
-                    if (dashboardShapeItems[i].value === root.targetConfig.dashboard.profilePicShape)
-                        return dashboardShapeItems[i];
+                for (let i = 0; i < root.dashboardShapeItems.length; i++) {
+                    if (root.dashboardShapeItems[i].value === root.targetConfig.dashboard.profilePicShape)
+                        return root.dashboardShapeItems[i];
                 }
-                return dashboardShapeItems[0];
+                return root.dashboardShapeItems[0];
             }
-            menuItems: dashboardShapeItems
+            menuItems: root.dashboardShapeItems
             onSelected: item => {
-                root.targetConfig.dashboard.profilePicShape = item.value;
-                root.targetConfig.save();
+                root.targetConfig.dashboard.profilePicShape = item.value; // qmllint disable missing-property
             }
         }
 
@@ -185,16 +205,15 @@ PageBase {
             fallbackIcon: "lock"
             fallbackText: qsTr("Clam Shell")
             active: {
-                for (let i = 0; i < lockShapeItems.length; i++) {
-                    if (lockShapeItems[i].value === root.targetConfig.lock.profilePicShape)
-                        return lockShapeItems[i];
+                for (let i = 0; i < root.lockShapeItems.length; i++) {
+                    if (root.lockShapeItems[i].value === root.targetConfig.lock.profilePicShape)
+                        return root.lockShapeItems[i];
                 }
-                return lockShapeItems[0];
+                return root.lockShapeItems[0];
             }
-            menuItems: lockShapeItems
+            menuItems: root.lockShapeItems
             onSelected: item => {
-                root.targetConfig.lock.profilePicShape = item.value;
-                root.targetConfig.save();
+                root.targetConfig.lock.profilePicShape = item.value; // qmllint disable missing-property
             }
         }
 
@@ -211,7 +230,6 @@ PageBase {
             checked: root.targetConfig.dashboard.showDashboard
             onToggled: {
                 root.targetConfig.dashboard.showDashboard = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -222,7 +240,6 @@ PageBase {
             checked: root.targetConfig.dashboard.showMedia
             onToggled: {
                 root.targetConfig.dashboard.showMedia = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -233,7 +250,6 @@ PageBase {
             checked: root.targetConfig.dashboard.showPerformance
             onToggled: {
                 root.targetConfig.dashboard.showPerformance = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -245,7 +261,6 @@ PageBase {
             checked: root.targetConfig.dashboard.showWeather
             onToggled: {
                 root.targetConfig.dashboard.showWeather = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -258,7 +273,6 @@ PageBase {
             checked: root.targetConfig.dashboard.showTerminal
             onToggled: {
                 root.targetConfig.dashboard.showTerminal = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -278,7 +292,6 @@ PageBase {
             checked: root.targetConfig.dashboard.showHyprlandSplash
             onToggled: {
                 root.targetConfig.dashboard.showHyprlandSplash = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -297,7 +310,6 @@ PageBase {
             checked: root.targetConfig.dashboard.colorizeMediaGif
             onToggled: {
                 root.targetConfig.dashboard.colorizeMediaGif = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -310,7 +322,6 @@ PageBase {
             checked: root.targetConfig.dashboard.useMediaShapes
             onToggled: {
                 root.targetConfig.dashboard.useMediaShapes = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -323,7 +334,6 @@ PageBase {
             checked: root.targetConfig.dashboard.randomizeMediaShapeColors
             onToggled: {
                 root.targetConfig.dashboard.randomizeMediaShapeColors = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -336,7 +346,6 @@ PageBase {
             checked: root.targetConfig.dashboard.syncMediaShapesToBeat
             onToggled: {
                 root.targetConfig.dashboard.syncMediaShapesToBeat = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -350,7 +359,6 @@ PageBase {
             checked: root.targetConfig.dashboard.replaceMediaLyricsWithVisuals
             onToggled: {
                 root.targetConfig.dashboard.replaceMediaLyricsWithVisuals = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -370,7 +378,6 @@ PageBase {
             checked: root.targetConfig.dashboard.showWeatherLocation !== false
             onToggled: {
                 root.targetConfig.dashboard.showWeatherLocation = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -387,7 +394,6 @@ PageBase {
             checked: root.targetConfig.dashboard.performance.showBattery
             onToggled: {
                 root.targetConfig.dashboard.performance.showBattery = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -398,7 +404,6 @@ PageBase {
             checked: root.targetConfig.dashboard.performance.showGpu
             onToggled: {
                 root.targetConfig.dashboard.performance.showGpu = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -409,7 +414,6 @@ PageBase {
             checked: root.targetConfig.dashboard.performance.showCpu
             onToggled: {
                 root.targetConfig.dashboard.performance.showCpu = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -420,7 +424,6 @@ PageBase {
             checked: root.targetConfig.dashboard.performance.showMemory
             onToggled: {
                 root.targetConfig.dashboard.performance.showMemory = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -431,7 +434,6 @@ PageBase {
             checked: root.targetConfig.dashboard.performance.showStorage
             onToggled: {
                 root.targetConfig.dashboard.performance.showStorage = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -443,7 +445,6 @@ PageBase {
             checked: root.targetConfig.dashboard.performance.showNetwork
             onToggled: {
                 root.targetConfig.dashboard.performance.showNetwork = checked;
-                root.targetConfig.save();
             }
         }
 
@@ -465,7 +466,6 @@ PageBase {
             stepSize: 5
             onMoved: v => {
                 root.targetConfig.dashboard.dragThreshold = v;
-                root.targetConfig.save();
             }
         }
     }

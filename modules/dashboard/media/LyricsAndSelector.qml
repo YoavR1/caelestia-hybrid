@@ -1,4 +1,6 @@
+import "../dash" as DashTab
 import QtQuick
+import QtQuick.Effects
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Services.Mpris
@@ -6,10 +8,7 @@ import Caelestia.Config
 import qs.components
 import qs.components.controls
 import qs.services
-import Caelestia.Services
-import QtQuick.Effects
 import qs.utils
-import "../dash" as DashTab
 
 Item {
     ColumnLayout {
@@ -49,11 +48,13 @@ Item {
 
         Component {
             id: lyricComp
-            LyricList { }
+
+            LyricList {}
         }
 
         Component {
             id: visualComp
+
             Item {
                 anchors.fill: parent
 

@@ -2,6 +2,26 @@ cmake_minimum_required(VERSION 3.19)
 
 set(REMOTE_REPO_URL "https://github.com/caelestia-dots/shell.git")
 
+# A fork must not report upstream's identity. REMOTE_REPO_URL above points at
+# caelestia-dots/shell, so a bare configure here baked in *upstream's* newest tag and
+# *upstream's* HEAD -- `caelestia --version` then printed a revision that is not in this tree,
+# which is the string a user pastes into a bug report. Prefer the local checkout, which
+# describes what is actually being built and needs no network; fall back to the remote query
+# only for a source tree with no .git, which is what that path was really for.
+if(NOT DEFINED VERSION)
+    execute_process(
+        COMMAND git -C "${CMAKE_CURRENT_SOURCE_DIR}" describe --tags --abbrev=0
+        OUTPUT_VARIABLE LOCAL_TAG
+        RESULT_VARIABLE LOCAL_TAG_RESULT
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+
+    if(LOCAL_TAG_RESULT EQUAL 0 AND NOT "${LOCAL_TAG}" STREQUAL "")
+        set(VERSION "${LOCAL_TAG}")
+    endif()
+endif()
+
 if(NOT DEFINED VERSION)
     # Fetch the latest annotated or lightweight tag from the remote repo
     execute_process(
@@ -21,6 +41,20 @@ if(NOT DEFINED VERSION)
 
     if("${VERSION}" STREQUAL "")
         message(FATAL_ERROR "VERSION is not set and failed to parse from remote tags")
+    endif()
+endif()
+
+if(NOT DEFINED GIT_REVISION)
+    execute_process(
+        COMMAND git -C "${CMAKE_CURRENT_SOURCE_DIR}" rev-parse HEAD
+        OUTPUT_VARIABLE LOCAL_HEAD
+        RESULT_VARIABLE LOCAL_HEAD_RESULT
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+
+    if(LOCAL_HEAD_RESULT EQUAL 0 AND NOT "${LOCAL_HEAD}" STREQUAL "")
+        set(GIT_REVISION "${LOCAL_HEAD}")
     endif()
 endif()
 
@@ -57,10 +91,16 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
 set(DISTRIBUTOR "Unset" CACHE STRING "Distributor")
-set(ENABLE_MODULES "extras;plugin;shell;m3shapes" CACHE STRING "Modules to build/install")
+set(ENABLE_MODULES "extras;plugin;shell" CACHE STRING "Modules to build/install")
 set(INSTALL_LIBDIR "${CMAKE_INSTALL_LIBDIR}/caelestia" CACHE STRING "Library install dir")
 set(INSTALL_QMLDIR "${CMAKE_INSTALL_LIBDIR}/qt6/qml" CACHE STRING "QML install dir")
 set(INSTALL_QSCONFDIR "${CMAKE_INSTALL_SYSCONFDIR}/xdg/quickshell/caelestia" CACHE STRING "Quickshell config install dir")
+
+add_compile_definitions(
+    QT_NO_CAST_FROM_ASCII
+    QT_NO_CAST_TO_ASCII
+    QT_NO_CAST_FROM_BYTEARRAY
+)
 
 add_compile_options(
     -Wall -Wextra -Wpedantic -Wshadow -Wconversion
@@ -71,7 +111,7 @@ add_compile_options(
 )
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    add_compile_options(-Wunused-lambda-capture)
+    add_compile_options(-Wunused-lambda-capture -Wno-nonportable-include-path)
 endif()
 
 if("extras" IN_LIST ENABLE_MODULES)
@@ -95,23 +135,4 @@ if("shell" IN_LIST ENABLE_MODULES)
     install(FILES "${CMAKE_BINARY_DIR}/qml/shell.qml" DESTINATION "${INSTALL_QSCONFDIR}")
 
     install(FILES LICENSE DESTINATION "${INSTALL_QSCONFDIR}")
-endif()
-
-if("m3shapes" IN_LIST ENABLE_MODULES)
-    message(STATUS "Fetching M3Shapes module")
-    include(FetchContent)
-    set(M3SHAPES_REV bdc327b29f95394a732baf3c9b19658ba23755b6)
-    FetchContent_Declare(
-        m3shapes_external
-        GIT_REPOSITORY https://github.com/soramanew/m3shapes.git
-        GIT_TAG        ${M3SHAPES_REV}
-        SOURCE_DIR     "${CMAKE_BINARY_DIR}/_deps/m3shapes-${M3SHAPES_REV}"
-    )
-    FetchContent_MakeAvailable(m3shapes_external)
-    message(STATUS "Done fetching M3Shapes module")
-
-    # Fix m3shapes wrong rpath
-    if(TARGET m3shapesplugin)
-        set_target_properties(m3shapesplugin PROPERTIES INSTALL_RPATH "$ORIGIN")
-    endif()
 endif()

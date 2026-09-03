@@ -1,5 +1,4 @@
 import QtQuick
-import Quickshell
 
 AnimatedImage {
     id: root
