@@ -2,6 +2,26 @@ cmake_minimum_required(VERSION 3.19)
 
 set(REMOTE_REPO_URL "https://github.com/caelestia-dots/shell.git")
 
+# A fork must not report upstream's identity. REMOTE_REPO_URL above points at
+# caelestia-dots/shell, so a bare configure here baked in *upstream's* newest tag and
+# *upstream's* HEAD -- `caelestia --version` then printed a revision that is not in this tree,
+# which is the string a user pastes into a bug report. Prefer the local checkout, which
+# describes what is actually being built and needs no network; fall back to the remote query
+# only for a source tree with no .git, which is what that path was really for.
+if(NOT DEFINED VERSION)
+    execute_process(
+        COMMAND git -C "${CMAKE_CURRENT_SOURCE_DIR}" describe --tags --abbrev=0
+        OUTPUT_VARIABLE LOCAL_TAG
+        RESULT_VARIABLE LOCAL_TAG_RESULT
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+
+    if(LOCAL_TAG_RESULT EQUAL 0 AND NOT "${LOCAL_TAG}" STREQUAL "")
+        set(VERSION "${LOCAL_TAG}")
+    endif()
+endif()
+
 if(NOT DEFINED VERSION)
     # Fetch the latest annotated or lightweight tag from the remote repo
     execute_process(
@@ -21,6 +41,20 @@ if(NOT DEFINED VERSION)
 
     if("${VERSION}" STREQUAL "")
         message(FATAL_ERROR "VERSION is not set and failed to parse from remote tags")
+    endif()
+endif()
+
+if(NOT DEFINED GIT_REVISION)
+    execute_process(
+        COMMAND git -C "${CMAKE_CURRENT_SOURCE_DIR}" rev-parse HEAD
+        OUTPUT_VARIABLE LOCAL_HEAD
+        RESULT_VARIABLE LOCAL_HEAD_RESULT
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+
+    if(LOCAL_HEAD_RESULT EQUAL 0 AND NOT "${LOCAL_HEAD}" STREQUAL "")
+        set(GIT_REVISION "${LOCAL_HEAD}")
     endif()
 endif()
 

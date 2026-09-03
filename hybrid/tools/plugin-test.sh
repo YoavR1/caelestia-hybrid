@@ -30,8 +30,8 @@ GEN=$BUILD_DIR/plugin/src/Caelestia/Services
 FILTER=${1:-}
 
 if [ ! -f "$GEN/ukey.pb.cc" ]; then
-    # VERSION and GIT_REVISION are parsed from *remote* tags, and this repo has no remote
-    # yet, so a bare configure is a FATAL_ERROR. Pass them empty, exactly as build.yml does.
+    # Passed empty exactly as build.yml does, so a test build never depends on the network
+    # or on how the tree is tagged. CMake derives both from the local checkout otherwise.
     echo "building $BUILD_DIR first" >&2
     cmake -B "$BUILD_DIR" -G Ninja -DVERSION= -DGIT_REVISION= >/dev/null 2>&1 || exit 1
     cmake --build "$BUILD_DIR" --target caelestia-services >/dev/null 2>&1 || exit 1

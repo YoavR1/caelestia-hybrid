@@ -115,8 +115,9 @@ sudo cmake --install build
 ```
 
 > [!NOTE]
-> `VERSION` and `GIT_REVISION` are parsed from the repository's remote tags. Until this repo
-> has a remote, pass them explicitly: `-DVERSION=0.0.0 -DGIT_REVISION=$(git rev-parse HEAD)`.
+> `VERSION` and `GIT_REVISION` come from the local checkout — its nearest tag and its `HEAD`.
+> A source tree with no `.git` falls back to querying the upstream repository over the
+> network. Override either with `-DVERSION=` / `-DGIT_REVISION=` if you need to.
 
 > [!TIP]
 > You can customise the installation location via the CMake flags `INSTALL_LIBDIR`, `INSTALL_QMLDIR`, and

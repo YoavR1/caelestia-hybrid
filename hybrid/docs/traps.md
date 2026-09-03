@@ -1364,3 +1364,47 @@ one makes the missing one look handled.
 
 Both fixed with optional chaining and an early return, and both verified 12/12 locally under
 Hyprland, where neither condition arises.
+
+---
+
+## T34 — A fork's build reported upstream's version and upstream's commit
+
+`caelestia --version` on a build of this tree printed:
+
+```
+Version: 2.4.0
+Git revision: 750e67d93ac12b264cb8cbc3a1f2b8f429c923c2
+```
+
+That revision is `caelestia-dots/shell`'s HEAD. It is not in this repository at all — it is
+the string a user would paste into a bug report, naming code they are not running.
+
+The cause is one line near the top of `CMakeLists.txt`:
+
+```cmake
+set(REMOTE_REPO_URL "https://github.com/caelestia-dots/shell.git")
+```
+
+`VERSION` came from `git ls-remote --tags` against that URL and `GIT_REVISION` from
+`git ls-remote HEAD` against it. Correct for upstream, wrong for every fork, and it also
+made a plain `cmake -B build` require network access.
+
+Both now prefer the local checkout — `git describe --tags --abbrev=0` and `git rev-parse
+HEAD` — and fall back to the remote query only when there is no `.git`, which is the case
+that path was really for: a source tarball. Offline configures work as a side effect.
+
+The version *number* happens to be unchanged at 2.4.0, because Phase 2 merged upstream's
+tags along with its commits, so the nearest local tag is upstream's newest. Only the
+revision moved — which is the half that identifies the build.
+
+**What this cost me, and the lesson.** Four places in this repository — `crypto-test.sh`,
+`plugin-test.sh`, `verify.sh` and the README — carried a note saying "VERSION and
+GIT_REVISION are parsed from *remote* tags, and this repo has no remote yet, so a bare
+configure is a FATAL_ERROR". I wrote that from reading the word "remote" in the CMake and
+never ran the bare configure to check. It was wrong twice over: the remote is upstream's
+hardcoded URL rather than this repo's, so having no `origin` was never the issue, and a bare
+configure had always worked whenever the network was up. Passing `-DVERSION= -DGIT_REVISION=`
+was still harmless and is what CI does, so nothing failed — the explanation was simply
+fiction, repeated four times, and it took a passing test to expose it.
+
+**Reading code tells you what it says. Only running it tells you what it does.**

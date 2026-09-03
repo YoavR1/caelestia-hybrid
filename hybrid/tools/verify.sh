@@ -49,8 +49,8 @@ fail=0
 step() { printf '\n\033[1m===== %s =====\033[0m\n' "$1"; }
 count() { echo "$2: $1"; [ "$1" -eq 0 ] || fail=1; }
 
-# VERSION and GIT_REVISION are parsed from *remote* tags, and this repo has no remote yet, so
-# a bare configure is a FATAL_ERROR. Empty is what build.yml passes.
+# Passed empty exactly as build.yml does, so the gate never depends on the network or on how
+# the tree is tagged. CMake derives both from the local checkout otherwise (T34).
 cfg=(-G Ninja -DVERSION= -DGIT_REVISION=)
 
 step "build"
