@@ -1090,3 +1090,24 @@ concluding that a green upstream CI says anything about this fork.
 
 The job also needs `credentials:` on the container. A fork's `GITHUB_TOKEN` can read its own
 owner's packages, but only if the workflow hands it to the docker login.
+
+### The image reference must be a lowercase literal
+
+`${{ github.repository_owner }}` preserves case — it is `YoavR1`, not `yoavr1` — and Docker
+rejects an uppercase registry reference outright:
+
+```
+ERROR: failed to build: invalid tag "ghcr.io/YoavR1/shell-arch-env:latest":
+repository name must be lowercase
+```
+
+The two sides have to be fixed differently, which is easy to get wrong:
+
+- **The build tag** can be lowercased at run time, because a step runs before it is used:
+  `echo "IMAGE_OWNER=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"`.
+- **`container: image:` cannot.** It is resolved before any step in the job exists, and
+  GitHub's expression language has no `toLower()`. It must be a literal.
+
+So the six container jobs carry `ghcr.io/yoavr1/shell-arch-env:latest` spelled out, and a
+fork edits exactly that one string. The first attempt used the expression in both places on
+the assumption that it was portable; it is portable only where a step can preprocess it.

@@ -10,8 +10,12 @@ jobs:
   smoke:
     runs-on: ubuntu-latest
 
+    # Lowercase literal, not ${{ github.repository_owner }}: Docker rejects an
+    # uppercase registry reference, container.image is resolved before any step
+    # could lowercase it, and GitHub expressions have no toLower(). A fork edits
+    # this one string (and nothing else) to point at its own namespace. See T29.
     container:
-      image: ghcr.io/${{ github.repository_owner }}/shell-arch-env:latest
+      image: ghcr.io/yoavr1/shell-arch-env:latest
       credentials:
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
