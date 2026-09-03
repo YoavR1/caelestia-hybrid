@@ -42,9 +42,10 @@ python3 scripts/qml-lint-conventions.py        # --fix handles all but section-o
 # 3. QML lint — any output at all is a failure
 ./hybrid/tools/qml-lint.sh                     # or --summary for category counts
 
-# 4. Two cheap repo-hygiene checks, both invisible to every other gate
+# 4. Three cheap checks, each for a bug class every other gate is blind to
 ./hybrid/tools/dead-signals.py       # signals declared but never emitted (T21)
 ./hybrid/tools/check-index-modes.sh  # scripts committed non-executable (T22)
+./hybrid/tools/shell-safety.py       # sh -c scripts built from a value (T26)
 
 # 5. C++ lint — needs its OWN clang configure. Arch's Qt6 hands gcc
 #    -mno-direct-extern-access, which clang-tidy rejects on every file (T19).

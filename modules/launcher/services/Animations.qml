@@ -13,7 +13,9 @@ QtObject {
 
     property Process reader: Process {
         running: false
-        command: ["sh", "-c", `ls -1 "${Paths.config}/animations"/*.lua 2>/dev/null || true`]
+        // A shell is needed for the glob, but the directory goes in as $1: the config
+        // path contains the user's home, which is not guaranteed to be free of spaces.
+        command: ["sh", "-c", 'ls -1 "$1"/animations/*.lua 2>/dev/null || true', "sh", Paths.config]
         stdout: StdioCollector {
             onStreamFinished: {
                 try {

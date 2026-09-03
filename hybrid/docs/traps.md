@@ -867,10 +867,28 @@ new:  sh -c '... printf "%s\n" "$2" > "$3"' sh "$VALUE" out.txt
 The Wallhaven pair is the one that matters: those values are attacker-influenced in the
 ordinary sense, not just awkward.
 
-**The fix is the pattern already in the tree.** `services/Nmcli.qml` was doing it right all
-along: `["sh", "-c", script, "sh", a, b]` passes `a` and `b` as `$1` and `$2`, which the
+**The fix is the pattern already in the tree.** `services/Nmcli.qml` was doing it right in
+one place: `["sh", "-c", script, "sh", a, b]` passes `a` and `b` as `$1` and `$2`, which the
 shell never parses as syntax. Where no shell is needed at all — the Wallhaven download was
 just `curl` — the argv form replaces `sh` entirely.
+
+`hybrid/tools/shell-safety.py` now enforces it, and runs in `lint.yml` beside the dead-signal
+check because it needs no build either. Against the tree before the fix it reports 15 sites;
+against the tree after, none. The allowlist is keyed by file and by a snippet of the line
+rather than by line number, so it does not rot when something above it moves, and every entry
+carries its reason.
+
+Writing that checker took three attempts, and the two failures are the interesting part:
+
+- Reading only the *literal* missed `"echo '" + value + "' > f"`, where the value is
+  concatenated **outside** the quotes.
+- Reading the whole *line* flagged the correctly-written calls, because a positional argument
+  like `` `${Paths.state}/wallpaper` `` sits after the script and looks exactly like
+  interpolation into it.
+
+Neither mistake is visible from the output — one under-reports, the other cries wolf on the
+fix. It has to parse the script argument as one expression, stopping at the comma that ends
+it. Checked both ways before being believed.
 
 **Not everything with `sh -c` is a bug.** Four uses are correct by design and were left
 alone: `Keybinds.qml` runs the user's own keybind commands, which is the feature; the Hypr
