@@ -344,6 +344,25 @@ drive_shell() {
         "${ipc[@]}" nexus openPage "$i" >/dev/null 2>&1
         sleep 0.7
     done
+    sleep 1
+
+    # The lock screen is a large surface nothing else reaches. It locks the *nested*
+    # compositor, never a real session -- the harness refuses to run against one.
+    "${ipc[@]}" lock lock >/dev/null 2>&1
+    sleep 2.5
+    "${ipc[@]}" lock unlock >/dev/null 2>&1
+    sleep 1.5
+
+    for picker in open openFreeze openClip; do
+        "${ipc[@]}" picker "$picker" >/dev/null 2>&1
+        sleep 0.8
+    done
+
+    "${ipc[@]}" idleInhibitor toggle >/dev/null 2>&1
+    sleep 0.4
+    "${ipc[@]}" idleInhibitor toggle >/dev/null 2>&1
+    "${ipc[@]}" audio cycleOutput >/dev/null 2>&1
+    "${ipc[@]}" brightness get >/dev/null 2>&1
     sleep 1.5
 }
 
