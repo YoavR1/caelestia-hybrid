@@ -65,6 +65,12 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      # The checkout is owned by a different uid than the container's root, so git refuses
+      # every command with "detected dubious ownership". The checkers now fail loudly on
+      # that rather than reporting an empty tree as clean, but they still need it to work.
+      - name: Trust the workspace
+        run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
       # Need no build, so they run first and fail in seconds rather than after a configure.
       - name: Check for dead signals
         run: ./hybrid/tools/dead-signals.py

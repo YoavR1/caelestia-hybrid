@@ -1111,3 +1111,44 @@ The two sides have to be fixed differently, which is easy to get wrong:
 So the six container jobs carry `ghcr.io/yoavr1/shell-arch-env:latest` spelled out, and a
 fork edits exactly that one string. The first attempt used the expression in both places on
 the assumption that it was portable; it is portable only where a step can preprocess it.
+
+---
+
+## T30 — Three of my own checkers reported a clean tree from an empty file list
+
+**Symptom:** in CI, and only in CI:
+
+```
+dead-signals.py     209 signal(s) checked, 0 with no reachable emitter
+shell-safety.py       0 shell invocation(s), 0 allowlisted, 0 building the script from a value
+dead-qml.py           0 QML file(s), 0 allowlisted, 0 unreferenced
+check-index-modes.sh  index modes ok
+```
+
+Two of those numbers are zero because there was nothing to check, and all three passed.
+
+The container runs as root while the checkout is owned by another uid, so git refuses
+everything with `detected dubious ownership`, `git ls-files` prints nothing and exits 128 —
+and a checker that iterates that output finds no files, reports no problems, and exits 0.
+`dead-signals.py` was unaffected only because it walks the filesystem with `rglob` instead.
+
+This is the exact defect these tools exist to find (T23), sitting in the tools. It cannot be
+caught by running them locally, where git always works.
+
+**Both halves are fixed, and both are needed.**
+
+*The checkers* now treat a failed or empty listing as an error. `tracked_files()` in the two
+Python tools and the `git ls-files -s` guard in the shell one exit non-zero with the git
+error and the `safe.directory` hint. Verified with a stub `git` that fails on `ls-files`:
+exit 2, 1 and 1, with a real git unchanged at 0.
+
+*The workflows* add `git config --global --add safe.directory "$GITHUB_WORKSPACE"` before the
+checkers, so the underlying problem is gone rather than merely detected.
+
+**Testing the guard took two attempts, which is its own lesson.** The first stub failed only
+when `$1` was `ls-files`. The Python tools invoke `git -C <root> ls-files …`, so `$1` is `-C`,
+the stub fell through to the real git, and the tools passed — making a working guard look
+broken. When a probe says a fix did not work, check the probe before the fix.
+
+**The general rule: zero inputs is a broken checker, never a clean tree.** Any tool that
+reports "N problems in M files" must refuse to report success when M is zero.

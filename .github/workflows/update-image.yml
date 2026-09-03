@@ -6,9 +6,15 @@ name: Update Docker CI image
 # This builds the same environment into the *fork owner's* namespace instead, which is why
 # the tag and the other workflows both use ${{ github.repository_owner }} rather than a name.
 #
-# It also adds two packages upstream's image does not carry, because upstream's tree does not
-# contain QuickShare: protobuf, and lm_sensors for the libsensors that Sensors::Sensors
-# resolves to in plugin/cmake/sensorslib.cmake.
+# It also adds three packages upstream's image does not carry, because upstream's tree has
+# neither QuickShare nor video wallpaper:
+#
+#   protobuf         the six generated .pb.cc
+#   lm_sensors       the libsensors that Sensors::Sensors resolves to in sensorslib.cmake
+#   qt6-multimedia   MediaPlayer and SoundEffect. Without it qmllint cannot resolve the
+#                    types and reports "SoundEffect was not found" plus a cascade of
+#                    unqualified-access warnings in VideoWallpaper.qml -- which looks like
+#                    a code problem and is a missing package.
 
 on:
   workflow_dispatch:
@@ -33,7 +39,7 @@ jobs:
         run: |
           cat > /tmp/Dockerfile <<EOF
           FROM archlinux:latest
-          RUN pacman -Syu --needed --noconfirm sudo base-devel cmake ninja fish git clazy qt6-declarative qt6-shadertools python libpipewire aubio libqalculate protobuf lm_sensors openssl && \
+          RUN pacman -Syu --needed --noconfirm sudo base-devel cmake ninja fish git clazy qt6-declarative qt6-shadertools qt6-multimedia python libpipewire aubio libqalculate protobuf lm_sensors openssl && \
               useradd -m builder && \
               echo 'builder ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers && \
               sudo -u builder git clone https://aur.archlinux.org/yay-bin.git /home/builder/yay-bin && \

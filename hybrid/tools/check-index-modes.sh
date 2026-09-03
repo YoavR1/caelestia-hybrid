@@ -20,7 +20,22 @@ set -uo pipefail
 ROOT=$(git rev-parse --show-toplevel 2>/dev/null) || ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 cd "$ROOT"
 
-bad=$(git ls-files -s | awk '$1 != "100755" { $1=""; $2=""; $3=""; sub(/^ +/, ""); print }' \
+# git ls-files failing, or listing nothing, must be an error rather than a clean result. In
+# a container the checkout is often owned by another uid, git refuses with "detected dubious
+# ownership", ls-files prints nothing and exits non-zero -- and a check that just iterates
+# the output then reports "ok" on an empty list. This one did exactly that on its first CI
+# run. Zero inputs is a broken check, never a clean tree.
+all=$(git ls-files -s) || {
+    echo "git ls-files failed; in a container run:" >&2
+    echo "  git config --global --add safe.directory $ROOT" >&2
+    exit 2
+}
+if [ -z "$all" ]; then
+    echo "git ls-files listed no files under $ROOT -- refusing to report ok" >&2
+    exit 2
+fi
+
+bad=$(printf '%s\n' "$all" | awk '$1 != "100755" { $1=""; $2=""; $3=""; sub(/^ +/, ""); print }' \
     | while IFS= read -r f; do
         # grep -a rather than a command substitution: a $(head -c2) on the repo's binary
         # files (fonts, images) makes bash warn about discarded null bytes on every run.

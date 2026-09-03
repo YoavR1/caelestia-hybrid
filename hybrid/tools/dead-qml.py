@@ -41,13 +41,32 @@ ALLOWED = {
 }
 
 
+def tracked_files(*patterns):
+    """git ls-files, but a failure or an empty result is an error rather than a pass.
+
+    In a container the checkout is often owned by another uid, git refuses with "detected
+    dubious ownership", ls-files prints nothing and exits non-zero -- and a checker that
+    simply iterates the result then reports "0 files, 0 problems" and succeeds. All three
+    git-based checkers did exactly that on their first CI run. Zero inputs is a broken
+    checker, never a clean tree.
+    """
+    r = subprocess.run(["git", "-C", str(ROOT), "ls-files",
+                        "--cached", "--others", "--exclude-standard", *patterns],
+                       capture_output=True, text=True)
+    if r.returncode != 0:
+        sys.exit(f"git ls-files failed ({r.returncode}): {r.stderr.strip()}\n"
+                 f"in a container, run: git config --global --add safe.directory {ROOT}")
+    files = r.stdout.split()
+    if not files:
+        sys.exit(f"git ls-files {patterns} matched nothing under {ROOT} -- refusing to "
+                 f"report a clean result from an empty file list")
+    return files
+
+
 def main():
-    files = subprocess.run(["git", "-C", str(ROOT), "ls-files", "--cached", "--others", "--exclude-standard", "*.qml"],
-                           capture_output=True, text=True).stdout.split()
+    files = tracked_files("*.qml")
     texts = {f: (ROOT / f).read_text() for f in files}
-    others = subprocess.run(
-        ["git", "-C", str(ROOT), "ls-files", "--cached", "--others", "--exclude-standard", "*.cpp", "*.hpp", "CMakeLists.txt", "*.json", "qmldir"],
-        capture_output=True, text=True).stdout.split()
+    others = tracked_files("*.cpp", "*.hpp", "CMakeLists.txt", "*.json", "qmldir")
     outside = "\n".join((ROOT / f).read_text(errors="ignore") for f in others)
 
     dead, skipped = [], []
