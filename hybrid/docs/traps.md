@@ -1283,3 +1283,34 @@ return each function actually needs — `""` for `list()`, `"unknown"` for `isOp
 **The general point.** A function whose body contains `return null` has that in its contract,
 and a sweep for callers is worth doing the moment you see one. Finding the first instance by
 accident says nothing about how many there are: here the ratio was 2 observed to 23 present.
+
+### The guards then revealed that the sway leg was driving nothing
+
+With the crashes gone, the next run reported something quieter and worse:
+
+```
+WARN caelestia.qml.shortcuts: Drawer "dashboard" does not exist
+```
+
+`toggle()` tested `list().split("\n").includes(drawer)` first, and the guard makes `list()`
+return `""` when there is no active screen — so no drawer name is ever in that list and every
+toggle reported the wrong reason. The message blamed the drawer for the absence of a screen.
+
+Which exposed the real problem: `forActive()` returned null for the **entire** sway run, so
+the IPC drive had been a no-op there all along. Six presets booted and nothing was toggled.
+That is a gate that looks like coverage and is not — the same shape as T23, arrived at from a
+different direction.
+
+Two changes, both narrow:
+
+- `forActive()` and `componentsForActive()` fall back to the sole screen when there is
+  exactly one. `Hypr.focusedMonitor` is null during startup, across hotplug, and for any run
+  under another compositor; with one screen there is still only one answer to "the active
+  screen". With several screens and nothing focused there is no honest answer, so null stands
+  and the callers' guards still matter.
+- `toggle()` checks for the screen, then the drawer, in that order, so the warning names the
+  thing that is actually wrong.
+
+The lesson worth keeping: **fixing a crash can turn a loud failure into a quiet one.** The
+TypeErrors were at least visible. Had the guards been added without reading what replaced
+them, the sway leg would have gone green while testing less than before.

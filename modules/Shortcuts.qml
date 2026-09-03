@@ -235,18 +235,21 @@ Scope {
 
     IpcHandler {
         function toggle(drawer: string): void {
-            if (list().split("\n").includes(drawer)) {
-                if (root.hasFullscreen && ["launcher", "session", "dashboard"].includes(drawer))
-                    return;
-                if (drawer === "workspaceDrawer" && !GlobalConfig.hybrid.features.overview)
-                    return;
-                const screenState = ShellState.forActive();
-                if (!screenState)
-                    return;
-                screenState[drawer] = !screenState[drawer];
-            } else {
+            // Checked in this order so the warning is about the drawer name. Going through
+            // list() first conflated "no active screen" with "no such drawer", and reported
+            // the latter for the former.
+            const screenState = ShellState.forActive();
+            if (!screenState)
+                return;
+            if (typeof screenState[drawer] !== "boolean") {
                 console.warn(lc, `Drawer "${drawer}" does not exist`);
+                return;
             }
+            if (root.hasFullscreen && ["launcher", "session", "dashboard"].includes(drawer))
+                return;
+            if (drawer === "workspaceDrawer" && !GlobalConfig.hybrid.features.overview)
+                return;
+            screenState[drawer] = !screenState[drawer];
         }
 
         function toggleTab(drawer: string, tab: string): void {
