@@ -38,8 +38,13 @@ MouseArea {
         if (!mon)
             return [];
 
-        const special = mon.lastIpcObject.specialWorkspace;
-        const wsId = special.name ? special.id : mon.activeWorkspace.id;
+        // A monitor object can exist with an empty lastIpcObject -- during startup before
+        // the first IPC reply, and for the whole run under a compositor that is not
+        // Hyprland. The `!mon` check above does not cover that.
+        const special = mon.lastIpcObject?.specialWorkspace;
+        const wsId = special?.name ? special.id : mon.activeWorkspace?.id;
+        if (wsId === undefined || wsId === null)
+            return [];
 
         return Hypr.toplevelsForWs(wsId).sort((a, b) => {
             // Pinned first, then fullscreen, then floating, then any other

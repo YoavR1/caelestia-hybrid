@@ -37,6 +37,11 @@ Item {
         // The assignments in fetchNews' own body above are fine -- a QML function body does
         // resolve against the component.
         xhr.onreadystatechange = function () {
+            // The request outlives the component: the sidebar can be closed, and this Item
+            // destroyed, while the fetch is still in flight. `root` is then null and every
+            // line below it throws. Nothing to update in that case -- just stop.
+            if (!root)
+                return;
             if (xhr.readyState === XMLHttpRequest.DONE) {
                 root.isFetching = false;
                 if (xhr.status === 200) {

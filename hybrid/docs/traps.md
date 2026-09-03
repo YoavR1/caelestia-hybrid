@@ -1339,5 +1339,28 @@ sidebar only opened once `forActive()` stopped returning null.
 
 **That is the shape of every round of this.** Each fix peeled back a layer of environment
 noise or a crash, and something real was underneath it: `$SHELL` unset, then 23 unguarded
-null dereferences, then a drive that was silently doing nothing, then a QML scope error. None
-of them are reachable from the nested-Hyprland matrix on a workstation.
+null dereferences, then a drive that was silently doing nothing, then a QML scope error, then
+two more once the drive was actually opening panels. None of them are reachable from the
+nested-Hyprland matrix on a workstation.
+
+### The last two, both about things that are only sometimes there
+
+```
+@modules/sidebar/News.qml[41:-1]:      TypeError: Value is null and could not be converted to an object
+@modules/areapicker/Picker.qml[42:-1]: TypeError: Cannot read property 'name' of undefined
+```
+
+*News* — `root` itself was null. The XHR outlives the component: the drive opens the sidebar,
+the fetch starts, the drive closes it, the `Item` is destroyed, and the reply lands in a dead
+closure. A real race anywhere, needing only that the sidebar be closed inside the request
+window — which the drive does deterministically and a person rarely would.
+
+*Picker* — `mon.lastIpcObject.specialWorkspace` was assumed present. The binding already
+guarded `!mon`, which is the easy half: a monitor object can exist with an **empty**
+`lastIpcObject`, during startup before the first IPC reply and for an entire run under a
+compositor that is not Hyprland. Guarding the container and not its contents is a recurring
+shape here, and it is worth checking for whenever a guard already exists — the presence of
+one makes the missing one look handled.
+
+Both fixed with optional chaining and an early return, and both verified 12/12 locally under
+Hyprland, where neither condition arises.
