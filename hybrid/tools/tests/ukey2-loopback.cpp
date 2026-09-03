@@ -1,6 +1,15 @@
 // Drives a complete UKEY2 handshake between two QuickShareCrypto instances through the
 // public API, then round-trips a payload. Nothing in the tree exercised this before, so
 // the EC_KEY -> EVP_PKEY migration had no behavioural check; this is that check.
+//
+// What a loopback can and cannot prove. It proves internal consistency: both sides derive
+// the same keys, the same PIN, and can decrypt each other. It cannot prove
+// *interoperability* with a real Android device, because both sides run the same code --
+// if this implementation read a field the wrong way round, the two halves here would agree
+// with each other and disagree with everyone else. The PIN derivation in particular reads
+// the auth string as signed bytes (see the bugprone-signed-char-misuse suppression in
+// QuickShareCrypto.cpp); that reading is asserted by a comment, not by this test. Only a
+// transfer with a real phone settles it.
 #include <qbytearray.h>
 #include <qcoreapplication.h>
 #include <qstring.h>
