@@ -258,6 +258,10 @@ Scope {
             WindowFactory.create();
         }
 
+        function openPage(page: int): void {
+            WindowFactory.openPage(page);
+        }
+
         target: "nexus"
     }
 

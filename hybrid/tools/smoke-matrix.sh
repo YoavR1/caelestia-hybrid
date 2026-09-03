@@ -335,8 +335,16 @@ drive_shell() {
 
     "${ipc[@]}" toaster info "smoke" "interaction pass" "info" >/dev/null 2>&1
     sleep 0.6
-    "${ipc[@]}" nexus open >/dev/null 2>&1
-    sleep 2.5
+
+    # Every settings page, not just the first. This is where the null targetConfig lived,
+    # and 16 pages of UI that nothing renders is 16 pages nothing checks.
+    local pages
+    pages=$(grep -c 'label: qsTr' "$ROOT/modules/nexus/PageRegistry.qml" 2>/dev/null || echo 1)
+    for ((i = 0; i < pages; i++)); do
+        "${ipc[@]}" nexus openPage "$i" >/dev/null 2>&1
+        sleep 0.7
+    done
+    sleep 1.5
 }
 
 run_preset() {
