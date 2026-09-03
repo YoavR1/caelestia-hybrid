@@ -1,10 +1,11 @@
 // Does BeatTracker::beat actually reach a QML-side receiver now? Emits the processor's
 // beat on the processor's own thread and counts what arrives on the tracker.
-#include "beattracker.hpp"
-
 #include <qcoreapplication.h>
 #include <qtimer.h>
+
 #include <cstdio>
+
+#include "beattracker.hpp"
 
 using caelestia::services::BeatTracker;
 
@@ -20,10 +21,15 @@ int main(int argc, char** argv) {
 
     int beats = 0;
     float lastBpm = 0;
-    QObject::connect(&tracker, &BeatTracker::beat, &tracker, [&](float bpm) { ++beats; lastBpm = bpm; });
+    QObject::connect(&tracker, &BeatTracker::beat, &tracker, [&](float bpm) {
+        ++beats;
+        lastBpm = bpm;
+    });
 
     int bpmChanges = 0;
-    QObject::connect(&tracker, &BeatTracker::bpmChanged, &tracker, [&] { ++bpmChanges; });
+    QObject::connect(&tracker, &BeatTracker::bpmChanged, &tracker, [&] {
+        ++bpmChanges;
+    });
 
     // Three beats, all at the same bpm: `beat` must fire three times, `bpmChanged` once.
     QTimer::singleShot(100, [&] {
@@ -34,7 +40,7 @@ int main(int argc, char** argv) {
     app.exec();
 
     const bool ok = beats == 3 && lastBpm == 128.0f && bpmChanges == 1;
-    std::printf("%s: beat fired %d/3 at %.1f bpm, bpmChanged fired %d/1\n", ok ? "PASS" : "FAIL", beats, lastBpm,
-        bpmChanges);
+    std::printf(
+        "%s: beat fired %d/3 at %.1f bpm, bpmChanged fired %d/1\n", ok ? "PASS" : "FAIL", beats, lastBpm, bpmChanges);
     return ok ? 0 : 1;
 }

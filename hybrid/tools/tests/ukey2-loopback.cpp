@@ -1,19 +1,23 @@
 // Drives a complete UKEY2 handshake between two QuickShareCrypto instances through the
 // public API, then round-trips a payload. Nothing in the tree exercised this before, so
 // the EC_KEY -> EVP_PKEY migration had no behavioural check; this is that check.
-#include "QuickShare/QuickShareCrypto.hpp"
-
 #include <qbytearray.h>
 #include <qcoreapplication.h>
 #include <qstring.h>
 
 #include <cstdio>
 
+#include "QuickShare/QuickShareCrypto.hpp"
+
 using caelestia::services::QuickShareCrypto;
 
 static int fails = 0;
+
 static void check(bool ok, const char* what) {
-    if (!ok) { std::printf("  FAIL: %s\n", what); ++fails; }
+    if (!ok) {
+        std::printf("  FAIL: %s\n", what);
+        ++fails;
+    }
 }
 
 int main(int argc, char** argv) {
@@ -60,7 +64,9 @@ int main(int argc, char** argv) {
     // A third party's key must not open the channel.
     {
         QuickShareCrypto client, server, stranger;
-        client.initClient(); server.initServer(); stranger.initServer();
+        client.initClient();
+        server.initServer();
+        stranger.initServer();
         const QByteArray ci = client.generateClientInit();
         server.processClientInit(ci);
         stranger.processClientInit(ci);
