@@ -42,7 +42,14 @@ BeatTracker::BeatTracker(QObject* parent)
     m_processor = new BeatProcessor();
     init();
 
-    connect(static_cast<BeatProcessor*>(m_processor), &BeatProcessor::beat, this, &BeatTracker::updateBpm);
+    auto* const processor = static_cast<BeatProcessor*>(m_processor);
+    connect(processor, &BeatProcessor::beat, this, &BeatTracker::updateBpm);
+    // BeatTracker::beat was declared and never emitted -- in all three upstreams, not just
+    // here. modules/dashboard/dash/MediaShapes.qml has connected `onBeat` to morph() the
+    // whole time, so the shapes fell back to their bpm-derived Timer and drifted out of
+    // phase with the music. Forward it: updateBpm cannot stand in, because it only signals
+    // when the bpm *changes*, and a beat happens on every beat.
+    connect(processor, &BeatProcessor::beat, this, &BeatTracker::beat);
 }
 
 smpl_t BeatTracker::bpm() const {
