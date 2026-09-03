@@ -35,7 +35,7 @@ cmake --build build
 
 # 2. Format — zero tolerance, same as upstream CI
 for f in **/*.qml; /usr/lib/qt6/bin/qmlformat $f | diff -u $f - || exit 1; end
-find plugin extras -name '*.cpp' -o -name '*.hpp' | xargs clang-format --dry-run --Werror
+git ls-files '*.cpp' '*.hpp' | xargs clang-format --dry-run --Werror   # wider than CI, on purpose
 python3 scripts/qml-lint-conventions.py        # --fix handles all but section-order
 ./hybrid/tools/qml-section-order.py            # the missing section-order fixer
 
@@ -66,7 +66,9 @@ cmake -B /tmp/w-clazy -G Ninja -DCMAKE_CXX_COMPILER=clazy -DCMAKE_CXX_FLAGS=-Wer
 
 Steps 2–5 mirror `.github/workflows/check-format.yml`, `lint.yml` and `build.yml`. If those
 workflows have drifted from what is written here, **the workflow is the source of truth** —
-read it and update this skill.
+read it and update this skill. The one deliberate difference: CI's format check globs
+`plugin extras`, and there is now C++ under `hybrid/tools/tests/` too, so this checks every
+tracked source instead.
 
 **Step 5 is the one that gets skipped.** `build.yml` has passed `-DCMAKE_CXX_FLAGS=-Werror`
 on both its legs since before this fork existed, and nothing local ever passed it, so the two
