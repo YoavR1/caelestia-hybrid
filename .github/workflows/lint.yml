@@ -86,6 +86,13 @@ jobs:
           cmake -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
             -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON -DVERSION= -DGIT_REVISION=
 
+      # protoc has not run after a bare configure, so the six generated .pb.h do not exist
+      # and every QuickShare translation unit fails to parse with "'wire_format.pb.h' file
+      # not found" -- taking a cascade of spurious findings with it. Upstream's lint job has
+      # no build step because upstream's tree has no protobuf.
+      - name: Build (generates the protobuf headers clang-tidy needs)
+        run: cmake --build build
+
       - name: Lint C++
         run: |
           clang-tidy --version

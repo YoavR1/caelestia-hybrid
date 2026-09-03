@@ -48,20 +48,20 @@ jobs:
       # CBackend::create(), and it has no headless backend to ask for. Sway does, and it
       # speaks the only protocol PanelWindow actually needs -- wlr-layer-shell.
       - name: Install headless compositor
-        run: pacman -Sy --noconfirm --needed sway
+        run: |
+          pacman -Sy --noconfirm --needed sway
+          # Arch's sway ships with cap_sys_nice=ep. Docker's default capability bounding set
+          # has no CAP_SYS_NICE, and execve of a binary carrying an *effective* file
+          # capability outside the bounding set fails with EPERM -- so the run died as
+          # "setsid: failed to execute sway: Operation not permitted", before sway itself
+          # ran at all. It wants CAP_SYS_NICE only for realtime scheduling, which a headless
+          # boot gate does not need, so dropping it is cheaper than granting it on the
+          # container and works regardless of runner configuration.
+          setcap -r "$(command -v sway)" || true
+          sway --version
 
       # Runs before the matrix it validates: proves the harness still rejects a config
       # the shell cannot load, so a green matrix cannot mean "tested nothing six times".
-      # sway failed with `setsid: failed to execute sway: Operation not permitted`, which is
-      # an execve EPERM rather than anything sway itself said. Print what the binary is
-      # before trying to run it, so the cause is in the log rather than inferred.
-      - name: Probe the compositor
-        run: |
-          id
-          command -v sway && ls -l "$(command -v sway)"
-          getcap "$(command -v sway)" || echo "(no file capabilities)"
-          sway --version || echo "sway --version exited $?"
-
       - name: Smoke matrix self-test
         run: ./hybrid/tools/smoke-matrix.sh --compositor sway --self-test
 

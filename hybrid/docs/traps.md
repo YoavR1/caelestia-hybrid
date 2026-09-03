@@ -1152,3 +1152,50 @@ broken. When a probe says a fix did not work, check the probe before the fix.
 
 **The general rule: zero inputs is a broken checker, never a clean tree.** Any tool that
 reports "N problems in M files" must refuse to report success when M is zero.
+
+---
+
+## T31 — Two more ways upstream's CI cannot validate this tree
+
+Both surfaced on the first CI run that got far enough to execute real work, and both have
+the same shape as T29: upstream's pipeline is correct *for upstream's tree*.
+
+### clang-tidy needs a build first, because protoc has not run
+
+```
+plugin/src/.../QuickShareConnection.hpp:7:10: error: 'wire_format.pb.h' file not found
+plugin/src/.../QuickShareCrypto.cpp:26:10: error: 'securemessage.pb.h' file not found
+```
+
+`lint-cpp` configures and then runs `run-clang-tidy` directly. A bare configure has not run
+protoc, so none of the six generated `.pb.h` exist, every QuickShare translation unit fails
+to parse, and clang-tidy then emits a cascade of **spurious** findings on the wreckage —
+`method can be made static`, `pointee can be declared const` — none of which reproduce
+locally. Upstream's job has no build step because upstream's tree has no protobuf.
+
+`hybrid/tools/verify.sh` already built before linting for exactly this reason; the workflow
+now does the same. The lesson generalises: when clang-tidy reports findings that a local run
+does not, check whether the translation unit parsed at all before believing any of them.
+
+### sway carries a file capability the container cannot grant
+
+```
+/usr/sbin/sway cap_sys_nice=ep
+/usr/sbin/sway: Operation not permitted        (exit 126)
+setsid: failed to execute sway: Operation not permitted
+```
+
+Arch's sway ships with `cap_sys_nice=ep`. Docker's default capability bounding set has no
+`CAP_SYS_NICE`, and `execve` of a binary carrying an **effective** file capability outside
+the bounding set fails with `EPERM` — so the failure happens before sway executes a single
+instruction, and the message comes from `setsid` rather than from sway.
+
+That last detail is what made it hard to read: `setsid: failed to execute sway` looks like a
+problem with the harness's launch line. It is not. `setcap -r` on the binary after install
+fixes it — sway wants `CAP_SYS_NICE` only for realtime scheduling, which a headless boot gate
+does not need, and dropping it works regardless of how the runner is configured, unlike
+`--cap-add`.
+
+**Diagnosing this took one probe step and no guesses.** `getcap` plus `sway --version` in the
+job printed the capability and the exit code, which is the entire answer. When an error is an
+`execve` failure rather than program output, print what you are about to execute.
