@@ -8,6 +8,8 @@
 #include <qhostinfo.h>
 #include <qrandom.h>
 
+#include <optional>
+
 namespace caelestia::services {
 
 using Qt::StringLiterals::operator""_s;
@@ -211,49 +213,69 @@ void QuickShareDiscovery::onItemNew(
     }
 }
 
-// TODO: split this up (cognitive complexity 28 against a threshold of 25).
-// NOLINTNEXTLINE(readability-function-cognitive-complexity)
-void QuickShareDiscovery::onServiceResolved(const QDBusMessage& msg) {
-    QList<QVariant> args = msg.arguments();
-    if (args.size() >= 10) {
-        QuickShareDevice device;
-        device.id = args[2].toString();
-        device.name = device.id; // fallback
+namespace {
 
-        const QList<QByteArray> txtRecords = args[9].userType() == qMetaTypeId<QDBusArgument>()
-                                                 ? qdbus_cast<QList<QByteArray>>(args[9].value<QDBusArgument>())
-                                                 : QList<QByteArray>();
+// The advertised name is in the "n=" TXT record. It is base64 of a Nearby endpoint-info
+// blob whose byte 17 is the name's length, with the name itself at 18 -- and peers are
+// inconsistent about the alphabet and the padding, hence three decode attempts.
+//
+// Returns nullopt when no record yielded a name, which is not the same as returning an
+// empty one: a blob with a length byte of zero decodes to a legitimately empty name, and
+// the caller's fallback to the device id must not fire in that case. Later records win, as
+// they did when this was inline.
+std::optional<QString> deviceNameFromTxtRecords(const QList<QByteArray>& txtRecords) {
+    std::optional<QString> name;
 
-        for (const QByteArray& txt : txtRecords) {
-            if (txt.startsWith("n=")) {
-                QByteArray const b64 = txt.mid(2);
-                QByteArray decoded =
-                    QByteArray::fromBase64(b64, QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals);
-                if (decoded.isEmpty())
-                    decoded = QByteArray::fromBase64(b64, QByteArray::Base64UrlEncoding);
-                if (decoded.isEmpty())
-                    decoded = QByteArray::fromBase64(b64);
+    for (const QByteArray& txt : txtRecords) {
+        if (!txt.startsWith("n="))
+            continue;
 
-                if (decoded.length() >= 18) {
-                    int const nameLen = static_cast<unsigned char>(decoded[17]);
-                    if (decoded.length() >= 18 + nameLen) {
-                        device.name = QString::fromUtf8(decoded.mid(18, nameLen));
-                    }
-                }
-            }
-        }
+        const QByteArray b64 = txt.mid(2);
+        QByteArray decoded =
+            QByteArray::fromBase64(b64, QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals);
+        if (decoded.isEmpty())
+            decoded = QByteArray::fromBase64(b64, QByteArray::Base64UrlEncoding);
+        if (decoded.isEmpty())
+            decoded = QByteArray::fromBase64(b64);
 
-        device.address = args[7].toString();
+        if (decoded.length() < 18)
+            continue;
 
-        // args[8] is quint16 port
-        if (args[8].userType() == QMetaType::UShort) {
-            device.port = args[8].value<quint16>();
-        } else {
-            device.port = static_cast<int>(args[8].toUInt());
-        }
-
-        emit deviceFound(device);
+        const int nameLen = static_cast<unsigned char>(decoded[17]);
+        if (decoded.length() >= 18 + nameLen)
+            name = QString::fromUtf8(decoded.mid(18, nameLen));
     }
+
+    return name;
+}
+
+} // namespace
+
+void QuickShareDiscovery::onServiceResolved(const QDBusMessage& msg) {
+    const QList<QVariant> args = msg.arguments();
+    if (args.size() < 10)
+        return;
+
+    QuickShareDevice device;
+    device.id = args[2].toString();
+    device.name = device.id; // fallback
+
+    const QList<QByteArray> txtRecords = args[9].userType() == qMetaTypeId<QDBusArgument>()
+                                             ? qdbus_cast<QList<QByteArray>>(args[9].value<QDBusArgument>())
+                                             : QList<QByteArray>();
+    if (const auto advertised = deviceNameFromTxtRecords(txtRecords))
+        device.name = *advertised;
+
+    device.address = args[7].toString();
+
+    // args[8] is quint16 port
+    if (args[8].userType() == QMetaType::UShort) {
+        device.port = args[8].value<quint16>();
+    } else {
+        device.port = static_cast<int>(args[8].toUInt());
+    }
+
+    emit deviceFound(device);
 }
 
 void QuickShareDiscovery::onItemRemove(

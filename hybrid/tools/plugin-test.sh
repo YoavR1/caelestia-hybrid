@@ -37,23 +37,34 @@ if [ ! -f "$GEN/ukey.pb.cc" ]; then
     cmake --build "$BUILD_DIR" --target caelestia-services >/dev/null 2>&1 || exit 1
 fi
 
-# The autogen directory has a hashed name, so it is found rather than spelled out. Guard on
-# the find result, not on the dirname: `dirname ""` is "." and "." is a directory, so a
-# missing autogen tree would otherwise sail past the check and fail at the compile instead.
-MOC=$(find "$GEN/caelestia-services_autogen" -name moc_beattracker.cpp 2>/dev/null | head -1)
-if [ -z "$MOC" ]; then
-    echo "no moc output under $GEN -- build the tree first" >&2
-    exit 1
-fi
-AUTOGEN=$(dirname "$MOC")
+# moc output is spread over SEVERAL hashed subdirectories -- beattracker's and QuickShare's
+# land in different ones -- so each file is resolved by name rather than by assuming one
+# directory holds them all. Guard on the find result, not on a dirname: `dirname ""` is "."
+# and "." is a directory, so a missing autogen tree would otherwise sail past the check and
+# fail later at the compile with a much worse message.
+AUTOGEN_ROOT=$GEN/caelestia-services_autogen
+moc() {
+    local f
+    f=$(find "$AUTOGEN_ROOT" -name "$1" 2>/dev/null | head -1)
+    [ -n "$f" ] || { echo "no $1 under $AUTOGEN_ROOT -- build the tree first" >&2; exit 1; }
+    printf '%s' "$f"
+}
+[ -d "$AUTOGEN_ROOT" ] || { echo "no moc output under $GEN -- build the tree first" >&2; exit 1; }
+# every autogen subdirectory is an include path, since generated headers are spread too
+AUTOGEN_INCLUDES=()
+while IFS= read -r d; do AUTOGEN_INCLUDES+=(-I"$d"); done < <(find "$AUTOGEN_ROOT" -type d)
 
 QTFLAGS=$(pkg-config --cflags --libs Qt6Core Qt6Qml)
-COMMON=(-std=c++20 -O1 -mno-direct-extern-access -w -fPIC -I"$SVC" -I"$ROOT/plugin/src" -I"$AUTOGEN")
+COMMON=(-std=c++20 -O1 -mno-direct-extern-access -w -fPIC -I"$SVC" -I"$ROOT/plugin/src"
+        "${AUTOGEN_INCLUDES[@]}")
 
 # name : extra sources : extra pkg-config packages
 TESTS=(
     "ukey2-loopback:$SVC/QuickShare/QuickShareCrypto.cpp $GEN/securemessage.pb.cc $GEN/ukey.pb.cc:protobuf libcrypto"
-    "beat-signal:$SVC/beattracker.cpp $SVC/audioprovider.cpp $SVC/audiocollector.cpp $SVC/service.cpp $AUTOGEN/moc_beattracker.cpp $AUTOGEN/moc_audioprovider.cpp $AUTOGEN/moc_audiocollector.cpp $AUTOGEN/moc_service.cpp:aubio libpipewire-0.3"
+    "beat-signal:$SVC/beattracker.cpp $SVC/audioprovider.cpp $SVC/audiocollector.cpp $SVC/service.cpp $(moc moc_beattracker.cpp) $(moc moc_audioprovider.cpp) $(moc moc_audiocollector.cpp) $(moc moc_service.cpp):aubio libpipewire-0.3"
+    # mdns-name #includes QuickShareDiscovery.cpp to reach a file-local helper, so the
+    # .cpp itself must NOT also be on the command line -- only its moc output.
+    "mdns-name:$(moc moc_QuickShareDiscovery.cpp):Qt6DBus Qt6Network"
 )
 
 rc=0
