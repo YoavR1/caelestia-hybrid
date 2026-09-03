@@ -520,3 +520,134 @@ believed. The class is now `[A-Za-z0-9.-]+`.
 
 Anything counting compiler or linter output needs its category pattern checked against real
 output containing every category, not against the categories you expect.
+
+---
+
+## T19 — `-Werror` is a CI gate, and it had never been run here
+
+**Symptom:** none locally. `cmake --build build` is green, every lint is zero, and
+`.github/workflows/build.yml` still fails on both of its legs.
+
+`build.yml` builds twice — `g++` and `clazy` — and both pass `-DCMAKE_CXX_FLAGS=-Werror`.
+Nothing in this project's tooling did, so the flag was never exercised. On first run:
+
+| leg | errors | where |
+|---|---|---|
+| `g++ -Werror` | 11 | `QuickShareCrypto.cpp`, deprecated OpenSSL 3.0 `EC_KEY` API |
+| `clazy -Werror` | 9 + a truncated tail | 5 files, plus every generated `.pb.cc` |
+
+Three separate lessons came out of it.
+
+**A gate you inherit is not a gate you pass.** Four static gates were brought to zero in
+Phase 0 and CI was described as green. The two `-Werror` build legs were part of that CI
+the whole time and had simply never been invoked locally.
+
+**`-Werror` is compiler-specific, so one compiler proves nothing.** Every `clazy` finding
+was invisible to `g++`: `-Wnullability-extension` does not exist there, and the
+`clazy-*` checks are a clang plugin. Run both legs or neither.
+
+**A truncated error list hides its own size.** clang stops at `-ferror-limit=20`. The first
+clazy run reported 3 distinct warnings; after fixing them the next run found 3 more, and
+only the run after that was clean. Re-run until a *clean* run, never until a *short* one.
+
+### What the findings actually were
+
+`QuickShareCrypto.cpp` carried a TODO saying the `EC_KEY` migration could not be verified
+because "nothing in this tree can exercise a real Quick Share transfer". That was true of a
+*transfer* and false of the *handshake* — see T20.
+
+The generated `.pb.cc` files are not ours to lint; `plugin/src/Caelestia/Services/CMakeLists.txt`
+now sets `COMPILE_OPTIONS "-w"` on `${PROTO_SRCS}`. Use `-w` rather than naming the specific
+warning: the set changes with the protoc and compiler version, and `-w` is understood by
+gcc, clang and clazy alike.
+
+The rest were real and each had a truthful fix rather than a suppression:
+`Q_PROPERTY(... CONSTANT)` for the three BlueZ advertisement properties (BlueZ reads them
+once at `RegisterAdvertisement`, and all three are literals), `QDateTime::currentSecsSinceEpoch()`
+for `currentDateTime().toSecsSinceEpoch()`, and a `const` binding for two range-loops that
+were detaching a Qt container.
+
+### And a local-only hazard found on the way
+
+A `build/` directory configured with one compiler and later reconfigured with another keeps
+the *first* compiler's interface flags and PCH targets. A `build/` that had seen `g++` and
+was then pointed at `clang++` produced `error: unknown argument: '-mno-direct-extern-access'`
+on 126 of 127 entries. Configure a fresh directory per compiler; do not reuse one.
+
+That flag is not noise, incidentally: Arch's Qt6 is built with `-mno-direct-extern-access`
+and anything linking Qt must be too, or the link fails with `copy relocation against
+non-copyable protected symbol '_ZN10QByteArray6_emptyE'`. `hybrid/tools/plugin-test.sh`
+passes it for that reason.
+
+---
+
+## T20 — The QuickShare handshake is testable without a phone
+
+**Symptom:** hand-rolled crypto with no coverage, and a TODO saying it cannot be covered.
+
+QuickShare's UKEY2 implementation is ~500 lines of imported OpenSSL: an ECDH exchange, an
+HKDF ladder deriving four keys and a PIN, and AES-256-CBC payload encryption. Nothing
+exercised any of it. The stated reason was that checking it meant sending a real file from
+a real phone.
+
+It does not. `QuickShareCrypto` is a plain class with no transport in it, so two instances
+can be handed each other's messages directly:
+
+```
+client.generateClientInit()  ->  server.processClientInit(...)
+                             <-  returns the server init
+client.processServerInit(...) ->  returns the client finish
+                             ->  server.processClientFinished(...)
+```
+
+After that the invariants are all locally checkable, and they are what the protocol is
+*for*: each side's encode key equals the other's decode key, the two directions use
+different keys, both sides derive the same PIN, a payload round-trips both ways, a third
+party running the same exchange derives different keys, and malformed input leaves
+`isHandshakeComplete()` false rather than half-completing.
+
+`hybrid/tools/plugin-test.sh` runs 50 rounds of that plus the negative cases. It is how the
+OpenSSL 3.0 migration in T19 was verified, and it found the `-mno-direct-extern-access`
+link requirement on the way.
+
+**The generalisable part:** "this needs real hardware to test" is usually a claim about the
+*transport*, not about the logic underneath it. Check whether the logic is separable before
+accepting it. Here the class had no I/O in it at all.
+
+---
+
+## T21 — `BeatTracker::beat` was declared, connected to, and never emitted
+
+**Symptom:** the dashboard's media shapes morph on a timer instead of on the beat, and
+drift out of phase with the music. No warning, no error, no lint finding.
+
+`plugin/src/Caelestia/Services/beattracker.hpp` declares the signal twice, on two different
+classes:
+
+```cpp
+class BeatProcessor : public AudioProcessor { signals: void beat(smpl_t bpm); };
+class BeatTracker   : public AudioProvider  { signals: void beat(smpl_t bpm); };
+```
+
+`BeatProcessor::beat` is emitted from `process()` and connected to `BeatTracker::updateBpm`.
+`BeatTracker::beat` — the one QML can see, because `BeatTracker` is the `QML_ELEMENT` — was
+emitted by nothing, in **all three upstreams**. Meanwhile
+`modules/dashboard/dash/MediaShapes.qml` has been connecting to it the whole time:
+
+```qml
+Connections {
+    function onBeat(bpm) { materialShape.morph(); }
+    target: Audio.beatTracker
+}
+```
+
+The fix is to forward it. `updateBpm` cannot stand in: it only signals when the bpm
+*changes*, and a beat happens on every beat. `hybrid/tools/tests/beat-signal.cpp` measures
+exactly that distinction — against `HEAD` before the fix it reports `beat fired 0/3`, and
+after it reports `beat fired 3/3 at 128.0 bpm, bpmChanged fired 1/1`.
+
+**Why nothing caught it.** A QML `Connections` handler for a signal that exists but never
+fires is valid QML and valid C++. qmllint resolves the signal, so there is nothing to warn
+about; the C++ side has a declared signal with no emitter, which no compiler diagnoses
+because moc generates a perfectly good emitter for it. The only way to see it is to ask
+"what emits this?" — worth asking of any signal a QML file handles.

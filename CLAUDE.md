@@ -16,7 +16,7 @@ on top of upstream **Caelestia**. One shell, one config, one CLI — features to
 | `phase2/upstream-catchup` | 51 upstream commits merged, incl. the config-module rewrite |
 | `phase3/feature-flags` | `hybrid.features` / `hybrid.variants` schema + Nexus page |
 
-Every gate upstream enforces is green on a tree that arrived with all four of them failing:
+Every gate upstream enforces is green on a tree that arrived with all of them failing:
 
 | gate | was | now |
 |---|---|---|
@@ -25,13 +25,23 @@ Every gate upstream enforces is green on a tree that arrived with all four of th
 | `scripts/qml-lint-conventions.py` | 1034 | 0 |
 | `qmllint` | ~810 | 0 |
 | `clang-tidy` | 446, never run | 0 |
+| `g++ -Werror` (`build.yml`) | 11, never run | 0 |
+| `clazy -Werror` (`build.yml`) | 9+, never run | 0 |
 | smoke matrix | did not run at all | 6 presets, x2 compositor configs |
+| `hybrid/tools/plugin-test.sh` | no test of any kind existed | 2 tests, 0 failures |
 
-CI runs all four plus the smoke matrix (`.github/workflows/smoke.yml`, headless sway).
+CI runs every row (`.github/workflows/smoke.yml` carries the last two, on headless sway).
 `hybrid/tools/qml-section-order.py` is ours — the `section-order` fixer upstream's checker
-lacks. Read `hybrid/docs/traps.md` T12–T18 before touching the harness; **T18 in particular**,
-because qmllint silently lints against an installed `midnight-shell-git` unless `--bare` is
-passed, and the `--summary` counter used to under-report whole categories.
+lacks. `hybrid/tools/plugin-test.sh` is ours too, and runs the only executable tests in the
+tree: a full UKEY2 handshake between two `QuickShareCrypto` instances, and a check that
+`BeatTracker::beat` reaches its QML receiver — it had been declared, connected to by
+`MediaShapes.qml`, and emitted by nothing, in all three upstreams (T21).
+
+Read `hybrid/docs/traps.md` T12–T21 before touching the harness; **T18 and T19 in
+particular**, because qmllint silently lints against an installed `midnight-shell-git`
+unless `--bare` is passed, and because the two `-Werror` build legs sat red through a phase
+that reported CI green — they were never run locally, and a `clazy` finding is invisible to
+`g++`.
 
 `hybrid/docs/phase2-upstream-catchup.md` records every merge decision and the API mapping from
 the old `ConfigObject` to `settings::ObjectNode`.
