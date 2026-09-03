@@ -146,8 +146,6 @@ public:
 
 // Migrates the legacy flat `bar.entries` array into the three section lists. Only
 // components part of the new default layout are kept, preserving their enabled state.
-// Migrates the legacy flat `bar.entries` array into the three section lists. Only
-// components part of the new default layout are kept, preserving their enabled state.
 // Rewritten onto settings::ObjectNode::syncJson: rather than loading each list by hand and
 // marking it visited, build the object the base class would have been given and delegate.
 inline bool BarSections::syncJson(const QJsonValue& json, QList<settings::Diagnostic>& diagnostics) {
@@ -155,7 +153,8 @@ inline bool BarSections::syncJson(const QJsonValue& json, QList<settings::Diagno
         return settings::ObjectNode::syncJson(json, diagnostics);
 
     QMap<QString, bool> enabledById;
-    for (const auto& value : json.toArray()) {
+    const QJsonArray legacyEntries = json.toArray();
+    for (const auto& value : legacyEntries) {
         const auto obj = value.toObject();
         enabledById.insert(obj.value(u"id"_s).toString(), obj.value(u"enabled"_s).toBool());
     }

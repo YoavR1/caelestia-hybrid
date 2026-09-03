@@ -9,6 +9,12 @@ protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS
     QuickShare/proto/wire_format.proto
 )
 
+# protoc's output is not ours to lint. CI builds with -Werror, and generated code trips
+# warnings that vary with the protoc and compiler version -- clang's -Wnullability-extension
+# broke the clazy leg on code no one here wrote. Silencing warnings for exactly these files
+# keeps -Werror meaningful for every file that is ours.
+set_source_files_properties(${PROTO_SRCS} PROPERTIES COMPILE_OPTIONS "-w")
+
 qml_module(caelestia-services
     URI Caelestia.Services
     SOURCES

@@ -14,9 +14,11 @@ using Qt::StringLiterals::operator""_s;
 class QuickShareBleAdvertisementAdaptor : public QDBusAbstractAdaptor {
     Q_OBJECT
     Q_CLASSINFO("D-Bus Interface", "org.bluez.LEAdvertisement1")
-    Q_PROPERTY(QString Type READ type)
-    Q_PROPERTY(QStringList ServiceUUIDs READ serviceUUIDs)
-    Q_PROPERTY(QVariantMap ServiceData READ serviceData)
+    // BlueZ reads these once, at RegisterAdvertisement; all three are literals, so there is
+    // nothing to notify about. CONSTANT, not a NOTIFY signal that could never fire.
+    Q_PROPERTY(QString Type READ type CONSTANT)
+    Q_PROPERTY(QStringList ServiceUUIDs READ serviceUUIDs CONSTANT)
+    Q_PROPERTY(QVariantMap ServiceData READ serviceData CONSTANT)
 
 public:
     explicit QuickShareBleAdvertisementAdaptor(QObject* parent);

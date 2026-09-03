@@ -220,10 +220,9 @@ void QuickShareDiscovery::onServiceResolved(const QDBusMessage& msg) {
         device.id = args[2].toString();
         device.name = device.id; // fallback
 
-        QList<QByteArray> txtRecords;
-        if (args[9].userType() == qMetaTypeId<QDBusArgument>()) {
-            txtRecords = qdbus_cast<QList<QByteArray>>(args[9].value<QDBusArgument>());
-        }
+        const QList<QByteArray> txtRecords = args[9].userType() == qMetaTypeId<QDBusArgument>()
+                                                 ? qdbus_cast<QList<QByteArray>>(args[9].value<QDBusArgument>())
+                                                 : QList<QByteArray>();
 
         for (const QByteArray& txt : txtRecords) {
             if (txt.startsWith("n=")) {

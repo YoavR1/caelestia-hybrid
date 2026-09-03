@@ -129,7 +129,7 @@ void QuickShareService::sendFile(const QString& deviceId, const QString& filePat
             QVariantMap entry;
             entry[u"fileName"_s] = QFileInfo(filePath).fileName();
             entry[u"filePath"_s] = filePath;
-            entry[u"timestamp"_s] = QDateTime::currentDateTime().toSecsSinceEpoch();
+            entry[u"timestamp"_s] = QDateTime::currentSecsSinceEpoch();
             entry[u"direction"_s] = u"sent"_s;
             entry[u"deviceName"_s] = deviceId;
             m_transferHistory.prepend(entry);
@@ -219,7 +219,7 @@ void QuickShareService::onNewConnection() {
             QString const fileName = m_pendingIncomingConnection->incomingFileName();
             entry[u"fileName"_s] = fileName;
             entry[u"filePath"_s] = QDir::homePath() + u"/Downloads/"_s + fileName;
-            entry[u"timestamp"_s] = QDateTime::currentDateTime().toSecsSinceEpoch();
+            entry[u"timestamp"_s] = QDateTime::currentSecsSinceEpoch();
             entry[u"direction"_s] = u"received"_s;
             entry[u"deviceName"_s] = m_pendingIncomingConnection->deviceName().isEmpty()
                                          ? u"Nearby Device"_s
