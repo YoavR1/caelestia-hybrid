@@ -1051,3 +1051,42 @@ positive first time:
   `"name"` check; a computed one would not be, and there are none today.
 - **The declaration itself.** Searching C++ for the bare name matches the `CONFIG_PROPERTY`
   line, so every key looks live unless those lines are excluded.
+
+---
+
+## T29 — Upstream's CI image is private, so inherited CI cannot run on any fork
+
+**Symptom:** every containerised job fails in about 25 seconds, before running a single
+step of your code, with:
+
+```
+docker pull ghcr.io/caelestia-dots/shell-arch-env:latest
+Error response from daemon: denied
+##[error]Docker pull failed with exit code 1
+```
+
+Six of the eight jobs use `container: image: ghcr.io/caelestia-dots/shell-arch-env:latest`.
+That package is private to the `caelestia-dots` org — an anonymous manifest fetch returns
+**401** and GHCR refuses to issue a pull token at all. Upstream's own runners can pull it
+because their `GITHUB_TOKEN` belongs to the owning org. A fork's cannot, and no amount of
+`packages: read` on the fork's token changes that.
+
+So the CI this project inherited was never going to run here. It looked configured, the
+workflow files were all present and valid, and it failed at `Initialize containers` every
+time.
+
+**The fix is to own the image.** `update-image.yml` carries the entire Dockerfile inline and
+pushes to `ghcr.io/${{ github.repository_owner }}/shell-arch-env:latest`, so enabling it in a
+fork publishes to that fork's namespace. It shipped as `.disabled`; it is now enabled, and
+the six container jobs point at `${{ github.repository_owner }}` rather than a hardcoded
+name, so this works for the next fork too without edits.
+
+**Two packages had to be added**, and they matter beyond the plumbing: upstream's image has
+neither `protobuf` nor `lm_sensors`, because upstream's tree has no QuickShare. `protobuf`
+is needed for the six generated `.pb.cc`, and `lm_sensors` provides the `libsensors` that
+`plugin/cmake/sensorslib.cmake` resolves `Sensors::Sensors` to. **Upstream's image could
+never have built this tree even if it were public** — which is worth knowing before
+concluding that a green upstream CI says anything about this fork.
+
+The job also needs `credentials:` on the container. A fork's `GITHUB_TOKEN` can read its own
+owner's packages, but only if the workflow hands it to the docker login.

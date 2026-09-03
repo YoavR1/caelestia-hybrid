@@ -10,7 +10,10 @@ jobs:
   lint-qml:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/caelestia-dots/shell-arch-env:latest
+      image: ghcr.io/${{ github.repository_owner }}/shell-arch-env:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - uses: actions/checkout@v6
@@ -46,7 +49,10 @@ jobs:
   lint-cpp:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/caelestia-dots/shell-arch-env:latest
+      image: ghcr.io/${{ github.repository_owner }}/shell-arch-env:latest
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - uses: actions/checkout@v6

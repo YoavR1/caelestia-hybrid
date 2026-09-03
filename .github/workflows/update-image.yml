@@ -1,5 +1,15 @@
 name: Update Docker CI image
 
+# Upstream's image, ghcr.io/caelestia-dots/shell-arch-env, is private to that org: an
+# anonymous manifest fetch returns 401 and GHCR issues no pull token, so every containerised
+# job in a fork dies at "Initialize containers" with `denied` before running a single step.
+# This builds the same environment into the *fork owner's* namespace instead, which is why
+# the tag and the other workflows both use ${{ github.repository_owner }} rather than a name.
+#
+# It also adds two packages upstream's image does not carry, because upstream's tree does not
+# contain QuickShare: protobuf, and lm_sensors for the libsensors that Sensors::Sensors
+# resolves to in plugin/cmake/sensorslib.cmake.
+
 on:
   workflow_dispatch:
   schedule:
@@ -23,7 +33,7 @@ jobs:
         run: |
           cat > /tmp/Dockerfile <<EOF
           FROM archlinux:latest
-          RUN pacman -Syu --needed --noconfirm sudo base-devel cmake ninja fish git clazy qt6-declarative qt6-shadertools python libpipewire aubio libqalculate && \
+          RUN pacman -Syu --needed --noconfirm sudo base-devel cmake ninja fish git clazy qt6-declarative qt6-shadertools python libpipewire aubio libqalculate protobuf lm_sensors openssl && \
               useradd -m builder && \
               echo 'builder ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers && \
               sudo -u builder git clone https://aur.archlinux.org/yay-bin.git /home/builder/yay-bin && \
