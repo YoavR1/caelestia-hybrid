@@ -42,7 +42,11 @@ python3 scripts/qml-lint-conventions.py        # --fix handles all but section-o
 # 3. QML lint — any output at all is a failure
 ./hybrid/tools/qml-lint.sh                     # or --summary for category counts
 
-# 4. C++ lint — needs its OWN clang configure. Arch's Qt6 hands gcc
+# 4. Two cheap repo-hygiene checks, both invisible to every other gate
+./hybrid/tools/dead-signals.py       # signals declared but never emitted (T21)
+./hybrid/tools/check-index-modes.sh  # scripts committed non-executable (T22)
+
+# 5. C++ lint — needs its OWN clang configure. Arch's Qt6 hands gcc
 #    -mno-direct-extern-access, which clang-tidy rejects on every file (T19).
 #    The directory name must END in "build": .clang-tidy excludes generated headers with
 #    ExcludeHeaderFilterRegex 'build/.*', so "tidy-build" works and "build-tidy" does not.
@@ -51,26 +55,26 @@ cmake -B tidy-build -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE
 run-clang-tidy -p tidy-build -quiet -j (nproc) -warnings-as-errors='*' \
   -source-filter='^(?!.*/build/).*\.cpp$'
 
-# 5. Both -Werror build legs. NOT redundant with step 1, and not with each other:
+# 6. Both -Werror build legs. NOT redundant with step 1, and not with each other:
 #    every clazy finding is invisible to gcc. Use a fresh dir per compiler (T19).
 cmake -B /tmp/w-gcc   -G Ninja -DCMAKE_CXX_COMPILER=g++   -DCMAKE_CXX_FLAGS=-Werror && cmake --build /tmp/w-gcc
 cmake -B /tmp/w-clazy -G Ninja -DCMAKE_CXX_COMPILER=clazy -DCMAKE_CXX_FLAGS=-Werror && cmake --build /tmp/w-clazy
 
-# 6. The plugin's C++ tests (QuickShare handshake, BeatTracker signal)
+# 7. The plugin's C++ tests (QuickShare handshake, BeatTracker signal)
 ./hybrid/tools/plugin-test.sh
 
-# 7. Preset smoke matrix — the project's real gate
+# 8. Preset smoke matrix — the project's real gate
 ./hybrid/tools/smoke-matrix.sh              # nested Hyprland, lua config
 ./hybrid/tools/smoke-matrix.sh --hypr both  # both Hyprland config formats
 ```
 
-Steps 2–5 mirror `.github/workflows/check-format.yml`, `lint.yml` and `build.yml`. If those
+Steps 2–6 mirror `.github/workflows/check-format.yml`, `lint.yml` and `build.yml`. If those
 workflows have drifted from what is written here, **the workflow is the source of truth** —
 read it and update this skill. The one deliberate difference: CI's format check globs
 `plugin extras`, and there is now C++ under `hybrid/tools/tests/` too, so this checks every
 tracked source instead.
 
-**Step 5 is the one that gets skipped.** `build.yml` has passed `-DCMAKE_CXX_FLAGS=-Werror`
+**Step 6 is the one that gets skipped.** `build.yml` has passed `-DCMAKE_CXX_FLAGS=-Werror`
 on both its legs since before this fork existed, and nothing local ever passed it, so the two
 legs sat red through a phase that reported CI green. Re-run each until a *clean* run, not a
 *short* one — clang stops at `-ferror-limit=20`, so a shrinking count can still be a truncated

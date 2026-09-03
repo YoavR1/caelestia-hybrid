@@ -651,3 +651,52 @@ fires is valid QML and valid C++. qmllint resolves the signal, so there is nothi
 about; the C++ side has a declared signal with no emitter, which no compiler diagnoses
 because moc generates a perfectly good emitter for it. The only way to see it is to ask
 "what emits this?" — worth asking of any signal a QML file handles.
+
+`hybrid/tools/dead-signals.py` now asks it for all 209 of them, and runs first in
+`lint.yml`'s `lint-cpp` job because it needs no build. Against `7f1ec1fe~1` it reports
+`DEAD BeatTracker::beat`; against the current tree, nothing.
+
+**It has to be generous, and here is what that costs.** A false positive sends someone to
+"fix" working code, so four things count as an emitter, and a first cut that missed any of
+them produced only false alarms:
+
+| looks dead | actually | seen in |
+|---|---|---|
+| `usingLuaChanged` | moc emits the NOTIFY of a `MEMBER` property on write | `HyprExtras` |
+| six `AppEntry` `*Changed` | forwarded via the runtime metaobject API, which no source scan can follow: `connect(m_entry, metaProp.notifySignal(), this, thisMetaProp.notifySignal())` | `AppEntry` |
+| `rawDeformMatrixChanged` | emitted by a *subclass* — declared on `BlobShape`, emitted four times in `BlobRect` | `BlobShape` |
+
+The last one is the reason the checker resolves inheritance rather than matching on the
+declaring class. The first version of it keyed on the signal *name* globally, which is worse
+still: it would have called `BeatTracker::beat` live, because `BeatProcessor::beat` — a
+different class, in the same header — is emitted. **A checker for this has to be class-aware
+and inheritance-aware, or it silently misses the exact case it was written for.**
+
+---
+
+## T22 — `chmod +x` does not reach the index, because `core.fileMode` is false
+
+**Symptom:** a script you can run all day locally fails in CI, or for anyone who clones,
+with `Permission denied`. `git status` is clean. `ls -l` shows `-rwxr-xr-x`.
+
+This repository sets `core.fileMode = false`, and it has to. Turning it on reports **419
+mode-only differences** — the working tree carries exec bits the index does not, and every
+real diff would be buried under the noise. So the setting is right, and the consequence is
+that `chmod +x` on a new file silently does nothing git will ever record. It is committed
+`100644` and nothing says so.
+
+Four tools were already committed that way: `qml-lint.sh`, `qml-section-order.py`,
+`plugin-test.sh` and `dead-signals.py`. The shell-verify gate invokes all four as
+`./hybrid/tools/...`, so a clean checkout would have failed on the first two steps of the
+gate, and CI would have failed on `plugin-test.sh` the first time it ran.
+
+**The fix is `git update-index --chmod=+x <path>`**, not `chmod`. `chmod` is what does not
+work here, and it is the thing everyone reaches for.
+
+`hybrid/tools/check-index-modes.sh` fails on any tracked file that starts with `#!` and is
+not `100755`. It runs first in `smoke.yml`, before anything can invoke a script.
+
+One implementation note, since it bit while writing it: testing the first two bytes with
+`case $(head -c 2 "$f")` makes bash warn `ignored null byte in input` on every binary file
+in the repo. `head -n 1 "$f" | grep -qa '^#!'` avoids the command substitution and stays
+quiet.

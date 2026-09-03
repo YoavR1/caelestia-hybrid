@@ -51,6 +51,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      # Needs no build, so it runs first and fails in seconds rather than after a configure.
+      - name: Check for dead signals
+        run: ./hybrid/tools/dead-signals.py
+
       - name: Configure
         run: |
           cmake -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \

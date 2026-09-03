@@ -16,6 +16,11 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      # core.fileMode is false in this repo, so a chmod +x never reaches the index and a
+      # script committed 100644 fails here and nowhere else. Checked first, costs a second.
+      - name: Check index modes
+        run: ./hybrid/tools/check-index-modes.sh
+
       - name: Build
         run: |
           cmake -B build -G Ninja -DVERSION= -DGIT_REVISION=
