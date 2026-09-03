@@ -1314,3 +1314,30 @@ Two changes, both narrow:
 The lesson worth keeping: **fixing a crash can turn a loud failure into a quiet one.** The
 TypeErrors were at least visible. Had the guards been added without reading what replaced
 them, the sway leg would have gone green while testing less than before.
+
+### And once it was really driving, a third bug appeared
+
+```
+WARN scene: @modules/sidebar/News.qml[35:-1]: Error: Invalid write to global property "isFetching"
+```
+
+```qml
+xhr.onreadystatechange = function () {
+    ...
+    isFetching = false;          // writes a *global*, not the component's property
+};
+```
+
+A plain `function ()` has its own scope, so the component's properties are not visible inside
+it and QML rejects the assignment at runtime. The assignments in `fetchNews`'s own body a few
+lines above are fine — a QML function body does resolve against the component — which is what
+makes the two look identical and behave differently. Qualified with `root.`; a sweep for bare
+assignments inside `= function (…) {` callbacks found no other instance.
+
+This one had never run before: the news fetch only happens when the sidebar opens, and the
+sidebar only opened once `forActive()` stopped returning null.
+
+**That is the shape of every round of this.** Each fix peeled back a layer of environment
+noise or a crash, and something real was underneath it: `$SHELL` unset, then 23 unguarded
+null dereferences, then a drive that was silently doing nothing, then a QML scope error. None
+of them are reachable from the nested-Hyprland matrix on a workstation.

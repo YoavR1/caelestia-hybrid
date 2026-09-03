@@ -30,13 +30,19 @@ Item {
 
         var xhr = new XMLHttpRequest();
         xhr.open("GET", "https://archlinux.org/feeds/news/");
+        // Everything in here must go through `root`. A plain function() has its own scope,
+        // so the component's properties are not visible and a bare `isFetching = false` is
+        // a write to a *global*, which QML rejects at runtime:
+        //   Error: Invalid write to global property "isFetching"
+        // The assignments in fetchNews' own body above are fine -- a QML function body does
+        // resolve against the component.
         xhr.onreadystatechange = function () {
             if (xhr.readyState === XMLHttpRequest.DONE) {
-                isFetching = false;
+                root.isFetching = false;
                 if (xhr.status === 200) {
-                    parseNews(xhr.responseText);
+                    root.parseNews(xhr.responseText);
                 } else {
-                    errorMessage = qsTr("Failed to fetch news (Status: %1)").arg(xhr.status);
+                    root.errorMessage = qsTr("Failed to fetch news (Status: %1)").arg(xhr.status);
                 }
             }
         };
