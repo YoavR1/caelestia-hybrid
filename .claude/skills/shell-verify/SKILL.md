@@ -62,11 +62,14 @@ python3 scripts/qml-lint-conventions.py        # --fix handles all but section-o
 
 # 5. C++ lint — needs its OWN clang configure. Arch's Qt6 hands gcc
 #    -mno-direct-extern-access, which clang-tidy rejects on every file (T19).
-#    The directory name must END in "build": .clang-tidy excludes generated headers with
-#    ExcludeHeaderFilterRegex 'build/.*', so "tidy-build" works and "build-tidy" does not.
-cmake -B tidy-build -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-  -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON && cmake --build tidy-build   # generates the .pb.h
-run-clang-tidy -p tidy-build -quiet -j (nproc) -warnings-as-errors='*' \
+#    The directory must be NAMED "build" (nested is fine). Two filters act on it and want
+#    different things: .clang-tidy's ExcludeHeaderFilterRegex 'build/.*' is unanchored, so
+#    "tidy-build" satisfies it; the -source-filter below needs a literal "/build/"
+#    component, which "tidy-build" lacks, and Qt's generated .cpp then get linted as
+#    project sources. Measured: 316 diagnostics from "tidy-build", 0 from "build".
+cmake -B .verify/build -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+  -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON && cmake --build .verify/build   # generates the .pb.h
+run-clang-tidy -p .verify/build -quiet -j (nproc) -warnings-as-errors='*' \
   -source-filter='^(?!.*/build/).*\.cpp$'
 
 # 6. Both -Werror build legs. NOT redundant with step 1, and not with each other:

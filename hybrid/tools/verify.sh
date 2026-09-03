@@ -15,9 +15,14 @@
 #   * A build directory belongs to one compiler. Reconfiguring an existing one for another
 #     keeps the first one's interface flags -- a clang configure over a gcc cache produced
 #     `unknown argument: -mno-direct-extern-access` on 126 of 127 files.
-#   * clang-tidy's build dir name must END in "build": .clang-tidy excludes generated headers
-#     with ExcludeHeaderFilterRegex 'build/.*', so "tidy-build" works and "build-tidy" does
-#     not, and the difference is thousands of errors from protoc's output.
+#   * clang-tidy's build directory must be named exactly "build" (nested is fine). TWO
+#     filters act on it and they want different things. .clang-tidy excludes generated
+#     *headers* with ExcludeHeaderFilterRegex 'build/.*', which is unanchored, so a
+#     "tidy-build" satisfies it. CI's -source-filter '^(?!.*/build/)' excludes generated
+#     *sources* and needs a literal "/build/" path component, which "tidy-build" does not
+#     contain. Satisfy only the first and Qt's own generated .cpp -- mocs_compilation,
+#     qmltyperegistrations, qrc_qmake_* -- are linted as project sources: measured, 316
+#     diagnostics from "tidy-build" and 0 from "build", same tree, same command.
 #   * Every numeric gate goes through `count`, which sets the failure flag. A gate that
 #     prints a number without failing on it is not a gate (T23).
 
@@ -81,10 +86,10 @@ step "plugin tests"
 
 if [ "$QUICK" = 0 ]; then
     step "clang-tidy"
-    cmake -B "$WORK_DIR/tidy-build" "${cfg[@]}" -DCMAKE_CXX_COMPILER=clang++ \
+    cmake -B "$WORK_DIR/build" "${cfg[@]}" -DCMAKE_CXX_COMPILER=clang++ \
         -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON >/dev/null || fail=1
-    cmake --build "$WORK_DIR/tidy-build" >/dev/null 2>&1     # generates the .pb.h files
-    count "$(run-clang-tidy -p "$WORK_DIR/tidy-build" -quiet -j "$(nproc)" -warnings-as-errors='*' \
+    cmake --build "$WORK_DIR/build" >/dev/null 2>&1     # generates the .pb.h files
+    count "$(run-clang-tidy -p "$WORK_DIR/build" -quiet -j "$(nproc)" -warnings-as-errors='*' \
         -source-filter='^(?!.*/build/).*\.cpp$' 2>&1 | grep -cE 'error:|warning:')" diagnostics
 
     # Not redundant with the build above, and not with each other: every clazy finding is

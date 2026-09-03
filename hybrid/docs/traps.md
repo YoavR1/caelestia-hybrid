@@ -567,6 +567,28 @@ once at `RegisterAdvertisement`, and all three are literals), `QDateTime::curren
 for `currentDateTime().toSecsSinceEpoch()`, and a `const` binding for two range-loops that
 were detaching a Qt container.
 
+### clang-tidy's build directory must be NAMED "build"
+
+Two filters act on it and they want different things, which is easy to satisfy by halves:
+
+| | pattern | `build` | `tidy-build` |
+|---|---|---|---|
+| generated **headers** | `.clang-tidy`'s `ExcludeHeaderFilterRegex: 'build/.*'` — unanchored | excluded | excluded |
+| generated **sources** | CI's `-source-filter='^(?!.*/build/).*\.cpp$'` — needs a literal `/build/` | excluded | **not excluded** |
+
+Satisfy only the first and Qt's own generated `.cpp` get linted as project sources:
+`mocs_compilation.cpp`, `caelestia-*_qmltyperegistrations.cpp` and the `qrc_qmake_*.cpp`
+resource files. Measured on the same tree with the same command: **316 diagnostics from
+`tidy-build`, 0 from `build`**, dominated by `readability-identifier-naming` and
+`bugprone-suspicious-include` on code moc wrote.
+
+`hybrid/tools/verify.sh` got this wrong on its first run, and so did the earlier version of
+this trap, which said the name merely had to *end* in "build". Nested is fine —
+`.verify/build` satisfies both, because the component is what matters, not the prefix.
+
+Note that protoc's output escapes on a technicality rather than by design: `.pb.cc` does not
+match `\.cpp$`. Do not rely on that; the extension list is CI's, not ours.
+
 ### And a local-only hazard found on the way
 
 A `build/` directory configured with one compiler and later reconfigured with another keeps
