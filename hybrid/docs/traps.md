@@ -700,3 +700,46 @@ One implementation note, since it bit while writing it: testing the first two by
 `case $(head -c 2 "$f")` makes bash warn `ignored null byte in input` on every binary file
 in the repo. `head -n 1 "$f" | grep -qa '^#!'` avoids the command substitution and stays
 quiet.
+
+---
+
+## T23 — A gate nobody has watched fail is not known to work
+
+Three of this project's gates turned out to have no teeth, in three different ways, and
+none of them looked broken:
+
+- **`build.yml`'s two `-Werror` legs** had never been run locally at all. They were red the
+  whole time CI was described as green (T19).
+- **A hand-rolled gate script** printed `diagnostics: 0` for each `-Werror` leg without ever
+  setting its failure flag, so it could have reported GREEN over a red leg. It was caught
+  only because an unrelated step happened to be red at the time and made the overall verdict
+  disagree with the step output.
+- **`qml-lint.sh --summary`** counted diagnostics with a regex that missed two whole
+  categories and printed `clean, no warnings` over 60 real ones (T18).
+
+The smoke matrix is the one that would hurt most. It works by copying a preset to
+`shell.json` and failing on what the log says — so if a preset were silently rejected, the
+shell would boot with defaults, the log would be clean, and the matrix would report six
+presets passing while testing one config six times.
+
+It does not: `settings::Node` warns on unknown keys, wrong types and bad enum values, and
+the harness treats those warnings as failures. That was a guess until it was measured, and
+measuring it is now `--self-test`:
+
+```
+./hybrid/tools/smoke-matrix.sh --self-test
+```
+
+It feeds the harness a config that is valid JSON and invalid schema — a misspelled enum
+value, an unknown section, an unknown key, a wrong type, an unknown top-level key — and
+passes only when the run **fails**. It runs in CI immediately before the matrix it
+validates.
+
+The self-test has teeth of its own, which was also measured rather than assumed: appending
+`caelestia.settings` to `smoke-ignore.txt` — the one edit that would blind the matrix to
+exactly this — makes `--self-test` report FAIL.
+
+**The general rule:** when you add or inherit a gate, make it fail once on purpose before
+you trust a pass. `smoke-ignore.txt` deserves particular suspicion, because every line in it
+is a deliberate blindfold and a line that is slightly too broad is invisible.
+

@@ -13,6 +13,7 @@
 #   ./hybrid/tools/smoke-matrix.sh --hypr both        # under both compositor configs
 #   ./hybrid/tools/smoke-matrix.sh --compositor sway  # headless sway, for CI
 #   ./hybrid/tools/smoke-matrix.sh --no-interact      # boot only, no IPC drive
+#   ./hybrid/tools/smoke-matrix.sh --self-test        # prove the gate can still fail
 #
 # Env:
 #   BUILD_DIR    default ./build
@@ -82,6 +83,7 @@ BUILD_DIR=${BUILD_DIR:-$ROOT/build}
 QS=${QS:-qs}
 SWAY=${SWAY:-sway}
 PRESET_DIR=$ROOT/hybrid/presets
+SELF_TEST=0
 IGNORE_FILE=$ROOT/hybrid/tools/smoke-ignore.txt
 IGNORE_HEADLESS=$ROOT/hybrid/tools/smoke-ignore-headless.txt
 LOG_DIR=$ROOT/.smoke-logs
@@ -110,6 +112,7 @@ while [ $# -gt 0 ]; do
         --keep-logs) KEEP_LOGS=1; shift ;;
         --baseline)  BASELINE=1; KEEP_LOGS=1; shift ;;
         --no-interact) INTERACT=0; shift ;;
+        --self-test)   SELF_TEST=1; shift ;;
         --compositor)
             case $2 in
                 hyprland|sway|auto) COMPOSITOR=$2 ;;
@@ -289,6 +292,27 @@ else
     while IFS= read -r p; do presets+=("$p"); done < <(find "$PRESET_DIR" -maxdepth 1 -name '*.json' | sort)
 fi
 [ ${#presets[@]} -gt 0 ] || { printf '%s no presets in %s\n' "$(red fail)" "$PRESET_DIR"; exit 2; }
+
+# A gate nobody has watched fail is not known to work. Two in this project turned out to
+# have no teeth -- build.yml's -Werror legs, which had never been run, and a hand-rolled
+# gate script that printed diagnostic counts without ever setting its failure flag. This
+# feeds the harness a config that is valid JSON and invalid schema, and passes only when
+# the run FAILS. Every line below is a different rejection path in settings::Node.
+if [ "$SELF_TEST" = 1 ]; then
+    POISON=$(mktemp -t smoke-selftest-XXXXXX.json)
+    cat > "$POISON" <<'JSON'
+{
+  "hybrid": {
+    "preset": "recomended",
+    "featurez": { "dock": false },
+    "features": { "dokc": false, "clipboard": "not-a-boolean" }
+  },
+  "totallyBogusTopLevelKey": { "nope": 1 }
+}
+JSON
+    presets=("$POISON")
+    printf '%s self-test: expecting this run to FAIL\n\n' "$(yellow note)"
+fi
 
 filter_ignored() {
     local files=("$IGNORE_FILE")
@@ -500,6 +524,17 @@ if [ "$BASELINE" = 1 ]; then
     printf '%s baseline written to %s\n' "$(yellow note)" "${IGNORE_FILE#$ROOT/}"
     printf '     READ IT. Delete every line that is a real bug rather than environment noise.\n'
     exit 0
+fi
+
+if [ "$SELF_TEST" = 1 ]; then
+    rm -f "$POISON"
+    if [ "$failures" -gt 0 ]; then
+        printf '%s self-test: the harness rejected a schema-invalid config, as it should\n' "$(green PASS)"
+        exit 0
+    fi
+    printf '%s self-test: a schema-invalid config PASSED. The gate has no teeth --\n' "$(red FAIL)"
+    printf '     it would report clean on presets the shell never actually loaded.\n'
+    exit 1
 fi
 
 if [ "$failures" -gt 0 ]; then

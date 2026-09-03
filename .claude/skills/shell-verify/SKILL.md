@@ -64,6 +64,7 @@ cmake -B /tmp/w-clazy -G Ninja -DCMAKE_CXX_COMPILER=clazy -DCMAKE_CXX_FLAGS=-Wer
 ./hybrid/tools/plugin-test.sh
 
 # 8. Preset smoke matrix — the project's real gate
+./hybrid/tools/smoke-matrix.sh --self-test  # first: prove the gate can still fail
 ./hybrid/tools/smoke-matrix.sh              # nested Hyprland, lua config
 ./hybrid/tools/smoke-matrix.sh --hypr both  # both Hyprland config formats
 ```

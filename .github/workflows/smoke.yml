@@ -37,6 +37,11 @@ jobs:
       - name: Install headless compositor
         run: pacman -Sy --noconfirm --needed sway
 
+      # Runs before the matrix it validates: proves the harness still rejects a config
+      # the shell cannot load, so a green matrix cannot mean "tested nothing six times".
+      - name: Smoke matrix self-test
+        run: ./hybrid/tools/smoke-matrix.sh --compositor sway --self-test
+
       - name: Smoke matrix
         run: ./hybrid/tools/smoke-matrix.sh --compositor sway --keep-logs
 
