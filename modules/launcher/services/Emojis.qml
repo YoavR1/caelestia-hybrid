@@ -3,6 +3,7 @@ pragma Singleton
 import QtQuick
 import Quickshell.Io
 import Caelestia.Config
+import qs.utils // qmllint disable unused-imports
 
 QtObject {
     id: root

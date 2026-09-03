@@ -14,7 +14,9 @@ ColumnLayout {
 
     required property string title
     required property NexusState nState
-    readonly property GlobalConfig targetConfig: GlobalConfig.forScreen(nState.targetScreen)
+    // Not `GlobalConfig`: forScreen() hands back a ConfigRoot, which is QML_ANONYMOUS and
+    // therefore cannot be named here. Typing it wrong left this null on every page.
+    readonly property var targetConfig: GlobalConfig.forScreen(nState.targetScreen)
     property bool isSubPage
     property bool scrollable: true
     readonly property int cappedWidth: Math.min(Tokens.sizes.nexus.maxContentWidth, width)

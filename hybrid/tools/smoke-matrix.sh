@@ -12,6 +12,7 @@
 #   ./hybrid/tools/smoke-matrix.sh --baseline         # record environment noise
 #   ./hybrid/tools/smoke-matrix.sh --hypr both        # under both compositor configs
 #   ./hybrid/tools/smoke-matrix.sh --compositor sway  # headless sway, for CI
+#   ./hybrid/tools/smoke-matrix.sh --no-interact      # boot only, no IPC drive
 #
 # Env:
 #   BUILD_DIR    default ./build
@@ -58,6 +59,15 @@
 # reaches very few of them whichever config is used. Closing that gap needs interaction
 # tests. See trap T17 for what booting under lua *does* expose.
 #
+# BOOTING IS NOT ENOUGH. After the shell comes up, every drawer is opened and closed over
+# its own IPC, the launcher is sent to its emoji and clipboard modes, a toast is raised and
+# Nexus is opened. The first run of this found two errors that fifteen boots had not:
+# `Paths is not defined` in the emoji list (an import removed by the Phase 0 unused-import
+# sweep -- trap T16), and `Unable to assign ConfigRoot` in PageBase, which left targetConfig
+# null on every settings page after the Phase 2 merge. Neither is reachable at boot.
+#
+# --no-interact skips it, which is only worth doing while bisecting a boot failure.
+#
 # FIRST RUN: some warnings are environmental (no bluetooth, a notification daemon already
 # owns the bus name, no polkit slot). Run once with --baseline to append those to
 # hybrid/tools/smoke-ignore.txt, then READ that file and delete anything that is a genuine
@@ -89,6 +99,7 @@ fi
 TIMEOUT_S=15
 KEEP_LOGS=0
 BASELINE=0
+INTERACT=1
 HYPR_FMTS=(lua)
 COMPOSITOR=auto
 WANTED=()
@@ -98,6 +109,7 @@ while [ $# -gt 0 ]; do
         --timeout)   TIMEOUT_S=$2; shift 2 ;;
         --keep-logs) KEEP_LOGS=1; shift ;;
         --baseline)  BASELINE=1; KEEP_LOGS=1; shift ;;
+        --no-interact) INTERACT=0; shift ;;
         --compositor)
             case $2 in
                 hyprland|sway|auto) COMPOSITOR=$2 ;;
@@ -298,6 +310,35 @@ filter_ignored() {
 failures=0
 runs=0
 
+# Open and close everything the shell exposes over IPC. Failures here are ignored on
+# purpose: a drawer that a preset has switched off simply does nothing, and the log is what
+# is being measured, not these exit codes.
+drive_shell() {
+    local -a env=("$@")
+    local ipc=(env "${env[@]}" "$QS" -p "$ROOT" ipc call)
+
+    sleep 6   # let the shell finish loading before poking it
+
+    for drawer in dashboard launcher session sidebar utilities workspaceDrawer osd; do
+        "${ipc[@]}" drawers toggle "$drawer" >/dev/null 2>&1
+        sleep 0.9
+        "${ipc[@]}" drawers toggle "$drawer" >/dev/null 2>&1
+        sleep 0.4
+    done
+
+    for mode in openEmoji openClipboard; do
+        "${ipc[@]}" launcher "$mode" >/dev/null 2>&1
+        sleep 1.2
+        "${ipc[@]}" drawers toggle launcher >/dev/null 2>&1
+        sleep 0.4
+    done
+
+    "${ipc[@]}" toaster info "smoke" "interaction pass" "info" >/dev/null 2>&1
+    sleep 0.6
+    "${ipc[@]}" nexus open >/dev/null 2>&1
+    sleep 2.5
+}
+
 run_preset() {
     local preset=$1 label=$2 name log cfg rc hard soft
     name=$(basename "$preset" .json)
@@ -309,19 +350,36 @@ run_preset() {
 
     printf '  %-16s ' "$name"
 
-    XDG_CONFIG_HOME="$cfg" \
-    XDG_CACHE_HOME="$cfg/cache" \
-    XDG_STATE_HOME="$cfg/state" \
-    XDG_RUNTIME_DIR="$RUNTIME" \
-    WAYLAND_DISPLAY="$SOCKET" \
-    HYPRLAND_INSTANCE_SIGNATURE="$SIG" \
-    QT_QPA_PLATFORM=wayland \
-    QS_NO_RELOAD_POPUP=1 \
-    QML2_IMPORT_PATH="$BUILD_DIR/qml:${QML2_IMPORT_PATH:-}" \
-        timeout -s TERM "$TIMEOUT_S" "$QS" -p "$ROOT" >"$log" 2>&1
-    rc=$?
+    local -a env=(
+        XDG_CONFIG_HOME="$cfg"
+        XDG_CACHE_HOME="$cfg/cache"
+        XDG_STATE_HOME="$cfg/state"
+        XDG_RUNTIME_DIR="$RUNTIME"
+        WAYLAND_DISPLAY="$SOCKET"
+        HYPRLAND_INSTANCE_SIGNATURE="$SIG"
+        QT_QPA_PLATFORM=wayland
+        QS_NO_RELOAD_POPUP=1
+        QML2_IMPORT_PATH="$BUILD_DIR/qml:${QML2_IMPORT_PATH:-}"
+    )
 
-    # rc 124 == still alive when we killed it == booted and stayed up. That is success.
+    if [ "$INTERACT" = 1 ]; then
+        env "${env[@]}" "$QS" -p "$ROOT" >"$log" 2>&1 &
+        local qspid=$!
+        drive_shell "${env[@]}"
+        if kill -0 "$qspid" 2>/dev/null; then
+            kill -TERM "$qspid" 2>/dev/null
+            wait "$qspid" 2>/dev/null
+            rc=124   # still up when we asked it to stop, same meaning as timeout's
+        else
+            wait "$qspid" 2>/dev/null
+            rc=$?
+        fi
+    else
+        env "${env[@]}" timeout -s TERM "$TIMEOUT_S" "$QS" -p "$ROOT" >"$log" 2>&1
+        rc=$?
+    fi
+
+    # rc 124 == still alive when we asked it to stop == booted and stayed up. Success.
     if [ $rc -ne 124 ]; then
         printf '%s  (exited early, rc=%d)\n' "$(red FAIL)" "$rc"
         strip < "$log" | grep -E 'ERROR|error' | head -12 | sed 's/^/        /'
@@ -369,7 +427,8 @@ if [ -n "${SMOKE_SOCKET:-}" ]; then
     SOCKET=$SMOKE_SOCKET
     SIG=${SMOKE_HYPR_SIG:-${HYPRLAND_INSTANCE_SIGNATURE:-}}
     printf 'using provided compositor: %s\n' "$SOCKET"
-    printf 'smoke matrix: %d preset(s), %ss window each\n\n' "${#presets[@]}" "$TIMEOUT_S"
+    printf 'smoke matrix: %d preset(s), %s\n\n' "${#presets[@]}" \
+        "$([ "$INTERACT" = 1 ] && printf 'boot + IPC drive' || printf "${TIMEOUT_S}s window each")"
     for preset in "${presets[@]}"; do run_preset "$preset" ""; done
 else
     if [ "$COMPOSITOR" = auto ]; then
@@ -387,7 +446,8 @@ else
         printf 'starting headless sway... '
         start_sway
         printf 'up on %s\n' "$SOCKET"
-        printf 'smoke matrix: %d preset(s), %ss window each\n\n' "${#presets[@]}" "$TIMEOUT_S"
+        printf 'smoke matrix: %d preset(s), %s\n\n' "${#presets[@]}" \
+        "$([ "$INTERACT" = 1 ] && printf 'boot + IPC drive' || printf "${TIMEOUT_S}s window each")"
         for preset in "${presets[@]}"; do run_preset "$preset" "sway"; done
         cleanup
         COMP_PID=""; COMP_DIR=""; SOCKET=""; SIG=""
@@ -396,7 +456,8 @@ else
             printf 'starting nested Hyprland (%s config)... ' "$fmt"
             start_compositor "$fmt"
             printf 'up on %s\n' "$SOCKET"
-            printf 'smoke matrix: %d preset(s), %ss window each\n\n' "${#presets[@]}" "$TIMEOUT_S"
+            printf 'smoke matrix: %d preset(s), %s\n\n' "${#presets[@]}" \
+        "$([ "$INTERACT" = 1 ] && printf 'boot + IPC drive' || printf "${TIMEOUT_S}s window each")"
             for preset in "${presets[@]}"; do
                 run_preset "$preset" "$([ ${#HYPR_FMTS[@]} -gt 1 ] && printf '%s' "$fmt")"
             done
@@ -421,4 +482,4 @@ if [ "$failures" -gt 0 ]; then
     exit 1
 fi
 
-printf '%s all %d run(s) booted clean\n' "$(green PASS)" "$runs"
+printf '%s all %d run(s) clean\n' "$(green PASS)" "$runs"

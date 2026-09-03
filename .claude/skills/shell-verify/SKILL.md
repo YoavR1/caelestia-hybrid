@@ -83,9 +83,16 @@ surface, and with no Wayland backend it is unavailable — which poisons the ent
 graph with `No PanelWindow backend loaded` (trap T12). The runner refuses to use your live
 session socket, so it can never draw over your desktop.
 
+Each run boots the shell **and then drives it**: every drawer opened and closed over IPC,
+the launcher sent to emoji and clipboard mode, a toast raised, Nexus opened. Booting alone
+misses most of the interesting bugs — the first interaction run found a `ReferenceError` in
+the emoji list and a null `targetConfig` on every settings page, neither reachable at boot.
+`--no-interact` drops back to boot-only, which is only useful while bisecting a boot
+failure.
+
 | Result | Meaning |
 |---|---|
-| `ok` | Booted and stayed up for the whole window with no QML diagnostics. |
+| `ok` | Came up, survived being driven, and emitted no QML diagnostics. |
 | `FAIL (exited early, rc=N)` | The shell died. Read the printed head of the log — usually a load error. |
 | `FAIL` + diagnostic lines | It stayed up but emitted QML errors or warnings. |
 

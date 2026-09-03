@@ -42,6 +42,12 @@ QObject::installEventFilter\(\): Cannot filter events for objects in a different
 # stops working, read the log with this file emptied before believing the gate.
 caelestia\.requests: \w+: request failed with error
 
+# The user avatar lives at ~/.face by convention and most accounts do not have one. The
+# dashboard and lock screen both draw a placeholder icon behind it, so a missing file is
+# the normal case rather than a defect. Only reachable once the dashboard is opened, which
+# is why it appeared with the interaction pass and not before.
+Source file does not exist: .*/\.face
+
 # KNOWN BUGS - real defects, suppressed only so the gate stays useful.
 # Each line here is debt. Delete the entry when the bug is fixed, not before.
 # =============================================================================
