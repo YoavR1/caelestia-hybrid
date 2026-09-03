@@ -84,16 +84,28 @@ Additionally:
 
 ## The `hybrid` block
 
-Phase 3 adds `hybrid` as a config object with:
+`hybrid` exists, in `plugin/src/Caelestia/Config/hybridconfig.hpp`:
 
-- `preset` — a string naming the preset, **never the expanded values** (D8), so presets can be
-  improved for existing users
-- `features` — one boolean per imported feature
+- `preset` — an enum naming the preset, **never the expanded values** (D8), so presets can be
+  improved for existing users. It serialises as a string: `"preset": "midnight"`.
+- `features` — one boolean per imported feature, 12 of them
 - `variants` — capped at ~6 entries (D4); growth means the design is drifting back toward the
-  registry we rejected
+  registry we rejected. Four so far.
 
-`hybrid/presets/*.json` already encode the intended shape. Until Phase 3 they are quarantined and
-harmless.
+Two things about it are unlike the rest of the schema, and both are load-bearing:
+
+**Defaults are functions, not constants.** Every feature and variant resolves its default through a
+`DefaultSpec` lambda that reads the selected preset, so a fresh config that names only a preset is
+complete. Changing `preset` re-resolves them — but only the keys the user has *not* set, via
+`isOverride()`, inside a `WriteScope(node, WriteOrigin::Layer)`. Writing under the ambient origin
+would record the preset's values as user overrides and destroy exactly what D8 exists to preserve.
+
+**A flag only exists once something reads it.** Four were removed for failing that test: two
+features not imported yet, one upstream ships unconditionally, and `patternLock`, which never ships
+as a toggle because it is a lock-screen bypass (D10, trap T3).
+
+`hybrid/presets/*.json` are real configs now, not placeholders — a key that is not in the schema
+fails the smoke matrix rather than being quietly ignored. See `hybrid/presets/README.md`.
 
 ## Migration
 
