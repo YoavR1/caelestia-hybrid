@@ -169,7 +169,11 @@ void SessionManager::call(const QString& path, const QString& iface, const QStri
             qCWarning(lcSessionManager) << "Call to" << method << "failed:" << reply.error().message();
         self->deleteLater();
     });
-    // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks) watcher is parented and self-deletes
+    // The watcher is parented to `this` and calls deleteLater on itself, neither of which
+    // the analyzer models, so it reports a leak at end of scope. That is why this sits
+    // immediately above the closing brace rather than next to the `new`: the diagnostic is
+    // reported there. Anything inserted between the two detaches it silently (trap T24).
+    // NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDeleteLeaks)
 }
 
 void SessionManager::callManager(const QString& method) {

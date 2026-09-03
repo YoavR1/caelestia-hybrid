@@ -340,6 +340,26 @@ runs=0
 # Open and close everything the shell exposes over IPC. Failures here are ignored on
 # purpose: a drawer that a preset has switched off simply does nothing, and the log is what
 # is being measured, not these exit codes.
+# `qs ipc call` **always exits 0**. An unknown target prints "Target not found.", an
+# unknown function prints "Function not found.", and the wrong arity prints "Too few
+# arguments provided" -- all with rc=0. Measured, because checking $? here looks like it
+# works and tests nothing.
+#
+# Combined with the drive's `>/dev/null 2>&1`, that meant a mistyped call exercised nothing
+# and said nothing. Two were wrong the day this was written: `mpris getActive` needs a
+# property name and `hypr cycleSpecialWorkspace` needs a direction, and both had been called
+# bare. A drive that silently skips half its calls is the failure this harness exists to
+# prevent (T23), so calls expected to work go through here, and the *output* is what says
+# whether they did.
+IPC_ERRORS=""
+check_ipc() {
+    local out
+    out=$("${ipc[@]}" "$@" 2>&1)
+    if printf '%s' "$out" | grep -qE '^(Target|Function) not found\.|arguments provided'; then
+        IPC_ERRORS+="    ipc call '$*': ${out//$'\n'/ | }"$'\n'
+    fi
+}
+
 drive_shell() {
     local -a env=("$@")
     local ipc=(env "${env[@]}" "$QS" -p "$ROOT" ipc call)
@@ -347,20 +367,20 @@ drive_shell() {
     sleep 6   # let the shell finish loading before poking it
 
     for drawer in dashboard launcher session sidebar utilities workspaceDrawer osd; do
-        "${ipc[@]}" drawers toggle "$drawer" >/dev/null 2>&1
+        check_ipc drawers toggle "$drawer"
         sleep 0.9
-        "${ipc[@]}" drawers toggle "$drawer" >/dev/null 2>&1
+        check_ipc drawers toggle "$drawer"
         sleep 0.4
     done
 
     for mode in openEmoji openClipboard; do
-        "${ipc[@]}" launcher "$mode" >/dev/null 2>&1
+        check_ipc launcher "$mode"
         sleep 1.2
-        "${ipc[@]}" drawers toggle launcher >/dev/null 2>&1
+        check_ipc drawers toggle launcher
         sleep 0.4
     done
 
-    "${ipc[@]}" toaster info "smoke" "interaction pass" "info" >/dev/null 2>&1
+    check_ipc toaster info "smoke" "interaction pass" "info"
     sleep 0.6
 
     # Every settings page, not just the first. This is where the null targetConfig lived,
@@ -368,28 +388,65 @@ drive_shell() {
     local pages
     pages=$(grep -c 'label: qsTr' "$ROOT/modules/nexus/PageRegistry.qml" 2>/dev/null || echo 1)
     for ((i = 0; i < pages; i++)); do
-        "${ipc[@]}" nexus openPage "$i" >/dev/null 2>&1
+        check_ipc nexus openPage "$i"
         sleep 0.7
     done
     sleep 1
 
     # The lock screen is a large surface nothing else reaches. It locks the *nested*
     # compositor, never a real session -- the harness refuses to run against one.
-    "${ipc[@]}" lock lock >/dev/null 2>&1
+    check_ipc lock lock
     sleep 2.5
-    "${ipc[@]}" lock unlock >/dev/null 2>&1
+    check_ipc lock unlock
     sleep 1.5
 
     for picker in open openFreeze openClip; do
-        "${ipc[@]}" picker "$picker" >/dev/null 2>&1
+        check_ipc picker "$picker"
         sleep 0.8
     done
 
-    "${ipc[@]}" idleInhibitor toggle >/dev/null 2>&1
+    check_ipc idleInhibitor toggle
     sleep 0.4
-    "${ipc[@]}" idleInhibitor toggle >/dev/null 2>&1
-    "${ipc[@]}" audio cycleOutput >/dev/null 2>&1
-    "${ipc[@]}" brightness get >/dev/null 2>&1
+    check_ipc idleInhibitor toggle
+    check_ipc audio cycleOutput
+    check_ipc brightness get
+
+    # Six IPC targets used to boot and then never run: mpris, notifs, gameMode, hypr,
+    # wallpaper and wallhaven. Reads and reversible toggles from four of them are safe here.
+    #
+    # Not driven, deliberately:
+    #   wallhaven doSearch/doRandom  hits the network. A boot gate must not depend on
+    #                                someone else's uptime -- see the ignore list.
+    #   wallpaper set                takes a path and writes state. get/list cover the
+    #                                service without it.
+    # getActive takes a property name; the rest take nothing. Calling one with the wrong
+    # arity fails silently under the redirects below, which is why check_ipc exists.
+    check_ipc mpris getActive trackTitle
+    for fn in list playPause playPause next previous stop; do
+        check_ipc mpris "$fn"
+        sleep 0.3
+    done
+
+    check_ipc notifs isDndEnabled
+    check_ipc notifs toggleDnd
+    sleep 0.4
+    check_ipc notifs toggleDnd
+    check_ipc notifs clear
+
+    # Toggled back so the next preset starts from the same compositor state.
+    check_ipc gameMode isEnabled
+    check_ipc gameMode toggle
+    sleep 0.6
+    check_ipc gameMode toggle
+    sleep 0.4
+
+    check_ipc hypr listSpecialWorkspaces
+    check_ipc hypr refreshDevices
+    check_ipc hypr cycleSpecialWorkspace next
+    sleep 0.5
+
+    check_ipc wallpaper get
+    check_ipc wallpaper list
     sleep 1.5
 }
 
@@ -419,6 +476,7 @@ run_preset() {
     if [ "$INTERACT" = 1 ]; then
         env "${env[@]}" "$QS" -p "$ROOT" >"$log" 2>&1 &
         local qspid=$!
+        IPC_ERRORS=""
         drive_shell "${env[@]}"
         if kill -0 "$qspid" 2>/dev/null; then
             kill -TERM "$qspid" 2>/dev/null
@@ -444,6 +502,15 @@ run_preset() {
 
     hard=$(strip < "$log" | grep -E '(^|\s)ERROR' | filter_ignored || true)
     soft=$(strip < "$log" | grep -E '(^|\s)WARN'  | filter_ignored || true)
+
+    if [ -n "$IPC_ERRORS" ]; then
+        # the name has already been printed without a newline, so only the verdict goes here
+        printf '%s\n' "$(red FAIL)"
+        printf '%s' "$IPC_ERRORS"
+        failures=$((failures + 1))
+        [ "$KEEP_LOGS" = 1 ] || rm -f "$log"
+        return
+    fi
 
     if [ -n "$hard" ] || [ -n "$soft" ]; then
         printf '%s\n' "$(red FAIL)"

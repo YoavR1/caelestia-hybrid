@@ -37,7 +37,7 @@ tree: a full UKEY2 handshake between two `QuickShareCrypto` instances, and a che
 `BeatTracker::beat` reaches its QML receiver — it had been declared, connected to by
 `MediaShapes.qml`, and emitted by nothing, in all three upstreams (T21).
 
-Read `hybrid/docs/traps.md` T12–T24 before touching the harness; **T18 and T19 in
+Read `hybrid/docs/traps.md` T12–T25 before touching the harness; **T18 and T19 in
 particular**, because qmllint silently lints against an installed `midnight-shell-git`
 unless `--bare` is passed, and because the two `-Werror` build legs sat red through a phase
 that reported CI green — they were never run locally, and a `clazy` finding is invisible to

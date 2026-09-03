@@ -797,3 +797,43 @@ explanation *above* the marker, never between it and the code.
 The reason this is worth a trap rather than a note: a detached suppression fails in the
 direction that looks like a new bug. The check fires on code that has not changed, on a
 commit that did not touch it, and the natural reading is that the refactor caused it.
+
+---
+
+## T25 — `qs ipc call` always exits 0, including when it did nothing
+
+**Symptom:** a script drives the shell over IPC, checks `$?` after every call, reports
+success, and half the calls never ran.
+
+Measured against a live shell:
+
+| call | output | exit code |
+|---|---|---|
+| `ipc call wallpaper get` | the wallpaper path | **0** |
+| `ipc call wallpaper getNoSuchThing` | `Function not found.` | **0** |
+| `ipc call noSuchTarget nope` | `Target not found.` | **0** |
+| `ipc call mpris getActive` (arity) | `Too few arguments provided (1 required but 0 were provided.)` | **0** |
+
+The error goes to the output. The exit status is success in every case. So `if ! out=$(... )`
+is not a check, and neither is `set -e`.
+
+The smoke drive made this maximally invisible by redirecting both streams to `/dev/null`,
+which is reasonable for a drive — the point is to exercise code, not to read results — right
+up until a call is wrong. Two were, the day the drive was extended past the panels:
+`mpris getActive` takes a property name and `hypr cycleSpecialWorkspace` takes a direction,
+and both had been called bare. They exercised nothing and said nothing.
+
+`check_ipc` in `smoke-matrix.sh` now runs every call in the drive and greps the *output* for
+`Target not found.`, `Function not found.` and `arguments provided`, failing the run if any
+appears. Verified with a deliberate typo, which the harness reports as
+`ipc call 'wallpaper getNoSuchThing': Function not found.`
+
+**What this bought immediately.** With all 54 IPC functions enumerated and the drive
+converted, the six presets still pass — which establishes something that was only assumed:
+`IpcHandler` targets are registered unconditionally, so turning a feature off does not remove
+its IPC surface. A drive that calls `launcher openEmoji` under the `all-off` preset is still
+making a real call.
+
+**The general shape, again:** a tool that reports failure on a channel you are not reading is
+indistinguishable from a tool that works. Check what a tool does on bad input before trusting
+what it says on good input.
