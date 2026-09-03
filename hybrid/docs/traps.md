@@ -1238,3 +1238,48 @@ it. The CI leg is narrower in what it exercises and *wider* in what it can expos
 The ignore entries were checked against the real log lines rather than written from memory,
 and the check included confirming that the `SysInfo` TypeError is still reported — an ignore
 list that swallowed it would have hidden the only real finding in the run.
+
+---
+
+## T33 — `forActive()` returns null by contract, and all 23 callers dereferenced it
+
+`services/ShellState.qml` is explicit about it:
+
+```qml
+function forActive(): ScreenState {
+    const mon = Hypr.focusedMonitor;
+    for (const s of states.instances)
+        if (Hypr.monitorFor(s.modelData) === mon)
+            return s;
+    return null;                     // <-- documented, and reachable
+}
+```
+
+`Visibilities.getForActive()` forwards it unchanged. A sweep of every call site found
+**23 of 23 dereferencing the result without a check**, across `modules/Shortcuts.qml` (20),
+`OsIcon.qml`, `NotificationsStatus.qml` and `Toggles.qml`.
+
+Two of them surfaced in CI on headless sway:
+
+```
+WARN scene: @modules/Shortcuts.qml[243:-1]: TypeError: Value is null and could not be converted to an object
+WARN scene: @modules/Shortcuts.qml[274:-1]: TypeError: Value is null and could not be converted to an object
+```
+
+Only two, because only those two paths happen to be driven by the IPC pass. The other 21 are
+the same bug waiting for a different keybind.
+
+**Why this was not put in the ignore list.** The headless list legitimately carries
+Hyprland-absence entries — `Unable to connect to Hyprland socket` and friends — and this
+failure is downstream of exactly that, so hiding it would have been consistent-looking. It is
+still an unguarded null dereference, which is a defect on any compositor: `focusedMonitor`
+is also null during startup before a monitor is focused, and across monitor hotplug. The sway
+run did not create the bug, it exercised it.
+
+All 23 now guard, in the style the handlers already used for `root.hasFullscreen`, with the
+return each function actually needs — `""` for `list()`, `"unknown"` for `isOpen()`, bare
+`return` for the rest.
+
+**The general point.** A function whose body contains `return null` has that in its contract,
+and a sweep for callers is worth doing the moment you see one. Finding the first instance by
+accident says nothing about how many there are: here the ratio was 2 observed to 23 present.

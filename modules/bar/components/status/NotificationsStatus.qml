@@ -30,6 +30,8 @@ MaterialIcon {
                 Notifs.dnd = !Notifs.dnd;
             } else {
                 const vis = Visibilities.getForActive();
+                if (!vis)
+                    return;
                 vis.sidebar = !vis.sidebar;
             }
         }

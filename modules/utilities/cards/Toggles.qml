@@ -183,6 +183,8 @@ StyledRect {
                         onClicked: {
                             Visibilities.launcherInitialSearch = `${GlobalConfig.launcher.actionPrefix}wallpaper `;
                             const visibilities = Visibilities.getForActive();
+                            if (!visibilities)
+                                return;
                             visibilities.launcher = true;
                         }
                     }
