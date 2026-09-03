@@ -755,14 +755,41 @@ first run found 8 of 11 patterns load-bearing and 3 matching nothing:
 
 - `caelestia.requests: \w+: request failed with error` — kept. The weather API 503s often
   enough to have failed 5 of 12 runs in one sitting; a zero here means a good day.
-- the two `QObject: ... different thread` entries — **deleted**. They were attributed to
-  QuickShare teardown, matched nothing across 12 runs, and were suppressing an entire Qt bug
-  class globally rather than one known instance. The matrix stayed clean over 12 runs
-  without them, so the coverage is back and cost nothing.
+- the two `QObject: ... different thread` entries — deleted, and then **put back**. This is
+  the interesting one, and it is a mistake worth keeping written down.
 
-The distinction to draw when auditing is not "does this still fire" but "if the thing this
-hides came back, would I want to know?" A pattern naming one file and one condition is a
-note; a pattern naming a Qt-wide diagnostic is a policy.
+### The ignore entries I deleted and had to restore
+
+Both matched nothing across 12 runs, and both named a Qt-wide diagnostic rather than one
+known instance, so deleting them looked like restoring coverage at no cost. The matrix then
+ran 12/12 clean without them, which seemed to settle it.
+
+A later run failed **12/12** on exactly those two lines. The full message, which the earlier
+comment had never quoted, says what is actually happening:
+
+```
+QObject: Cannot create children for a parent that is in a different thread.
+(Parent is QGuiApplication, parent's thread is QThread, current thread is QQuickPixmapReader)
+```
+
+`QQuickPixmapReader` is Qt Quick's internal image-loading thread. The entry had been
+attributed to "QuickShare's worker thread during teardown" — which the message contradicts,
+and which nobody had checked. It fires beside the first image load, it is Qt's own code, and
+there is nothing here to fix.
+
+Two separate errors, and the second is the one that matters:
+
+1. **The attribution was never verified.** A one-line justification on an ignore entry is
+   worth exactly as much as the evidence behind it, and this one had none.
+2. **Zero matches is a sample, not a proof.** The condition is a race against startup timing.
+   Twelve quiet runs said the race had been landing the other way, not that it was gone —
+   and the thing that flipped it was unrelated: deleting four dead QML files changed startup
+   timing enough to change the outcome.
+
+So the audit question is sharper than "does this still fire" and sharper than "would I want
+to know if it came back". It is: **do I have a reason this condition cannot recur?** For a
+race, a run of quiet days is never that reason. Delete an entry when the code that produced
+it is gone, not when the log happens to be quiet.
 
 
 ---
@@ -904,3 +931,58 @@ commands by design, so no boundary is crossed. What is left is a robustness nit:
 apostrophe in an expression breaks the calculator. Fixing it properly means escaping for
 *fish* rather than POSIX quoting rules, in a code path that spawns an interactive terminal
 and so cannot be exercised by the harness. Recorded rather than changed blind.
+
+---
+
+## T27 — QuickShare can send but cannot receive: the prompt is never instantiated
+
+**Symptom:** send a file from the shell and it works. Send one *to* the shell and nothing
+appears, ever.
+
+The C++ side of the incoming path is complete:
+
+```cpp
+// quickshare_service.hpp
+void incomingTransferRequested(const QString& deviceName, const QString& fileName, qint64 fileSize);
+void incomingTransferPinReady(const QString& pinCode);
+Q_INVOKABLE void acceptIncomingTransfer();
+Q_INVOKABLE void rejectIncomingTransfer();
+```
+
+Both signals are emitted, from `onNewConnection`. **Nothing in QML handles either**, and
+nothing calls accept or reject, so an incoming transfer sits waiting for a confirmation that
+can never arrive.
+
+`modules/notifications/QuickSharePrompt.qml` is the UI for exactly this, complete with
+Accept and Decline wired to those two invokables — and it is instantiated nowhere. It also
+writes `QuickShare.hasPendingTransfer`, which is not a property of the service: the only two
+references to that name in either tree are the two inside this file.
+
+**This is inherited, not a merge regression.** It is equally dead in `dim-ghub/midnight-shell`:
+the file exists, nothing instantiates it, and `hasPendingTransfer` is undefined there too. Our
+merge carried it over faithfully.
+
+**Why it is recorded rather than fixed.** Wiring it needs a `hasPendingTransfer` (or the
+equivalent state in QML), a decision about where the prompt lives in the panel graph (T1),
+and dismissal and timeout behaviour. None of that can be exercised from here: the only
+trigger is a real phone sending a real file, and the loopback in
+`hybrid/tools/tests/ukey2-loopback.cpp` cannot stand in, because it drives the crypto rather
+than the transport. Shipping an untested modal into the notification layer is worse than the
+present state, which at least fails visibly as "nothing happens".
+
+`hybrid/tools/dead-qml.py` allowlists the file rather than deleting it, so the design survives
+and the gap stays visible.
+
+### The sweep that found it
+
+Four MiDnight-only files were unreferenced; a fifth appeared once the first four went, because
+dead code was keeping it alive. `components/images/CachingVideo.qml` was the sole user of
+`services/VideoWallpaperPlayer.qml`, and both were already dead in MiDnight.
+
+Removed: `CachingVideo.qml` (superseded — `Wallpaper.qml` plus `WallpaperPauser.qml` own that
+behaviour now), `VideoWallpaperPlayer.qml` (its orphan), `BadAppleController.qml` (superseded
+by `BadApplePlayer`), `TestComponent.qml` (27 lines of scaffolding that pops a red window).
+
+Kept: `components/misc/Ref.qml`, which is unused in **all three** upstreams including upstream
+itself, since the C++ `ServiceRef` replaced it. That one is upstream's to delete; removing it
+here trades eight dead lines for a delete/modify conflict on every merge that touches it.

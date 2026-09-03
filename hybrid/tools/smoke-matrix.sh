@@ -617,10 +617,11 @@ fi
 printf '%s all %d run(s) clean\n' "$(green PASS)" "$runs"
 
 # Every line in the ignore list is a deliberate blindfold (T23). One that no longer matches
-# anything is a blindfold with no remaining justification, and the only way to find it is to
-# ask. This reports counts and never fails the run: several entries are legitimately
-# intermittent -- absent bluetooth hardware, a weather API that 503s some days -- so a zero
-# here is a prompt to go and check, not a verdict.
+# anything *may* be a blindfold with no remaining justification, and the only way to find out
+# is to ask. This reports counts and never fails the run: several entries are legitimately
+# intermittent -- absent bluetooth hardware, a weather API that 503s some days, a Qt-internal
+# race that turns on startup timing -- so a zero here is a prompt to go and check, never a
+# verdict on its own.
 if [ "$AUDIT" = 1 ]; then
     printf '\n%s ignore-pattern audit over %d log(s):\n\n' "$(yellow note)" "$runs"
     files=("$IGNORE_FILE")
@@ -634,6 +635,8 @@ if [ "$AUDIT" = 1 ]; then
             printf '  %5d  %s\n' "$n" "$pat"
         fi
     done < <(cat "${files[@]}" 2>/dev/null | grep -Ev '^[[:space:]]*(#|$)' || true)
-    printf '\n  a 0 means that pattern matched nothing in this run. Check whether the\n'
-    printf '  condition is intermittent or whether the entry is dead and should go.\n'
+    printf '\n  A 0 means the pattern matched nothing in THIS run. That is a sample, not a\n'
+    printf '  verdict: two entries were once deleted on the strength of 12 quiet runs and had\n'
+    printf '  to be restored when a later 12 failed 12/12 on them (T23). Delete an entry when\n'
+    printf '  the code that produced it is gone -- not when the log happens to be quiet.\n'
 fi

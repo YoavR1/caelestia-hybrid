@@ -28,12 +28,22 @@ failed to register listener on path "/org/quickshell/PolkitAgent"
 # the CLI's job and the shell falls back correctly.
 Read of .*/state/caelestia/scheme\.json failed: File does not exist
 
-# Two entries lived here suppressing Qt's cross-thread warnings -- "Cannot create children
-# for a parent that is in a different thread" and the installEventFilter equivalent --
-# attributed to QuickShare's worker thread during teardown. `--audit-ignores` showed both
-# matching nothing across 12 runs, and they were silencing a real bug class globally rather
-# than one known instance, so they are gone. If cross-thread warnings return, the log will
-# name the object and the fix belongs in the code, not here.
+# Qt Quick's own image-loading thread, not ours. The full message names the participants:
+#
+#   QObject: Cannot create children for a parent that is in a different thread.
+#   (Parent is QGuiApplication, parent's thread is QThread, current thread is
+#    QQuickPixmapReader)
+#
+# QQuickPixmapReader is Qt's internal pixmap loader; it fires next to the first image load
+# and there is nothing in this repository to fix. An earlier comment here blamed QuickShare's
+# worker thread during teardown, which the message plainly contradicts.
+#
+# These were deleted once, on the strength of `--audit-ignores` reporting zero matches over
+# 12 runs, and restored when a later 12 runs failed 12/12 on them. The condition is a race
+# against startup timing, so a zero-match sample is not evidence of deadness -- deleting an
+# ignore entry needs a reason the condition *cannot* recur, not a run of quiet days. See T23.
+QObject: Cannot create children for a parent that is in a different thread
+QObject::installEventFilter\(\): Cannot filter events for objects in a different thread
 
 # =============================================================================
 # The shell fetches weather, GitHub activity and lyrics over the network at startup. A CI
