@@ -1679,3 +1679,30 @@ for f in <flags>; do grep -rl "features\.$f\b" --include='*.qml' modules/ servic
 conclusion survives — the forks really are mostly disjoint, and four-versus-five dual sites does
 not change the design. The table under it needed a correction, and CLAUDE.md's "do not
 re-litigate without new evidence" is a bar to clear, not a door that is closed.
+
+### The same question found a larger error in the work plan
+
+Asking it of the rest of the `feature-import` skill's "Known import notes" turned up three more
+rows describing work that does not exist. Every `midnight` row was already in the tree:
+
+| row | claim | reality |
+|---|---|---|
+| Wallpaper features | "`services/Wallpapers.qml` is 125→486 lines … needs the merged CLI" | **525 lines in this tree.** Upstream 125, MiDnight 486, merged forward in Phase 2. |
+| Clipboard / emoji | "Launcher entries; needs CLI subcommands" | `modules/launcher/services/{Clipboard,Emojis}.qml` present, both flags gating them. |
+| Shimeji / Bad Apple / Dino | "46 + 74 + 8 asset files with unresolved licensing" | `modules/shimeji/` present, all three flags gated; the encumbered assets were removed and replaced with generated originals earlier. |
+
+The cause is structural rather than careless, which is why it is worth recording. **D1 makes
+MiDnight the baseline**, so every MiDnight feature arrived with the Phase 0 fork and was merged
+forward in Phase 2. A table of "features from the forks" is only a work list for the *other*
+fork; for the baseline it is a description of what is already here. Both halves read
+identically, and nothing in the table said which was which.
+
+What survives in those rows is the residual: `--extract-thumbs` and the clipboard/emoji
+subcommands live in `caelestia-dots/cli`, a **separate repository** (D6), not in this one. That
+is a real dependency, and it is the actual reason those features are not finished — not a
+pending import.
+
+Net effect on the plan: of nine rows, two are done (Hotspot, BtAgent), three were never work,
+one is blocked on security (pattern lock, T3/D10), two need a design decision before any port
+(Dock, Overview — both collide with a flag that already gates MiDnight's version), and two are
+genuinely open (GPU detection, theme manager). The roadmap was roughly half description.

@@ -128,14 +128,21 @@ Kind:   copied | adapted | reimplemented
 
 ## Known import notes
 
+**Every `midnight` row below is already in this tree.** D1 makes `dim-ghub/midnight-shell` the
+baseline, so MiDnight's features arrived with Phase 0 and were merged forward in Phase 2 — they
+were never pending imports, and this table listed them as work for long enough to be worth
+saying so explicitly. What is real in those rows is the *residual*: a CLI subcommand that does
+not exist yet, or an asset question. Check `git ls-files` before planning any of them.
+
 | Feature | Source | Notes |
 |---|---|---|
 | Dock | `op` | **Not the easy import this table used to claim.** It said "own Wrapper/window, so Loader-hosting is safe"; the source says otherwise. `modules/dock/Wrapper.qml` is an `Item` driven by `screenState.dock`, and `modules/drawers/` reaches into it from three places — `Regions.qml` (`panel: root.panels.dock`, plus its context-menu height in the region calculation), `ContentWindow.qml` (`dockBg`, and `dock.transform` fed by `dockBg.deformMatrix`) and `Interactions.qml` (`dockShortcutActive`). So it is a panel in the coupling graph, and importing it means editing the one area T1 and T2 exist to warn about. It also lands beside MiDnight's bar dock, which `hybrid.features.dock` already gates — two docks, not one behind a flag. Rescope before attempting: it needs either a second flag or a fifth `hybrid.variants` entry, and that is a design decision, not a port. |
 | Overview | `op` | **Do not import as a feature.** 12 files under `modules/overview/`, but MiDnight also ships `modules/drawers/WorkspaceOverview.qml` (447 lines), it is already in this tree, and `hybrid.features.overview` already gates it. This is a dual site (the fifth), so it is a `hybrid.variants` question for Phase 7, not an import. |
-| Hotspot / BtAgent | `op` | `services/{Hotspot,BtAgent,Nmcli}.qml` + `scripts/bt-agent.py`. Pulls a `dnsmasq` runtime dep. |
+| Hotspot | `op` | **Done** — PR #2, `hybrid.features.hotspot`. `dnsmasq` is a runtime *message* from `nmcli`, not a build dependency. Shipped a published default PSK and logged the generated one; see T41. |
+| BtAgent | `op` | **Done** — PR #4, `hybrid.features.btAgent`. Adds `python-dbus` and `python-gobject` runtime deps. Its agent claims the system default BlueZ role, so its lifetime is tied to the dialog rather than the shell; see T43. |
 | GPU detection | `op` | C++: `plugin/src/Caelestia/Services/gpu.{cpp,hpp}`. Upstream has since typed GPU kind as an enum — check for overlap. |
 | Theme manager | `op` | Ships large binary theme assets with **unresolved licensing**. Import the code; hold the assets. |
 | Pattern lock | `op` | **Blocked (T3, D10).** Security defect. Do not import without the rework. |
-| Wallpaper features | `midnight` | `services/Wallpapers.qml` is 125→486 lines and the state model *is* the feature (T6). One implementation, config options. Needs the merged CLI (D6) for `--extract-thumbs`. |
-| Clipboard / emoji | `midnight` | Launcher entries; needs CLI subcommands. Good plugin-entry-point shape (T11). |
-| Shimeji / Bad Apple / Dino | `midnight` | Self-contained, default off. 46 + 74 + 8 asset files with **unresolved licensing**. |
+| Wallpaper features | `midnight` | **Already here — not an import.** `services/Wallpapers.qml` is 525 lines in this tree (upstream 125, MiDnight 486, merged forward in Phase 2). The state model *is* the feature (T6). The only open part is the CLI: `--extract-thumbs` lives in the separate `caelestia-dots/cli` repo (D6), which is not this repository. |
+| Clipboard / emoji | `midnight` | **Already here — not an import.** `modules/launcher/services/{Clipboard,Emojis}.qml`, with `hybrid.features.{clipboard,emojiPicker}` gating them. Good plugin-entry-point shape (T11). Open part is CLI subcommands, in the separate CLI repo. |
+| Shimeji / Bad Apple / Dino | `midnight` | **Already here — not an import.** `modules/shimeji/` and the background overlays, all three flags gated and default off. The asset licensing is resolved: the encumbered files were removed and replaced with generated originals (see `hybrid/docs/provenance.md`). Only `assets/badapple.mp4` remains outstanding. |
