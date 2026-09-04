@@ -1885,3 +1885,32 @@ Two general points worth keeping:
 - **The leak was invisible to every gate.** The matrix passed 6/6 while doing this, because it
   measures the shell's log, not what the shell leaves running. It was found by looking at
   `pgrep` after a run, on a hunch, not by any check in this repository.
+
+### The first fix did not work, and the orphans said why
+
+`PR_SET_PDEATHSIG` alone was not enough. It was verified in isolation -- spawn a child from a
+Python parent, kill the parent, watch the child go -- and it passed. Under quickshell it does
+not: a later matrix run left a fresh orphan, reparented to `systemd --user`. The signal fires on
+the death of the *thread* that forked the child, and Qt's spawn path gives no guarantee about
+which thread that is. **A mechanism verified on a stand-in parent is not verified for the real
+one.**
+
+The replacement watches `os.getppid()` from a daemon thread and acts when it changes, which is
+indifferent to how the process was started or which signal killed the shell.
+
+Its first draft raised `SIGTERM` at itself so the existing handler could unregister from BlueZ
+cleanly. The orphans then demonstrated why that is not enough either:
+
+```
+$ kill -TERM 231891 233168 233807 248661 249927 250566
+$ ps -eo pid,args | grep -c bt-agent
+6
+```
+
+**All six ignored SIGTERM and needed SIGKILL.** A Python signal handler only runs between
+bytecodes, and this process spends its life inside GLib's main loop in C, so the signal is
+accepted and never acted on. A watchdog that politely requests an exit it cannot enforce is the
+exact bug it exists to fix. It now asks, waits three seconds, and calls `os._exit(0)`.
+
+Verified the way the first attempt was not: full matrix runs, counting agent processes
+afterwards. Zero.

@@ -26,6 +26,7 @@ import signal
 import socket
 import sys
 import threading
+import time
 
 import dbus
 import dbus.mainloop.glib
@@ -331,17 +332,43 @@ def die_with_parent():
     try:
         libc = ctypes.CDLL("libc.so.6", use_errno=True)
         if libc.prctl(PR_SET_PDEATHSIG, signal.SIGTERM, 0, 0, 0) != 0:
-            print("[bt-agent] prctl(PR_SET_PDEATHSIG) failed; agent may outlive the shell", flush=True)
-            return
+            print("[bt-agent] prctl(PR_SET_PDEATHSIG) failed", flush=True)
     except (OSError, AttributeError) as e:
-        print(f"[bt-agent] cannot set PDEATHSIG ({e}); agent may outlive the shell", flush=True)
-        return
+        print(f"[bt-agent] cannot set PDEATHSIG ({e})", flush=True)
 
-    # The parent can have died in the window between fork and here, in which case the signal
-    # has already been missed and nothing will ever arrive.
-    if os.getppid() == 1:
+    # PDEATHSIG alone is not enough, measured rather than assumed. It works when the parent is
+    # an ordinary process -- verified directly -- but a shell killed at the end of a smoke run
+    # still left this agent running and reparented to `systemd --user`, so whatever quickshell
+    # does when spawning defeats it. The signal fires on the death of the *thread* that forked
+    # the child, and Qt's spawn path does not guarantee that thread is the one that goes away.
+    #
+    # So watch the parent directly. getppid() changing means the original parent is gone; every
+    # orphan observed had been reparented, so this catches exactly the case PDEATHSIG missed,
+    # regardless of how the process was started or which signal killed the shell.
+    original_ppid = os.getppid()
+    if original_ppid == 1 or original_ppid != os.getppid():
         print("[bt-agent] parent already gone, exiting", flush=True)
         sys.exit(0)
+
+    def watch_parent():
+        while True:
+            time.sleep(2)
+            if os.getppid() == original_ppid:
+                continue
+
+            # Ask for the clean shutdown first, so the agent unregisters from BlueZ rather
+            # than leaving the default-agent role held by a process that no longer exists.
+            os.kill(os.getpid(), signal.SIGTERM)
+
+            # Then guarantee it. A Python signal handler only runs between bytecodes, and this
+            # process spends its life inside GLib's main loop in C -- so SIGTERM can be
+            # accepted and never acted on. That is not theoretical: six orphaned agents from
+            # earlier smoke runs ignored SIGTERM entirely and had to be SIGKILLed. A watchdog
+            # that politely requests an exit it cannot enforce is the bug it was written to fix.
+            time.sleep(3)
+            os._exit(0)
+
+    threading.Thread(target=watch_parent, daemon=True, name="parent-watch").start()
 
 
 def main():

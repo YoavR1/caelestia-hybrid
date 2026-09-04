@@ -17,6 +17,11 @@ Singleton {
     property int startFailures: 0
     property bool everConnected: false
 
+    // Set once the agent has been given up on, so neither the process nor the socket is
+    // retried again. Without it the socket kept reconnecting to a path nothing would ever
+    // create, logging QLocalSocket::ServerNotFoundError on a loop.
+    property bool gaveUp: false
+
     readonly property int maxStartFailures: 3
     property string requestType: ""    // "confirmation", "passkey", "pin", "display", "authorization"
     property string deviceName: ""
@@ -155,17 +160,29 @@ Singleton {
             root.resetState();
             sock.connected = false;
 
-            // An agent that never reached its socket did not crash mid-session -- it failed
-            // to start, and it will fail again for the same reason. The usual cause is a
-            // missing python-dbus or python-gobject, which exits immediately with a
-            // traceback; retrying that forever means a restart every 3 seconds and a
-            // tracebackleak into the log for as long as the shell runs. CI found this by
-            // lacking both modules. A crash *after* a successful connection is different and
-            // still retried indefinitely, because that is a transient worth recovering from.
+            // Exit code 0 before ever connecting is not a failure: bt-agent.py exits cleanly
+            // and deliberately when there is no D-Bus system bus to talk to, which is the
+            // normal state of a container, a TTY session or a machine with Bluetooth removed.
+            // It has decided it cannot run, and it will decide the same thing every three
+            // seconds forever. Report it once, quietly, and stop -- restarting it is noise,
+            // and warning about it says the shell is broken when it is merely idle.
+            if (exitCode === 0 && !root.everConnected) {
+                root.gaveUp = true;
+                console.log("[BtAgent] Agent stopped without a D-Bus connection - Bluetooth pairing prompts are unavailable on this system. Not retrying.");
+                return;
+            }
+
+            // Anything else that never reached the socket is a real start failure, and it will
+            // recur for the same reason: a missing python-dbus or python-gobject exits with a
+            // traceback immediately. Retrying that forever means a restart every three seconds
+            // and a traceback in the log for as long as the shell runs. A crash *after* a
+            // successful connection is different and is still retried indefinitely, because
+            // that is a transient worth recovering from.
             if (root.everConnected) {
                 root.startFailures = 0;
             } else if (++root.startFailures >= root.maxStartFailures) {
-                console.warn("[BtAgent] Agent exited with code", exitCode, "without ever connecting,", root.startFailures, "times - giving up. Bluetooth pairing prompts will not appear; check that python-dbus and python-gobject are installed.");
+                root.gaveUp = true;
+                console.warn("[BtAgent] Agent exited with code", exitCode, "without ever connecting,", root.startFailures, "times - giving up. Check that python-dbus and python-gobject are installed.");
                 return;
             }
 
@@ -181,7 +198,7 @@ Singleton {
         // Re-check the flag rather than assigning `true`. This assignment breaks the binding
         // above -- that is unavoidable in an imperative restart -- so it has to carry the
         // gate itself, or a crash would resurrect the agent with the feature switched off.
-        onTriggered: agentProc.running = GlobalConfig.hybrid.features.btAgent
+        onTriggered: agentProc.running = !root.gaveUp && GlobalConfig.hybrid.features.btAgent
     }
 
     // Delay socket connection until agent has time to create the socket
@@ -189,7 +206,12 @@ Singleton {
         id: socketConnectTimer
 
         interval: 1000
-        onTriggered: sock.connected = true
+        // Guarded like the reconnect timer. The agent can exit within this delay -- it does
+        // exactly that where there is no D-Bus system bus -- and connecting afterwards asks
+        // for a socket path nothing ever created, which quickshell reports as
+        // QLocalSocket::ServerNotFoundError. That warning is the shell's, not ours, so the
+        // only way to not emit it is to not make the call.
+        onTriggered: sock.connected = !root.gaveUp && agentProc.running
     }
 
     // --- Socket connection to agent ---
@@ -206,6 +228,11 @@ Singleton {
 
         onConnectionStateChanged: {
             if (!connected) {
+                if (root.gaveUp) {
+                    // Nothing will ever answer on that path now, so reconnecting logs
+                    // ServerNotFoundError every two seconds for the life of the shell.
+                    return;
+                }
                 console.warn("[BtAgent] Socket disconnected, reconnecting in 2s");
                 reconnectTimer.start();
             } else {
@@ -222,6 +249,6 @@ Singleton {
         id: reconnectTimer
 
         interval: 2000
-        onTriggered: sock.connected = true
+        onTriggered: sock.connected = !root.gaveUp
     }
 }
