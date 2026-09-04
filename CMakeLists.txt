@@ -77,6 +77,23 @@ endif()
 
 string(REGEX REPLACE "^v" "" VERSION "${VERSION}")
 
+# `-DVERSION=` is *defined but empty*, so both detection blocks above are skipped and
+# `project()` gets no value at all -- CMake warns "VERSION keyword not followed by a value"
+# and PROJECT_VERSION ends up empty. That is not hypothetical: verify.sh and build.yml both
+# pass `-DVERSION= -DGIT_REVISION=` on purpose, to keep the gate off the network and
+# independent of how the tree is tagged, so every gate and CI build produced a binary whose
+# `caelestia --version` printed two empty strings (extras/version.cpp prints both verbatim).
+#
+# Fill in placeholders rather than falling back to detection: falling back would reintroduce
+# exactly the network dependency the empty values exist to avoid. A build that says 0.0.0 and
+# "unknown" is honest about being an unversioned build; one that says nothing looks broken.
+if("${VERSION}" STREQUAL "")
+    set(VERSION "0.0.0")
+endif()
+if("${GIT_REVISION}" STREQUAL "")
+    set(GIT_REVISION "unknown")
+endif()
+
 project(caelestia-shell VERSION ${VERSION} LANGUAGES CXX)
 
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)

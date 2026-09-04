@@ -1635,3 +1635,45 @@ field, which the page renders masked with a reveal toggle.
 
 The general shape: **a hardcoded credential is worth checking against what the tool does
 without it.** Here the "default" was not filling a gap, it was overwriting a better answer.
+
+## T42 — Fixing the version for a bare build left every gate build reporting nothing
+
+T34 fixed a fork that reported *upstream's* version and *upstream's* commit, by preferring
+the local checkout. It did not fix the other caller. `hybrid/tools/verify.sh` and
+`.github/workflows/build.yml` both configure with
+
+```
+-DVERSION= -DGIT_REVISION=
+```
+
+on purpose, so the gate never touches the network and does not depend on how the tree is
+tagged. But `-DVERSION=` makes the variable **defined and empty**, and both detection blocks
+in `CMakeLists.txt` are guarded by `if(NOT DEFINED VERSION)`. Defined-but-empty skips them
+both, so `project(caelestia-shell VERSION ${VERSION} ...)` received no value at all:
+
+```
+CMake Warning at CMakeLists.txt:80 (project):
+  VERSION keyword not followed by a value or was followed by a value that
+  expanded to nothing.
+```
+
+That warning is printed on every configure in the gate and in CI, and it is not cosmetic:
+`extras/version.cpp` prints `VERSION` and `GIT_REVISION` verbatim, so every gate- and
+CI-built binary answered `caelestia --version` with two empty lines.
+
+Fixed by substituting placeholders immediately before `project()` — `0.0.0` and `unknown` —
+rather than by falling back to detection. Falling back would reintroduce exactly the network
+dependency the empty values exist to avoid: with no tags, local detection fails through to
+the remote `git ls-remote` query. A build that says `0.0.0` is honest about being an
+unversioned build; one that says nothing looks broken.
+
+Both paths are verified, because fixing one had already broken the other once:
+
+| configure | version | revision |
+|---|---|---|
+| bare | `2.4.0` | the real local HEAD |
+| `-DVERSION= -DGIT_REVISION=` | `0.0.0` | `unknown` |
+
+The lesson is narrower than T34's and worth keeping separate: **a variable can be set and
+still be empty, and `if(NOT DEFINED)` does not notice.** The guard has to match how callers
+actually pass the value, not how you imagine they do.
