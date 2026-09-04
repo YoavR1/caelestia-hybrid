@@ -133,11 +133,23 @@ Agents and skills read these. Never edit them; they are throwaway checkouts.
 |---|---|---|---|
 | Dock | `modules/dock/` (3 files) | `modules/bar/components/Dock.qml` (a bar component) | no — different things |
 | Bar | 2 trivial edits | 19 modified + 10 new | no — only MiDnight |
-| Overview | 12 files | — | no — only OP |
+| Overview | `modules/overview/` (12 files) | `modules/drawers/WorkspaceOverview.qml` (447 lines) | **yes — a fifth** |
 | Wallpaper | 1 line | `services/Wallpapers.qml` 125→486 lines | no — only MiDnight |
 | Clipboard, emoji, switcher, shimeji | — | yes | no — only MiDnight |
 | Hotspot, BtAgent, GPU, themes | yes | — | no — only OP |
 | **Lock centre, audio popout, background/clock, colours** | yes | yes | **yes — these four** |
+
+The Overview row was `no — only OP` until 2026-09-04. That was wrong: MiDnight ships
+`modules/drawers/WorkspaceOverview.qml`, it is 447 lines, it is in this tree as part of the D1
+baseline, and `hybrid.features.overview` already gates it from `modules/Shortcuts.qml`. Both
+forks implement a workspace overview; they are different designs of the same component, which
+is the definition this table uses for a dual site.
+
+So there are **five** dual sites, not four, and OP's `modules/overview/` must not be imported
+as a second boolean-gated implementation — that is precisely what D3 and D5 exist to prevent.
+It is either left alone (MiDnight's works and is the baseline) or `overview` is promoted to
+`hybrid.variants` in Phase 7, taking that list from four entries to five, still inside D4's
+cap of about six. That is a design decision, not a cleanup, and it is open.
 
 ## Verification
 
