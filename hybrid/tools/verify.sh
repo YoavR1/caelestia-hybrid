@@ -79,6 +79,7 @@ step "qmllint"
 step "dead signals";  ./hybrid/tools/dead-signals.py      | tail -1; ./hybrid/tools/dead-signals.py      >/dev/null || fail=1
 step "dead qml";      ./hybrid/tools/dead-qml.py          | tail -1; ./hybrid/tools/dead-qml.py          >/dev/null || fail=1
 step "shell safety";  ./hybrid/tools/shell-safety.py      | tail -1; ./hybrid/tools/shell-safety.py      >/dev/null || fail=1
+step "dead config";   ./hybrid/tools/dead-config.py       | tail -1; ./hybrid/tools/dead-config.py       >/dev/null || fail=1
 step "index modes";   ./hybrid/tools/check-index-modes.sh || fail=1
 
 step "plugin tests"
