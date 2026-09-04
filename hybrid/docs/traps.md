@@ -1635,3 +1635,47 @@ field, which the page renders masked with a reveal toggle.
 
 The general shape: **a hardcoded credential is worth checking against what the tool does
 without it.** Here the "default" was not filling a gap, it was overwriting a better answer.
+
+## T44 — The component audit missed a dual implementation, and the flag already gated it
+
+`CLAUDE.md`'s "Component reality" table is the evidence behind D3 — feature flags rather than
+implementation selectors — because the forks were found to be ~90% disjoint, with only four
+components implemented by both. One row was wrong:
+
+```
+| Overview | 12 files | — | no — only OP |
+```
+
+MiDnight ships `modules/drawers/WorkspaceOverview.qml`. It is 447 lines. It has been in this
+tree since Phase 0, because MiDnight is the D1 baseline, and `hybrid.features.overview` has
+been gating it from `modules/Shortcuts.qml` this whole time — both the `workspaceOverview`
+shortcut and the `toggle("workspaceDrawer")` IPC path.
+
+So the flag named after OP's feature has, since it was introduced, been switching MiDnight's.
+Nothing misbehaved, and that is the point: a boolean called `overview` gating *an* overview
+looks correct from every direction except a file listing.
+
+Both are workspace overviews — MiDnight's shows each workspace's windows with drag-to-move and
+click-to-focus, OP's adds a carousel and an all-windows grid. Different designs of the same
+component, which is exactly what the table means by a dual site. There are five, not four.
+
+The consequence is a piece of work *not* done. The `feature-import` skill listed Overview as a
+straightforward OP import, and importing those 12 files behind `hybrid.features.overview` would
+have produced two overviews fighting over one boolean — the implementation-registry design D3
+and D5 exist to prevent. It is now marked "do not import": either leave it, or promote
+`overview` to `hybrid.variants` in Phase 7 (four entries to five, inside D4's cap of ~6).
+
+How it was found is worth keeping. Not by auditing the table, but by asking a mechanical
+question before starting the next import — *which flags have consumers, and do the directories
+they name exist?* `modules/overview/` was absent while `features.overview` had a live consumer.
+A flag whose feature directory does not exist is either dead or pointing somewhere unexpected,
+and it takes one command to ask:
+
+```sh
+for f in <flags>; do grep -rl "features\.$f\b" --include='*.qml' modules/ services/ shell.qml; done
+```
+
+**A locked decision is only as good as the audit under it, and audits are checkable.** D3's
+conclusion survives — the forks really are mostly disjoint, and four-versus-five dual sites does
+not change the design. The table under it needed a correction, and CLAUDE.md's "do not
+re-litigate without new evidence" is a bar to clear, not a door that is closed.
