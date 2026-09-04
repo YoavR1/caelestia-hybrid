@@ -45,6 +45,9 @@ QtObject {
                 Component {
                     WallpaperEnginePage {}
                 }
+                Component {
+                    ThemeSelect {}
+                }
             }
         },
         Component {

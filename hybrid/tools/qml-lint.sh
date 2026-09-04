@@ -165,4 +165,10 @@ cat "$out"
 size=$(wc -c < "$out")
 rm -f "$out"
 [ "$size" -eq 0 ] && exit 0
-exit "${rc:-1}"
+
+# Any output is a failure. That is CI's rule verbatim -- lint.yml ends with
+# `test -z "$lint_out" || exit 1` -- and deferring to qmllint's own exit code is NOT the same
+# thing, because qmllint returns 0 when every diagnostic it printed is Info-level. So this
+# script printed `Info: ... Unused import [unused-imports]` and exited 0, the gate reported
+# clean, and the same tree failed lint-qml in CI. Twice. See trap T48.
+exit 1

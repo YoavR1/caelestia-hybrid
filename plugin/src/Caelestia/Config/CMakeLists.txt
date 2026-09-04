@@ -13,6 +13,7 @@ qml_module(caelestia-config
         tokensattached.cpp
         anim.cpp
         hybridconfig.cpp
+        userpaths.cpp
         sessionconfig.cpp
         audioconfig.hpp
         aiconfig.hpp

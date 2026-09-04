@@ -15,6 +15,7 @@
       "badApple": true,
       "dino": true,
       "hotspot": true,
+      "themeManager": true,
       "btAgent": true
     },
     "variants": {

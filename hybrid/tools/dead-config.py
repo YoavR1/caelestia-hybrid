@@ -52,8 +52,18 @@ VERBOSE = "--verbose" in sys.argv
 # once something reads it"; this is what makes that true rather than aspirational.
 DECL_RE = re.compile(
     r"\bCONFIG_(?:GLOBAL_)?(?:ENUM_)?(?:PROPERTY|LIST)\s*\(\s*[^,()]+,\s*([A-Za-z_]\w*)"
-    r"|\b(?:FEATURE|VARIANT)\s*\(\s*([A-Za-z_]\w*)\s*\)"
+    r"|\b(?:FEATURE|VARIANT|THEMED_PATH)\s*\(\s*([A-Za-z_]\w*)"
 )
+
+# Wrapper macros whose first argument is the key name. FEATURE/VARIANT wrap
+# CONFIG_GLOBAL_PROPERTY, THEMED_PATH wraps CONFIG_PROPERTY. They are listed above, and
+# `check_wrappers_known` below fails the run if a new one appears -- because a wrapper this
+# tool has not been told about does not produce a false positive, it produces a **silent
+# hole**: every key declared through it drops out of the schema count and can never be
+# reported dead. That happened twice. FEATURE/VARIANT hid all 18 flags until the count was
+# questioned, and THEMED_PATH hid four path keys the same way a release later.
+KNOWN_WRAPPERS = {"FEATURE", "VARIANT", "THEMED_PATH"}
+WRAPPER_DEF_RE = re.compile(r"^\s*#define\s+([A-Z][A-Z0-9_]*)\s*\(([^)]*)\)")
 
 
 def declared_names(line: str):
@@ -97,6 +107,42 @@ ALLOW_REASON = (
 )
 
 
+def check_wrappers_known(headers):
+    """Fail if a header defines a macro that expands to a config property we do not parse."""
+    unknown = []
+    for f in headers:
+        text = (ROOT / f).read_text()
+        for i, line in enumerate(text.splitlines()):
+            m = WRAPPER_DEF_RE.match(line)
+            # CONFIG_* names are matched by DECL_RE directly, so a macro that merely renames
+            # one of them (CONFIG_LIST -> SETTINGS_LIST) is already covered and is not a hole.
+            if not m or m.group(1) in KNOWN_WRAPPERS or m.group(1).startswith("CONFIG_"):
+                continue
+            # A macro definition can continue over backslash-continued lines; look at the
+            # whole run before deciding it does not declare a property.
+            body, n = line, i
+            lines = text.splitlines()
+            while body.rstrip().endswith("\\") and n + 1 < len(lines):
+                n += 1
+                body += lines[n]
+            # A wrapper is only a hole if the property NAME comes from one of its
+            # parameters. FONT_CONFIG/FONT_STYLE generate whole classes but name their keys
+            # literally -- `CONFIG_PROPERTY(QString, family, ...)` -- so DECL_RE already sees
+            # `family` in the macro body and nothing is hidden. THEMED_PATH(name, ...) and
+            # FEATURE(name) pass the name *through*, which is what makes them invisible.
+            params = {a.strip() for a in m.group(2).split(",") if a.strip()}
+            declared = re.findall(
+                r"CONFIG_(?:GLOBAL_)?(?:ENUM_)?(?:PROPERTY|LIST)\s*\(\s*[^,()]+,\s*([A-Za-z_]\w*)", body)
+            if params & set(declared):
+                unknown.append(f"{f}:{i + 1}: {m.group(1)}")
+    if unknown:
+        print("  wrapper macro(s) this checker does not parse -- every key declared through")
+        print("  them is invisible here. Add the name to KNOWN_WRAPPERS and to DECL_RE:")
+        for u in unknown:
+            print(f"    {u}")
+    return unknown
+
+
 def tracked(*patterns):
     out = subprocess.run(["git", "-C", str(ROOT), "ls-files", *patterns],
                          capture_output=True, text=True, check=True).stdout.split()
@@ -108,6 +154,9 @@ def tracked(*patterns):
 
 def main():
     headers = [f for f in tracked("plugin/src/Caelestia/Config/*.hpp")]
+
+    if check_wrappers_known(headers):
+        return 1
 
     keys = {}
     for f in headers:
