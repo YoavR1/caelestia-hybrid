@@ -66,6 +66,7 @@ class HybridFeatures : public settings::ObjectNode {
     FEATURE(badApple)
     FEATURE(dino)
     FEATURE(hotspot)
+    FEATURE(btAgent)
 };
 
 // The four components both forks genuinely implement. Capped at ~6 entries (D4): growth

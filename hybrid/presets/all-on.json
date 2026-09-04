@@ -14,7 +14,8 @@
       "shimeji": true,
       "badApple": true,
       "dino": true,
-      "hotspot": true
+      "hotspot": true,
+      "btAgent": true
     },
     "variants": {
       "lockCentre": "op",

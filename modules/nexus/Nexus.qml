@@ -7,6 +7,7 @@ import qs.components
 import qs.components.controls
 import qs.services
 import qs.modules.nexus
+import qs.modules.nexus.pages.bluetooth
 
 Item {
     id: root
@@ -112,5 +113,24 @@ Item {
         anchors.margins: Tokens.padding.extraLarge
 
         nState: nState
+    }
+
+    // Bluetooth pairing dialog, overlaying the whole Nexus window rather than the pairing
+    // page. PageBase takes a single `contentChild`, so it cannot host a sibling overlay,
+    // and this is where the dialog can actually cover whatever page is open.
+    //
+    // The agent's lifetime deliberately follows this Loader; there is no eager load in
+    // ServiceLoader. scripts/bt-agent.py calls `RequestDefaultAgent`, taking over as the
+    // *system* BlueZ pairing agent, and OP registered it at shell startup while mounting
+    // the dialog only on the pairing page -- so a request arriving with that page closed was
+    // captured from whatever agent would otherwise have served it, and then left unanswered
+    // until BlueZ timed out. Tying registration to the dialog means we only claim the role
+    // while something can answer, and otherwise leave the desktop's own agent alone.
+    Loader {
+        anchors.fill: parent
+        z: 100
+        active: GlobalConfig.hybrid.features.btAgent
+
+        sourceComponent: BluetoothPairingDialog {}
     }
 }
