@@ -23,6 +23,17 @@ PageBase {
         }
     ]
 
+    // Ordered to match config::HybridVariant (Midnight, Op). Indexed by ordinal, so a new
+    // enumerator must be appended in both places -- see T47.
+    readonly property list<MenuItem> variantItems: [
+        MenuItem {
+            text: qsTr("MiDnight")
+        },
+        MenuItem {
+            text: qsTr("OP")
+        }
+    ]
+
     title: qsTr("Hybrid")
 
     ColumnLayout {
@@ -212,10 +223,28 @@ PageBase {
             onToggled: root.targetConfig.hybrid.features.dino = checked
         }
 
-        // The four genuine dual-implementation sites (lock centre, audio popout, desktop
-        // clock, colours) live in the config under `hybrid.variants` and are set by the
-        // presets, but there is no section for them here yet: each still has exactly one
-        // implementation, so a selector would visibly do nothing. Phase 7 is when they get
-        // a second one and this page grows a Variants section.
+        // ------------------------------------------------------------ variants
+
+        SectionHeader {
+            text: qsTr("Variants")
+        }
+
+        // Only the sites that genuinely have two implementations appear here. A selector for
+        // one that does not would visibly do nothing, which is worse than its absence -- so
+        // lockCentre, desktopClock and colours stay out until their second side is imported,
+        // even though all four keys exist in the config and the presets already set them.
+        SelectRow {
+            first: true
+            last: true
+            label: qsTr("Audio popout")
+            subtext: qsTr("Which fork's audio panel the bar opens")
+            configNode: root.targetConfig.hybrid.variants
+            propertyName: "audioPopout"
+            menuItems: root.variantItems
+            active: root.variantItems[root.targetConfig.hybrid.variants.audioPopout === HybridVariant.Op ? 1 : 0]
+            onSelected: item => {
+                root.targetConfig.hybrid.variants.audioPopout = root.variantItems.indexOf(item) === 1 ? HybridVariant.Op : HybridVariant.Midnight;
+            }
+        }
     }
 }
