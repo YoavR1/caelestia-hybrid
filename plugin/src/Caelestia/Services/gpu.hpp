@@ -1,5 +1,7 @@
 #pragma once
 
+#include <qelapsedtimer.h>
+#include <qhash.h>
 #include <qprocess.h>
 #include <qqmlintegration.h>
 #include <qstringlist.h>
@@ -51,6 +53,11 @@ private:
 
     void readGenericUsage();
     void startNvidiaUsage();
+
+    // Intel exposes no gpu_busy_percent (that is an amdgpu attribute), so usage comes from
+    // RC6 -- the counter of milliseconds the GPU spent in its idle power state. Busy is
+    // 1 - (delta rc6 / delta wall clock), which is real utilisation rather than a proxy.
+    void readIntelUsage();
     void readGpuTemperature();
     void resetUsage();
 
@@ -72,6 +79,11 @@ private:
     // /sys/class/drm card busy files, enumerated once at construction (the card
     // set is static at runtime) and reused by resolution and the tick path.
     QStringList m_busyFiles;
+
+    // RC6 is a monotonic total, so a sample is only meaningful against the previous one:
+    // keep the last reading per gt directory and the wall clock between them.
+    QHash<QString, qint64> m_lastIntelRc6Residency;
+    QElapsedTimer m_intelUsageTimer;
 
     // Bumped per resolution so callbacks from a superseded probe are dropped
     int m_generation = 0;

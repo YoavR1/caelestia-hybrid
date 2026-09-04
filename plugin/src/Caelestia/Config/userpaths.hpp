@@ -47,16 +47,18 @@ class UserPaths : public settings::ObjectNode {
         QString, cacheDir, QStandardPaths::writableLocation(QStandardPaths::GenericCacheLocation) + u"/caelestia"_s)
     CONFIG_GLOBAL_PROPERTY(
         QString, lyricsDir, QStandardPaths::writableLocation(QStandardPaths::MusicLocation) + u"/Lyrics/"_s)
-
     // The selected theme's folder name under assets/themes, or empty for none. The *name* is
     // stored rather than the expanded paths, so a theme's contents can change and existing
     // users get the change -- the same reasoning as D8 for presets.
     CONFIG_PROPERTY(QString, themeName, QString())
 
-    THEMED_PATH(sessionGif, "session.gif", "root:/assets/session-sparkle.gif")
-    THEMED_PATH(mediaGif, "media.gif", "root:/assets/media-sparkle.gif")
-    THEMED_PATH(noNotifsPic, "notif.png", "root:/assets/no-notifs.png")
-    THEMED_PATH(lockNoNotifsPic, "notif.png", "root:/assets/no-notifs.png")
+    // Fallbacks are the forks' own artwork, restored on 2026-09-04. The themed default layers
+    // over them: with no theme selected these resolve exactly as they did before this feature
+    // existed, which is what makes the flag safe to ship on by default.
+    THEMED_PATH(sessionGif, "session.gif", "root:/assets/kurukuru.gif")
+    THEMED_PATH(mediaGif, "media.gif", "root:/assets/bongocat.gif")
+    THEMED_PATH(noNotifsPic, "notif.png", "root:/assets/dino.png")
+    THEMED_PATH(lockNoNotifsPic, "notif.png", "root:/assets/dino.png")
 
 public:
     explicit UserPaths(UserPaths* fallback = nullptr, QObject* parent = nullptr, bool globalOnly = false);
