@@ -1690,3 +1690,38 @@ Actually pairing a device is untested, and deliberately so: the only way to test
 the agent, which claims the machine's default pairing agent role and would disrupt whatever
 holds it. That needs a real device and a person watching, like the QuickShare receive path
 (T27). Do not read a green matrix as evidence that pairing works.
+
+## T45 — I filtered `Info:` out of the QML gate and called it clean
+
+`lint-qml` failed on PR #4 with one line:
+
+```
+Info: services/BtAgent.qml:8:1: Unused import [unused-imports]
+import qs.services
+```
+
+`hybrid/tools/qml-lint.sh` had reported this correctly, locally, before the push. It was not
+seen because of how it was *checked*:
+
+```sh
+./hybrid/tools/qml-lint.sh 2>&1 | grep -E '^(Warning|Error)' || echo "clean"
+```
+
+qmllint emits three severities and that grep matches two. CI's rule is
+`test -z "$lint_out" || exit 1` — **any** output fails, `Info` included. So the filter dropped
+exactly the diagnostic that mattered and printed the word "clean".
+
+The script's own contract was right all along: it `cat`s the output and exits non-zero if the
+file is non-empty. Running it and reading `$?` would have caught this; wrapping it in a grep
+replaced its verdict with a different, weaker one.
+
+**Check a gate by its exit status, not by grepping its output.** A gate that already knows how
+to fail does not need help deciding, and any filter placed between it and the verdict is a
+second, unreviewed gate — one written in the moment, with no test, and biased toward the answer
+that lets work proceed. This is the same shape as T23 (a gate that could not fail), T30
+(checkers passing on an empty file list) and T35 (`git push` reporting success while pushing
+nothing): *the check passed* and *the check was performed* are different claims.
+
+The finding itself was real and pre-existing. `Toaster` is a C++ type registered by
+`plugin/src/Caelestia/toaster.cpp`, so it arrives with `import Caelestia`; `BtAgent.qml` uses
+only that and `GlobalConfig`, and OP's `import qs.services` was dead in the source. Removed.
