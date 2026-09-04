@@ -1748,3 +1748,34 @@ Net effect on the plan: of nine rows, two are done (Hotspot, BtAgent), three wer
 one is blocked on security (pattern lock, T3/D10), two need a design decision before any port
 (Dock, Overview — both collide with a flag that already gates MiDnight's version), and two are
 genuinely open (GPU detection, theme manager). The roadmap was roughly half description.
+
+## T47 — Adding an enumerator has two homes, and only one of them fails loudly
+
+Adding `Intel` to `GpuType` touches two places, and they fail in opposite ways.
+
+The config side is safe. Enums are serialised **by name** -- `EnumCodec::encode` writes
+`m_metaEnum` keys and `decode` compares strings case-insensitively -- so an existing
+`shell.json` saying `"gpuType": "nvidia"` keeps working wherever the enumerator sits, and an
+unknown name is rejected with a diagnostic rather than silently mapped to whatever now
+occupies that slot.
+
+`modules/nexus/pages/ServicesPage.qml` is not:
+
+```qml
+// GPU types, ordered to match config::GpuType (Auto, Nvidia, Generic, None)
+readonly property list<MenuItem> gpuItems: [ ... ]
+```
+
+That list is indexed by **ordinal**. Insert an enumerator anywhere but the end and every entry
+after it labels the wrong type -- the dropdown reads "Generic" and sets `None` -- and nothing
+detects it. Not the compiler, which never sees the QML; not `qmllint`, which sees a valid list
+of `MenuItem`; not the smoke matrix, which boots the page fine because the list is the right
+*length*. The only symptom is a settings menu that lies.
+
+So `Intel` is appended rather than slotted next to `Nvidia` where it reads better, and the
+comment in both files now says the list is ordinal-coupled and must be appended to.
+
+The general shape: **serialising by name buys safety at the persistence layer and none at all
+in a UI that indexes by position.** When a type is duplicated as a literal list somewhere, the
+duplicate is the copy that will rot, and its only protection is a comment pointing at the
+original.
