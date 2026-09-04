@@ -3,13 +3,21 @@ import Caelestia.Config
 import qs.components
 import qs.components.images
 import qs.services
-import qs.modules.launcher.services
-
-// qmllint enable unused-imports
+import qs.modules.launcher.services // qmllint disable unused-imports
 
 Item {
     id: root
 
+    // This type is why the ThemeManager import carries a `disable unused-imports` directive.
+    // A type used only in a property declaration does not count as using its import, so the
+    // linter calls that import unused -- while removing it produces three unresolved-type
+    // warnings instead. The directive sits inline on the import rather than on a line above
+    // it, because qml-lint-conventions.py --fix rewrites the import block and drops comments
+    // inside it.
+    //
+    // Note the wording above: a comment whose text *begins* with the linter's name is parsed
+    // as a directive, so "<name> does not count ..." was read as one with unknown categories
+    // "not" and "count". Keep the name out of the leading position in prose.
     required property ThemeManager.Theme modelData
     required property var list
 

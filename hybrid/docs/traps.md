@@ -1748,3 +1748,59 @@ Net effect on the plan: of nine rows, two are done (Hotspot, BtAgent), three wer
 one is blocked on security (pattern lock, T3/D10), two need a design decision before any port
 (Dock, Overview — both collide with a flag that already gates MiDnight's version), and two are
 genuinely open (GPU detection, theme manager). The roadmap was roughly half description.
+
+## T48 — The local QML gate passed on output that fails CI
+
+`hybrid/tools/qml-lint.sh` ended like this:
+
+```sh
+[ "$size" -eq 0 ] && exit 0
+exit "${rc:-1}"          # rc is qmllint's own exit code
+```
+
+Empty output passes; anything else defers to qmllint. That looks careful and is wrong, because
+**qmllint exits 0 when every diagnostic it printed is `Info`-level**. So the script printed
+
+```
+Info: modules/launcher/items/ThemeItem.qml:6:1: Unused import [unused-imports]
+```
+
+and exited **0**. CI's rule is `test -z "$lint_out" || exit 1` — *any* output fails — so the same
+tree passed locally and failed `lint-qml` in CI. Twice.
+
+This is the sequel to T45 and the more serious half of it. There the mistake was mine: I wrapped
+the gate in `grep -E '^(Warning|Error)'`, which dropped `Info`. The fix was "check a gate by its
+exit status, not by grepping its output" — and that fix would not have helped here, because the
+exit status itself was wrong. A gate can only be trusted as a verdict if its exit code encodes
+the same contract the real gate enforces.
+
+Fixed by making any output exit 1, matching lint.yml verbatim. The tree was already clean under
+the stricter rule, so nothing else moved.
+
+**Both directions of a gate need a test.** T23 established that a gate nobody has watched fail is
+not known to work; this adds the other half — a gate nobody has watched *pass on known-bad input*
+is not known to be strict enough. The `--self-test` in `smoke-matrix.sh` does exactly that for the
+matrix. `qml-lint.sh` has no equivalent, and would have caught this the day it was written.
+
+### A second, smaller trap in the same file
+
+The fix was a `// qmllint disable unused-imports` on the import line. It was originally written
+as a comment block *above* the import — and `scripts/qml-lint-conventions.py --fix` rewrites the
+import block and drops comments inside it, so the disable silently vanished and left an orphaned
+`// qmllint enable` behind. The directive has to be **inline on the line it applies to**, which
+survives both that fixer and `qmlformat`.
+
+And a third, found by the newly-strict gate within a minute of fixing it: the explanatory
+comment written to document all this began "qmllint does not count a type used only in ...",
+and **any comment whose text begins with the linter's name is parsed as a directive**. That
+sentence became a directive with unknown categories `not` and `count`:
+
+```
+Warning: ThemeItem.qml:12:7: qmllint directive on unknown category "not" [invalid-lint-directive]
+```
+
+Keep the tool's name out of the leading position when writing prose about it. The stricter
+exit code paid for itself immediately.
+
+Also verified inline rather than assumed: the disable survives a `--fix` pass followed by
+`qmlformat -i`, which is the sequence that destroyed the block-comment form.
