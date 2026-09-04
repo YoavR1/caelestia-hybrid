@@ -1567,3 +1567,28 @@ the gate saw nothing.
 
 Churning upstream-shaped files to satisfy a rule the gate is not enforcing buys nothing and
 costs merge conflicts against three upstreams. Run `qml-lint-conventions.py --fix`.
+
+## T40 — The presets README claimed a guarantee the matrix does not check
+
+`hybrid/presets/README.md` said of the `all-on`/`all-off` pair:
+
+> they prove a flag gates *instantiation* rather than visibility, because the components a
+> preset turns off report zero instantiations, not zero visible pixels
+
+Nothing measures that. `run_preset()` in `smoke-matrix.sh` asserts exactly three things: the
+shell is still alive when the timeout fires (`rc == 124`), the log carries no `ERROR` or
+`WARN` surviving `filter_ignored`, and every IPC call driven by `drive_shell` answers. There
+is no instantiation count anywhere in the harness, and no component reports one.
+
+So `all-off` proves a disabled feature does not *break* or *warn*. A feature gated with
+`visible: false` — precisely the mistake the rule exists to prevent — passes `all-off` and
+`all-on` both.
+
+The claim is now corrected in place rather than deleted, because the underlying rule is
+still right; it is enforced by review (the `feature-import` skill, the `qml-reviewer` agent)
+rather than by the harness. A real instantiation census is worth building.
+
+This is the third time in this project a documented guarantee turned out to be unmeasured —
+after the gate that could not fail (T23) and the checkers that passed on an empty file list
+(T30). The pattern is worth stating plainly: **a sentence in a README asserting that a gate
+proves something is not evidence that it does.** Read the assertion in the script.
