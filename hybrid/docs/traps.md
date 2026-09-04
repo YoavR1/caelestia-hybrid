@@ -1997,7 +1997,21 @@ the stricter rule, so nothing else moved.
 **Both directions of a gate need a test.** T23 established that a gate nobody has watched fail is
 not known to work; this adds the other half — a gate nobody has watched *pass on known-bad input*
 is not known to be strict enough. The `--self-test` in `smoke-matrix.sh` does exactly that for the
-matrix. `qml-lint.sh` has no equivalent, and would have caught this the day it was written.
+matrix.
+
+`qml-lint.sh` now has one too, and its probe is deliberately an **Info-level** finding — an
+unused `import QtQml` in an `Item`. A Warning-level probe would have passed even with the bug
+present and proved nothing; a self-test has to exercise the boundary the gate actually got
+wrong. Validated by putting the bug back and watching it fail:
+
+```
+$ # final line changed back to `exit "${rc:-1}"`
+$ ./hybrid/tools/qml-lint.sh --self-test
+FAIL self-test: the gate PASSED a file with a known Info-level finding.
+     It is not enforcing what lint.yml enforces (`test -z "$lint_out"`).
+```
+
+It runs in `verify.sh` and in `lint.yml`, so the gate's strictness is now itself gated.
 
 ### A second, smaller trap in the same file
 
@@ -2022,3 +2036,164 @@ exit code paid for itself immediately.
 Also verified inline rather than assumed: the disable survives a `--fix` pass followed by
 `qmlformat -i`, which is the sequence that destroyed the block-comment form.
 
+
+## T49 — One GPU's name beside another GPU's usage
+
+The dashboard on a hybrid laptop -- an Intel HD 4000 iGPU and an AMD Radeon HD 8750M dGPU --
+read:
+
+```
+GPU  HD 4000     68°C     Usage 0%
+```
+
+Every part of that is produced correctly and the whole is wrong. The name and the number come
+from **different graphics cards**.
+
+`Gpu::finishNameSource` picked the type like this:
+
+```cpp
+if (!name.isEmpty())              setType(Nvidia);
+else if (!m_busyFiles.isEmpty())  setType(Generic);   // <- taken
+else                              setType(intelGtDirs().isEmpty() ? None : Intel);
+```
+
+`gpu_busy_percent` is an amdgpu attribute, so `m_busyFiles` held the *discrete* card and the
+type resolved to `Generic` before the Intel branch was ever reached. Usage therefore came from
+the AMD card, which is runtime-suspended whenever nothing is using it and reads a flat 0
+forever. The **name** came from `glxinfo -B`, which reports whatever holds the GL context --
+the Intel iGPU, because that is what Hyprland composites on. `lspci` would have agreed with
+glxinfo for a different reason: it lists the integrated GPU first, since its PCI slot is lower.
+
+Two fixes, because there are two faults:
+
+- **Prefer a card that is awake.** Busy files whose `device/power/runtime_status` reads
+  `suspended` are dropped before the type is chosen, so a sleeping dGPU no longer shadows a
+  working iGPU. When the discrete card wakes for a game it is preferred again, which is the
+  right answer in both states.
+- **Name the card the numbers come from.** When a `Generic` card is selected its PCI slot is
+  recorded, and the `lspci` parse prefers the line for that slot instead of the first display
+  controller. Single-GPU machines are unaffected: with no preference set the old behaviour is
+  exactly what runs.
+
+**This was unreachable in development.** The dev machine is a VMware VM whose adapter exposes
+no `gpu_busy_percent`, no `gt` directory and no rc6 counter, so `m_busyFiles` was always empty
+and the branch that shadowed Intel could never be taken. It took a real laptop with two GPUs,
+and it was found by reading a photograph of a dashboard rather than by any gate in this
+repository.
+
+A diagnostic mistake is worth recording alongside it, because it nearly sent the fix the wrong
+way. Asked to look for the counter, I suggested:
+
+```sh
+find /sys/class/drm/ -name '*rc6*'      # printed nothing
+```
+
+`/sys/class/drm/card1` is a **symlink**, and `find` does not follow symlinks without `-L`. The
+file was there the whole time. The output said "this hardware has no rc6 counter", the truth
+was "this command cannot see it", and the next step would have been to add legacy sysfs paths
+that were never needed. Use `find -L` under `/sys/class`, or list the resolved directory.
+
+## T50 — A frozen counter reads as 100% busy, and looks entirely plausible
+
+With the hybrid-GPU fix from T49 in place, the same laptop then reported:
+
+```
+GPU  HD 4000     73°C     Usage 100%
+```
+
+The name was right, the temperature was right, and the number was nonsense: the machine was
+idle. The hardware said so plainly once asked:
+
+```
+rc6_enable: 1
+rc6 before/after 5s: 2500 -> 2500   (delta 0 ms)
+freq act/min/max: 350 / 350 / 1100
+```
+
+`rc6_residency_ms` counts milliseconds the GPU spent asleep, and usage is
+`1 - (delta_rc6 / delta_wall)`. The counter was **frozen at 2500** -- it accumulates briefly
+after boot on this Ivy Bridge and then stops while a display is being driven, despite
+`rc6_enable` reading 1. A delta of zero makes that formula return exactly 1.0, every tick,
+forever. Meanwhile the frequency files said the GPU was pinned at its minimum, 350 of 350-1100,
+which is as idle as a GPU gets.
+
+The fix is not "fall back when the delta is zero", and the reason is worth keeping. **A
+genuinely saturated GPU never sleeps either, and produces exactly the same zero delta.** The
+two cases are indistinguishable in a single sample. What separates them is history: a working
+counter advances sooner or later; a broken one never does. So rc6 is trusted only after it has
+been *seen to move*, and until then the frequency estimate carries the reading -- which is the
+correct answer in both ambiguous cases anyway, since a busy GPU also clocks up.
+
+Two things this is worth remembering for:
+
+- **A plausible number is not a validated one.** 0% was obviously suspicious and got
+  investigated (T49). 100% was equally wrong and looked like a real reading of a real load.
+  The frozen counter was found only because the owner said "everything looked weird" and ran
+  three `cat`s.
+- **Deriving a rate from a monotonic counter needs a liveness check.** The counter existing,
+  being readable, and being nominally enabled were all true here and none of them meant it was
+  counting. `rc6_enable: 1` is documentation of intent, not evidence of function.
+
+## T51 — I fixed the hybrid GPU by deleting the evidence
+
+The T49 fix preferred a GPU that was awake, like this:
+
+```cpp
+m_busyFiles.removeIf([](const QString& f) { return isRuntimeSuspended(cardDirFor(f)); });
+```
+
+`m_busyFiles` is enumerated **once at construction**, with a comment saying so -- "the card set
+is static at runtime". Removing entries from it is permanent. And the removal ran inside
+`finishNameSource`, which happens once, at startup.
+
+On the test laptop the discrete card was awake at that moment, so it survived the filter and
+the type resolved to `Generic`. A minute later it suspended. Nothing re-evaluated: usage kept
+reading a sleeping card's `gpu_busy_percent`, `gpuPciAverageTemp()` found no readable sensor,
+and the temperature fell to **0 °C and stayed there** -- while the CPU-package fallback sat
+unused, because it is keyed on the type being `Intel` and the type was still `Generic`.
+
+Three separate mistakes, worth separating:
+
+- **Destructive filtering of a cached enumeration.** The suspended entries were not skipped,
+  they were deleted, so the dGPU could never be chosen again even after waking. The fix filters
+  into a new list at the point of use and leaves `m_busyFiles` intact.
+- **A one-shot decision about dynamic state.** Runtime PM status changes constantly; resolving
+  the type once at startup and never again cannot be right. `tick()` now checks whether the
+  resolved type still matches reality and re-resolves when it does not -- which also re-runs
+  the name probe, keeping the name and the numbers describing the same device.
+- **Re-resolution had to be rate-limited.** `resolveGpu()` spawns `nvidia-smi`, `glxinfo` and
+  `lspci`. A card flapping at tick rate would spawn them every tick, so there is a 5s floor.
+
+The pattern, and the reason this is the third GPU trap in a row: **each fix was verified
+against the state the machine happened to be in when I looked.** T49 was found in one state,
+T50 in another, and this one only appeared a minute after boot, when the hardware changed state
+on its own. Hardware that has modes needs testing in each mode, and "it looked right when I
+checked" is the weakest evidence in this file.
+
+### The live version oscillated, and the fix was to stop tracking state at all
+
+Re-resolving on suspend transitions worked -- and produced a dashboard that swapped which GPU
+it was describing roughly every half minute, as the discrete card slept and woke on its own.
+Correct on each tick, useless as a display.
+
+The mistake was the choice of signal. `runtime_status` answers "is this card awake", which is
+dynamic by nature, so any rule built on it inherits the flapping. The question actually worth
+asking is "which card is on the screen", and that is answered by connector ownership:
+
+```
+/sys/class/drm/card1-LVDS-1  -> ../../devices/pci0000:00/0000:00:02.0/drm/card1/...
+/sys/class/drm/card1-DP-1    card1-HDMI-A-1    card1-VGA-1
+```
+
+All four connectors belong to `card1`, the Intel chip. `card0`, the AMD one, owns none -- it is
+a muxless render-offload device that drives no display and does nothing unless `DRI_PRIME`
+targets it. The card with the connectors is the one the compositor renders on, its numbers are
+always live, and **connector ownership does not change while the shell runs**.
+
+So the suspend tracking, the tick-time re-resolve and the rate limiter that guarded it were all
+deleted. The selection is static again and reads as four plain cases: a display-owning card
+with a busy file, an Intel `gt` when the screen belongs to the iGPU, a busy file with no
+connectors anywhere (headless or offload-only), and nothing.
+
+**A dynamic signal produced a dynamic bug.** Two fixes were spent making the flapping
+well-behaved before asking whether the thing being tracked was the right thing to track.

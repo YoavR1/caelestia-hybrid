@@ -6,6 +6,7 @@
 #   ./hybrid/tools/qml-lint.sh --fix --dry-run    # preview automatic fixes
 #   ./hybrid/tools/qml-lint.sh --fix              # apply them (commit first)
 #   ./hybrid/tools/qml-lint.sh services/Audio.qml # a subset
+#   ./hybrid/tools/qml-lint.sh --self-test        # prove the gate can still fail
 #
 # Anything not recognised here is passed straight through to qmllint.
 #
@@ -32,9 +33,12 @@ SUMMARY=0
 PASSTHRU=()
 FILES=()
 
+SELFTEST=0
+
 while [ $# -gt 0 ]; do
     case $1 in
-        --summary) SUMMARY=1; shift ;;
+        --summary)   SUMMARY=1; shift ;;
+        --self-test) SELFTEST=1; shift ;;
         -h|--help) sed -n '2,22p' "$0"; exit 0 ;;
         -*)        PASSTHRU+=("$1"); shift ;;
         *)         FILES+=("$1"); shift ;;
@@ -43,6 +47,7 @@ done
 
 red()   { printf '\033[1;31m%s\033[0m' "$*"; }
 green() { printf '\033[1;32m%s\033[0m' "$*"; }
+yellow(){ printf '\033[1;33m%s\033[0m' "$*"; }
 
 [ -x "$QMLLINT" ] || { printf '%s %s not found. Install qt6-declarative.\n' "$(red fail)" "$QMLLINT"; exit 2; }
 case "$("$QMLLINT" --version 2>&1)" in
@@ -130,6 +135,30 @@ if [ ${#FILES[@]} -eq 0 ]; then
     mapfile -t FILES < <(find . -name '*.qml' -not -path './build/*' -not -path './.git/*' | sort)
 fi
 [ ${#FILES[@]} -gt 0 ] || { printf '%s no qml files\n' "$(red fail)"; exit 2; }
+
+# ------------------------------------------------------------ self-test (T23, T48)
+#
+# A gate nobody has watched fail is not known to work, and a gate nobody has watched pass on
+# known-bad input is not known to be strict enough. This script had the second problem: it
+# deferred to qmllint's exit code, which is 0 when every diagnostic printed is Info-level, so
+# it printed `Unused import` and exited 0 while CI failed on the identical tree. The probe
+# below is deliberately an *Info*-level finding for that reason -- a Warning-level one would
+# have passed even before the bug was fixed, and proved nothing.
+if [ "$SELFTEST" = 1 ]; then
+    probe=$ROOT/components/__lint_self_test.qml
+    trap 'rm -f "$probe"' EXIT
+    # `import QtQml` is unused by an Item, which qmllint reports at Info level.
+    printf 'import QtQuick\nimport QtQml\n\nItem {\n}\n' > "$probe"
+
+    printf '%s self-test: expecting this run to FAIL\n\n' "$(yellow note)"
+    if "$0" "$probe" >/dev/null 2>&1; then
+        printf '%s self-test: the gate PASSED a file with a known Info-level finding.\n' "$(red FAIL)"
+        printf '       It is not enforcing what lint.yml enforces (`test -z "$lint_out"`).\n'
+        exit 1
+    fi
+    printf '%s self-test: the gate rejected an Info-level finding, as CI does\n' "$(green PASS)"
+    exit 0
+fi
 
 # ------------------------------------------------------------------------ run
 

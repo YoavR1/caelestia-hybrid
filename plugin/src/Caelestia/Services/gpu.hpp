@@ -76,14 +76,18 @@ private:
     qreal m_percentage = 0.0;
     qreal m_temperature = 0.0;
 
-    // /sys/class/drm card busy files, enumerated once at construction (the card
-    // set is static at runtime) and reused by resolution and the tick path.
+    // /sys/class/drm card busy files, enumerated once at construction (the card set is
+    // static at runtime) and narrowed at resolution to the card that drives a display.
     QStringList m_busyFiles;
 
     // RC6 is a monotonic total, so a sample is only meaningful against the previous one:
     // keep the last reading per gt directory and the wall clock between them.
     QHash<QString, qint64> m_lastIntelRc6Residency;
     QElapsedTimer m_intelUsageTimer;
+
+    // Whether rc6_residency_ms has ever been seen to advance. Until it has, the counter is
+    // not trusted and usage comes from the frequency estimate instead -- see readIntelUsage.
+    bool m_intelRc6Advanced = false;
 
     // Bumped per resolution so callbacks from a superseded probe are dropped
     int m_generation = 0;

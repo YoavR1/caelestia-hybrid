@@ -72,6 +72,9 @@ conv=$(python3 scripts/qml-lint-conventions.py 2>&1)
 echo "$conv" | tail -1
 echo "$conv" | grep -q 'No violations found' || fail=1
 
+step "qmllint self-test"
+./hybrid/tools/qml-lint.sh --self-test | tail -1; ./hybrid/tools/qml-lint.sh --self-test >/dev/null || fail=1
+
 step "qmllint"
 ./hybrid/tools/qml-lint.sh >/dev/null 2>&1 && echo clean || { echo FAILED; fail=1; }
 

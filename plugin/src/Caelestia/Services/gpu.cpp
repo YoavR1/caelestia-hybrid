@@ -3,6 +3,7 @@
 #include <qdir.h>
 #include <qdiriterator.h>
 #include <qfile.h>
+#include <qfileinfo.h>
 #include <qregularexpression.h>
 #include <qset.h>
 
@@ -118,6 +119,31 @@ qreal intelFrequencyUsage() {
     return count > 0 ? sum / static_cast<qreal>(count) : 0.0;
 }
 
+// "/sys/class/drm/card0/device/gpu_busy_percent" -> "/sys/class/drm/card0"
+QString cardDirFor(const QString& busyFile) {
+    return busyFile.left(busyFile.lastIndexOf(u"/device/"_s));
+}
+
+// Does this card own any display connector?
+//
+// Connectors are siblings in /sys/class/drm named after their card -- card1-LVDS-1,
+// card1-HDMI-A-1 and so on. A card with none renders nothing on its own: in a muxless hybrid
+// laptop the discrete GPU drives no screen at all and stays suspended unless DRI_PRIME sends
+// work to it. The card owning the connectors is the one the compositor renders on, so its
+// numbers are the live ones and it is what "my GPU" means on such a machine.
+bool cardDrivesDisplay(const QString& cardDir) {
+    const QString card = cardDir.mid(cardDir.lastIndexOf(u'/') + 1);
+    return !QDir(u"/sys/class/drm"_s).entryList({ card + u"-*"_s }, QDir::AllEntries | QDir::NoDotAndDotDot).isEmpty();
+}
+
+// The PCI slot as lspci prints it: "0000:01:00.0" -> "01:00.0".
+QString pciSlotFor(const QString& cardDir) {
+    const QString target = QFileInfo(cardDir + u"/device"_s).canonicalFilePath();
+    const QString slot = target.mid(target.lastIndexOf(u'/') + 1);
+    const qsizetype colon = slot.indexOf(u':');
+    return colon >= 0 ? slot.mid(colon + 1) : slot;
+}
+
 QString cleanName(QString s) {
     static const QRegularExpression k_noise(u"\\(R\\)|\\(TM\\)|Graphics"_s, QRegularExpression::CaseInsensitiveOption);
     static const QRegularExpression k_spaces(u"\\s+"_s);
@@ -154,12 +180,36 @@ QString parseGlxinfoName(const QByteArray& out) {
     return {};
 }
 
+// Set while a Generic card is selected, so the lspci parse can name *that* device instead of
+// the first display controller it sees. Empty means "no preference", which is the old
+// behaviour and what every single-GPU machine gets.
+// Function-local rather than a namespace-scope QString: a non-POD global static has
+// static-initialisation-order hazards, and clazy rejects it (-Wclazy-non-pod-global-static).
+QString& preferredPciSlot() {
+    static QString s_slot;
+    return s_slot;
+}
+
 QString parseLspciName(const QByteArray& out) {
     static const QRegularExpression k_lineRe(u"vga|3d controller|display"_s, QRegularExpression::CaseInsensitiveOption);
 
     const QStringList lines = QString::fromUtf8(out).split(u'\n');
     QString match;
+    // A hybrid laptop lists both GPUs, and the integrated one comes first because its PCI
+    // slot is lower. Naming it while reporting the discrete card's usage is how the dashboard
+    // came to show "HD 4000" beside an AMD card's percentage.
+    if (!preferredPciSlot().isEmpty()) {
+        for (const QString& line : lines) {
+            if (line.startsWith(preferredPciSlot())) {
+                match = line;
+                break;
+            }
+        }
+    }
     for (const QString& line : lines) {
+        if (!match.isEmpty()) {
+            break;
+        }
         if (k_lineRe.match(line).hasMatch()) {
             match = line;
             break;
@@ -329,14 +379,47 @@ void Gpu::finishNameSource(int index, int generation, QString name) {
     if (m_userType == GpuType::Auto && index == k_nvidiaSource) {
         if (!name.isEmpty()) {
             setType(GpuType::Nvidia);
-        } else if (!m_busyFiles.isEmpty()) {
-            // gpu_busy_percent is amdgpu's, and it is a direct utilisation figure, so it wins
-            // wherever it exists.
-            setType(GpuType::Generic);
         } else {
-            // No busy file. Intel exposes none, which is why an Intel machine previously
-            // resolved to None and reported a flat 0% forever.
-            setType(intelGtDirs().isEmpty() ? GpuType::None : GpuType::Intel);
+            // Prefer the card driving the screen. gpu_busy_percent is an amdgpu attribute,
+            // so on a muxless hybrid laptop it exists only on the *discrete* card -- which
+            // owns no connector, renders nothing unless DRI_PRIME targets it, and is
+            // therefore asleep and reading 0 essentially always. Choosing it reported a
+            // permanent 0% for a chip that was off, beside the other GPU's name, because the
+            // name comes from whatever is rendering.
+            //
+            // Connector ownership is the right signal and, unlike runtime_status, it does not
+            // change while the shell runs. An earlier attempt tracked suspend state instead
+            // and oscillated: the discrete card woke and slept on its own about every half
+            // minute, and the dashboard swapped which GPU it described each time (T51).
+            QStringList display;
+            for (const QString& f : std::as_const(m_busyFiles)) {
+                if (cardDrivesDisplay(cardDirFor(f))) {
+                    display << f;
+                }
+            }
+
+            if (!display.isEmpty()) {
+                // The card on the screen reports usage directly. A single-GPU desktop, and a
+                // machine whose discrete card drives the monitor, both land here.
+                m_busyFiles = display;
+                setType(GpuType::Generic);
+                // Name the card the numbers come from; glxinfo would name whatever holds the
+                // GL context, which on a hybrid machine is the other GPU.
+                preferredPciSlot() = pciSlotFor(cardDirFor(m_busyFiles.first()));
+            } else if (!intelGtDirs().isEmpty()) {
+                // The screen belongs to an Intel iGPU, which publishes no busy file -- which
+                // is why such a machine used to resolve to None and report a flat 0% forever.
+                preferredPciSlot().clear();
+                setType(GpuType::Intel);
+            } else if (!m_busyFiles.isEmpty()) {
+                // No card owns a connector: headless, or offload-only. Its usage is still
+                // better than nothing.
+                setType(GpuType::Generic);
+                preferredPciSlot() = pciSlotFor(cardDirFor(m_busyFiles.first()));
+            } else {
+                preferredPciSlot().clear();
+                setType(GpuType::None);
+            }
         }
 
         if (m_type == GpuType::None) {
@@ -428,6 +511,9 @@ void Gpu::readIntelUsage() {
             // Clamped at zero because the counter resets across a suspend or a driver reload,
             // which would otherwise read as a hugely negative idle and so as 100% busy.
             const qint64 delta = std::max<qint64>(0, *current - *lastIt);
+            if (delta > 0) {
+                m_intelRc6Advanced = true;
+            }
             const qreal idle = std::clamp(static_cast<qreal>(delta) / static_cast<qreal>(elapsedMs), 0.0, 1.0);
             sum += 1.0 - idle;
             ++count;
@@ -446,7 +532,17 @@ void Gpu::readIntelUsage() {
 
     m_intelUsageTimer.restart();
 
-    const qreal newPerc = count > 0 ? sum / static_cast<qreal>(count) : intelFrequencyUsage();
+    // Use rc6 only once it has actually been seen to move. On an Ivy Bridge HD 4000 the
+    // counter sat frozen at 2500 ms with rc6_enable set to 1 -- it accumulates briefly after
+    // boot and then stops while a display is being driven. `1 - (0 / elapsed)` is 100%, so an
+    // idle GPU reported a confident, constant, completely wrong full load.
+    //
+    // A zero delta on its own cannot be the trigger, because a genuinely saturated GPU never
+    // sleeps either and produces exactly the same zero. What separates them is history: a
+    // working counter advances sooner or later, a broken one never does. So the frequency
+    // estimate carries the reading until rc6 proves itself, and that estimate is correct in
+    // both ambiguous cases anyway -- it read 350/350/1100, i.e. minimum, i.e. 0%.
+    const qreal newPerc = (m_intelRc6Advanced && count > 0) ? sum / static_cast<qreal>(count) : intelFrequencyUsage();
     if (std::abs(newPerc - m_percentage) > 0.0001) {
         m_percentage = newPerc;
         emit percentageChanged();
