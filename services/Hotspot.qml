@@ -20,7 +20,13 @@ Singleton {
     // --- Hotspot Configuration ---
     property string ssid: "Caelestia-Hotspot"
 
-    property string password: "caelestia1234"
+    // Deliberately empty. `nmcli device wifi hotspot` generates a password when none is
+    // given (see nmcli(1): "If not provided, nmcli will generate a password"), so every
+    // install gets its own WPA PSK. OP shipped the constant "caelestia1234" here, which
+    // replaced that per-install secret with one published in this repository: anyone in
+    // radio range who has read the source is on the network. The generated key is read
+    // back by `readConfigProc` after a successful start and shown in the settings field.
+    property string password: ""
     property string band: "bg" // "bg" (2.4 GHz) | "a" (5 GHz)
     property string iface: ""
 
@@ -159,14 +165,10 @@ Singleton {
 
         command: ["nmcli", "device", "wifi", "hotspot"]
 
-        stdout: SplitParser {
-            onRead: data => {
-                const line = data.trim();
-                if (line.length > 0) {
-                    console.log("[Hotspot stdout]", line);
-                }
-            }
-        }
+        // stdout is deliberately not captured. `nmcli device wifi hotspot` prints the
+        // hotspot password there -- that is the documented way to learn a generated one --
+        // so echoing it to the shell log wrote the WPA PSK into the journal in plaintext.
+        // The password reaches the user through the settings field, via `readConfigProc`.
 
         stderr: SplitParser {
             onRead: data => {
@@ -184,6 +186,9 @@ Singleton {
             if (code === 0) {
                 root.active = true;
                 root.lastError = "";
+                // nmcli may have generated the password; re-read so the settings field can
+                // show the user what it actually is.
+                root.readSavedConfig();
                 Toaster.toast(qsTr("Wi-Fi Hotspot"), qsTr("Hotspot '%1' is now active").arg(root.ssid), "wifi_tethering");
                 root.refreshClients();
             } else {

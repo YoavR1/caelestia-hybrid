@@ -1592,3 +1592,46 @@ This is the third time in this project a documented guarantee turned out to be u
 after the gate that could not fail (T23) and the checkers that passed on an empty file list
 (T30). The pattern is worth stating plainly: **a sentence in a README asserting that a gate
 proves something is not evidence that it does.** Read the assertion in the script.
+
+## T41 — OP's hotspot ships one Wi-Fi password for every install, and logs it
+
+Three findings in `services/Hotspot.qml`, all in the credential path, found while importing
+it. None is as severe as the pattern lock (T3, D10) — the user has to deliberately start an
+access point — but the first is a real vulnerability and the fix is a deletion.
+
+**A published default PSK.** The service declared:
+
+```qml
+property string password: "caelestia1234"
+```
+
+`start()` passes that to `nmcli device wifi hotspot ... password <psk>`. The important part
+is what the constant displaces. From `nmcli(1)`:
+
+> password — password to use for the created hotspot. **If not provided, nmcli will generate
+> a password.**
+
+So NetworkManager's behaviour is already correct: omit the argument and every install gets
+its own WPA key. OP's constant *overrides* that per-install secret with a value published in
+a public GPL repository. Anyone in radio range who has read the source is on the network,
+and on the LAN behind it. Fixed by making the default empty — a deletion, not a mechanism.
+No RNG is needed in QML, because the one in NetworkManager was there all along.
+
+**The generated key was logged in plaintext.** `startProc`'s stdout handler did:
+
+```qml
+console.log("[Hotspot stdout]", line);
+```
+
+and printing the password is exactly what that stdout is *for* — `nmcli -s dev wifi hotspot`
+is the documented way to learn a generated one. So the WPA PSK went into the shell log and
+the journal on every start. The handler is now empty.
+
+**The generated key never reached the user.** Nothing re-read the connection after a
+successful start, so with no default password the settings field would have stayed blank and
+the user would have had no way to see what nmcli chose. `onExited` now calls
+`readSavedConfig()` on success; `readConfigProc` already runs `nmcli -s` and populates the
+field, which the page renders masked with a reveal toggle.
+
+The general shape: **a hardcoded credential is worth checking against what the tool does
+without it.** Here the "default" was not filling a gap, it was overwriting a better answer.
