@@ -67,10 +67,10 @@ public release:
 
 | Asset | Source | Status |
 |---|---|---|
-| `assets/shimeji/pusheen/*` (46) | `midnight` | **Resolved — removed.** Pusheen is a registered trademark of Pusheen Corp. Replaced by `assets/shimeji/sparkle/`, drawn here. |
-| `assets/bongocat.gif` | `midnight` | **Resolved — removed.** Bongo Cat. Replaced by `assets/media-sparkle.gif`. |
-| `assets/kurukuru.gif` | `midnight` | **Resolved — removed.** Replaced by `assets/session-sparkle.gif`. |
-| `assets/dino/*` (8), `assets/dino.png` | `midnight` | **Resolved — removed.** The Chrome offline runner's T-Rex and cacti are Google's. Replaced by `assets/runner/` and `assets/no-notifs.png`. |
+| `assets/shimeji/pusheen/*` (46) | `midnight` | **Accepted by the owner, 2026-09-04 — restored** and back as the `shimeji.directory` default. Pusheen remains a registered trademark of Pusheen Corp. `assets/shimeji/sparkle/` stays in the tree as a drop-in alternative: it is a directory setting, so switching is one config key. |
+| `assets/bongocat.gif` | `midnight` | **Accepted by the owner, 2026-09-04 — restored** as the `paths.mediaGif` default. `assets/media-sparkle.gif` stays as an alternative. |
+| `assets/kurukuru.gif` | `midnight` | **Accepted by the owner, 2026-09-04 — restored** as the `paths.sessionGif` default. `assets/session-sparkle.gif` stays as an alternative. |
+| `assets/dino/*` (8), `assets/dino.png` | `midnight` | **Accepted by the owner, 2026-09-04 — restored.** The Chrome offline runner's T-Rex and cacti remain Google's. `components/DinoGame.qml` hardcodes sprite paths, so unlike the others this one is a code change rather than a config key; `assets/runner/` stays in the tree and the paths in that file are the whole switch. |
 | `assets/sounds/*` (74 files) | `midnight` | **Accepted by the owner, 2026-09-04 — restored.** Android's stock tones: Aldebaran, Altair, Antares, Betelgeuse, Beat_Box_Android and 61 more, 16 MB of Google's library. They had been replaced by 16 synthesised files; the originals are back, byte-identical, on the same reasoning as `badapple.mp4` — MiDnight publishes them already and the repository is now public. The synthesised set is not deleted, it is unshipped: `hybrid/tools/mascot/make-sounds.py` regenerates it in one command, which is the remedy if a takedown ever arrives. |
 | `assets/badapple.mp4` | `midnight` | Unresolved — Touhou fan animation. It *is* the easter egg, so it cannot be substituted; the honest options are to drop the feature or to ship it without the video and let a user supply one. |
 | `assets/themes/{Deadpool,Gojo,Shinchan}/*` | `op` | Not imported. Arrives with OP's theme manager in Phase 5 — **do not import the art**. |
