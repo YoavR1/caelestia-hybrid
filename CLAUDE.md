@@ -32,6 +32,7 @@ Every gate upstream enforces is green on a tree that arrived with all of them fa
 | `hybrid/tools/dead-signals.py` | didn't exist; 1 dead signal | 0 of 209 |
 | `hybrid/tools/dead-qml.py` | didn't exist; 5 dead files | 0 of 367 |
 | `hybrid/tools/shell-safety.py` | didn't exist; 15 injectable sites | 0 of 33 |
+| `hybrid/tools/dead-config.py` | didn't exist; the T28 sweep was prose | 0 of 368, 15 allowlisted |
 | `hybrid/tools/check-index-modes.sh` | didn't exist; 4 tools non-executable | clean |
 
 `./hybrid/tools/verify.sh` runs every row of that table in one go and prints GREEN or RED.
@@ -41,7 +42,7 @@ lacks. `hybrid/tools/plugin-test.sh` is ours too, and runs the only executable t
 tree: the UKEY2 handshake, the `BeatTracker::beat` forward, the mDNS name decode and the
 QuickShare payload frames.
 
-The four checkers in that table each guard a bug class every other gate is blind to, and each
+The five checkers in that table each guard a bug class every other gate is blind to, and each
 was validated by being made to fail on purpose before being trusted — a checker that reports
 zero because it is looking in the wrong place is worse than no checker (T23).
 

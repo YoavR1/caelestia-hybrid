@@ -1037,7 +1037,27 @@ delete groundwork.
 Recorded here so the next person touching video wallpaper or the AI assistant starts from
 evidence instead of rediscovering it.
 
-### How to re-run the sweep
+### The sweep is now a checker
+
+`hybrid/tools/dead-config.py` does this automatically and runs in `verify.sh` and in
+`lint.yml`, so a sixteenth dead key fails CI rather than waiting to be noticed. The fifteen
+below are allowlisted there with their reasons. What follows is the algorithm it implements,
+kept because the three false-positive classes are the interesting part.
+
+Two defects in the first version of that checker are worth knowing about, because both made it
+report a clean tree for the wrong reason:
+
+- it counted a key literally named `name`, picked up from
+  `#define CONFIG_ENUM_PROPERTY(Type, name, defaultVal)` in `common.hpp`. A phantom key looks
+  live the moment any QML writes `.name`.
+- it saw none of the 18 `FEATURE`/`VARIANT` flags, because those are one-argument wrappers
+  around `CONFIG_GLOBAL_PROPERTY` and a regex hunting `CONFIG_` macros never matches them. The
+  schema header claims "a flag exists here only once something reads it"; until that regex was
+  fixed, nothing enforced it.
+
+Both were found by planting a dead key and watching the checker stay green (T23).
+
+### How to re-run the sweep by hand
 
 Extract every `CONFIG_*PROPERTY(type, name, …)` from `plugin/src/Caelestia/Config/*.hpp`, then
 look for `.name` or `"name"` in the QML and for the bare name in C++ **excluding the
