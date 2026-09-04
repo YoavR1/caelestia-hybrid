@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Draw the Caelestia sparkle -- the shell's own mascot -- as SVG.
 
 The shape is the four-pointed sparkle from assets/logo.svg, softened into a character: the

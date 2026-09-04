@@ -8,3 +8,5 @@ logs
 *.bak
 tidy-build/
 .verify/
+__pycache__/
+*.pyc
