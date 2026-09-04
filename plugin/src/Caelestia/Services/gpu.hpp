@@ -85,6 +85,10 @@ private:
     QHash<QString, qint64> m_lastIntelRc6Residency;
     QElapsedTimer m_intelUsageTimer;
 
+    // Whether rc6_residency_ms has ever been seen to advance. Until it has, the counter is
+    // not trusted and usage comes from the frequency estimate instead -- see readIntelUsage.
+    bool m_intelRc6Advanced = false;
+
     // Bumped per resolution so callbacks from a superseded probe are dropped
     int m_generation = 0;
     bool m_nvidiaQuerying = false;

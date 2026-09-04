@@ -2078,3 +2078,44 @@ find /sys/class/drm/ -name '*rc6*'      # printed nothing
 file was there the whole time. The output said "this hardware has no rc6 counter", the truth
 was "this command cannot see it", and the next step would have been to add legacy sysfs paths
 that were never needed. Use `find -L` under `/sys/class`, or list the resolved directory.
+
+## T50 — A frozen counter reads as 100% busy, and looks entirely plausible
+
+With the hybrid-GPU fix from T49 in place, the same laptop then reported:
+
+```
+GPU  HD 4000     73°C     Usage 100%
+```
+
+The name was right, the temperature was right, and the number was nonsense: the machine was
+idle. The hardware said so plainly once asked:
+
+```
+rc6_enable: 1
+rc6 before/after 5s: 2500 -> 2500   (delta 0 ms)
+freq act/min/max: 350 / 350 / 1100
+```
+
+`rc6_residency_ms` counts milliseconds the GPU spent asleep, and usage is
+`1 - (delta_rc6 / delta_wall)`. The counter was **frozen at 2500** -- it accumulates briefly
+after boot on this Ivy Bridge and then stops while a display is being driven, despite
+`rc6_enable` reading 1. A delta of zero makes that formula return exactly 1.0, every tick,
+forever. Meanwhile the frequency files said the GPU was pinned at its minimum, 350 of 350-1100,
+which is as idle as a GPU gets.
+
+The fix is not "fall back when the delta is zero", and the reason is worth keeping. **A
+genuinely saturated GPU never sleeps either, and produces exactly the same zero delta.** The
+two cases are indistinguishable in a single sample. What separates them is history: a working
+counter advances sooner or later; a broken one never does. So rc6 is trusted only after it has
+been *seen to move*, and until then the frequency estimate carries the reading -- which is the
+correct answer in both ambiguous cases anyway, since a busy GPU also clocks up.
+
+Two things this is worth remembering for:
+
+- **A plausible number is not a validated one.** 0% was obviously suspicious and got
+  investigated (T49). 100% was equally wrong and looked like a real reading of a real load.
+  The frozen counter was found only because the owner said "everything looked weird" and ran
+  three `cat`s.
+- **Deriving a rate from a monotonic counter needs a liveness check.** The counter existing,
+  being readable, and being nominally enabled were all true here and none of them meant it was
+  counting. `rc6_enable: 1` is documentation of intent, not evidence of function.

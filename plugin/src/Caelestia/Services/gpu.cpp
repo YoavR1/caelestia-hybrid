@@ -491,6 +491,9 @@ void Gpu::readIntelUsage() {
             // Clamped at zero because the counter resets across a suspend or a driver reload,
             // which would otherwise read as a hugely negative idle and so as 100% busy.
             const qint64 delta = std::max<qint64>(0, *current - *lastIt);
+            if (delta > 0) {
+                m_intelRc6Advanced = true;
+            }
             const qreal idle = std::clamp(static_cast<qreal>(delta) / static_cast<qreal>(elapsedMs), 0.0, 1.0);
             sum += 1.0 - idle;
             ++count;
@@ -509,7 +512,17 @@ void Gpu::readIntelUsage() {
 
     m_intelUsageTimer.restart();
 
-    const qreal newPerc = count > 0 ? sum / static_cast<qreal>(count) : intelFrequencyUsage();
+    // Use rc6 only once it has actually been seen to move. On an Ivy Bridge HD 4000 the
+    // counter sat frozen at 2500 ms with rc6_enable set to 1 -- it accumulates briefly after
+    // boot and then stops while a display is being driven. `1 - (0 / elapsed)` is 100%, so an
+    // idle GPU reported a confident, constant, completely wrong full load.
+    //
+    // A zero delta on its own cannot be the trigger, because a genuinely saturated GPU never
+    // sleeps either and produces exactly the same zero. What separates them is history: a
+    // working counter advances sooner or later, a broken one never does. So the frequency
+    // estimate carries the reading until rc6 proves itself, and that estimate is correct in
+    // both ambiguous cases anyway -- it read 350/350/1100, i.e. minimum, i.e. 0%.
+    const qreal newPerc = (m_intelRc6Advanced && count > 0) ? sum / static_cast<qreal>(count) : intelFrequencyUsage();
     if (std::abs(newPerc - m_percentage) > 0.0001) {
         m_percentage = newPerc;
         emit percentageChanged();
