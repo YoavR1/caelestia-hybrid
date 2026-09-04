@@ -1465,3 +1465,173 @@ The general shape is the one this file keeps returning to: *a command that repor
 for doing nothing is indistinguishable from one that did the work.* It is the same failure
 as the checkers that passed on an empty file list (T30) and the gate that could not fail
 (T23), arriving this time through a shell command rather than a script.
+
+---
+
+## T36 — The QML gate linted an hours-old snapshot of the tree
+
+`hybrid/tools/qml-lint.sh` needs a `.qmlls.ini` to tell `qmllint` where our types live.
+Quickshell writes one as a **symlink into a VFS directory** — a *copy* of the QML tree made
+at the moment the shell booted:
+
+```
+.qmlls.ini -> /run/user/1000/quickshell/vfs/31ac3acb.../.qmlls.ini
+```
+
+The script regenerated it only when it was missing:
+
+```sh
+if [ ! -s .qmlls.ini ]; then    # regenerates ONLY when missing or empty
+```
+
+A stale-but-valid link therefore survived forever, and the linter resolved types against a
+snapshot of the tree as it had been hours earlier. Two consequences, in opposite directions:
+
+- **a newly added file does not exist.** Importing `services/Hotspot.qml` produced eight
+  `Unqualified access [unqualified]` warnings on `HotspotPage.qml` — against a correct file.
+  Every one was noise from a snapshot taken before the import.
+- **a deleted file still resolves.** The gate keeps passing code that references a type that
+  is gone. This is the dangerous direction, and it is silent.
+
+Fixed by regenerating when the snapshot no longer matches the tree. Two tests, because
+neither alone is sufficient:
+
+- **mtime** — any `.qml` newer than the link. Catches additions and edits. It must use
+  `git ls-files --cached --others --exclude-standard`: plain `git ls-files` lists only
+  *tracked* files, and a freshly imported `.qml` is untracked at exactly the moment it needs
+  to be picked up. Keying on tracked files alone misses the one case the check exists for,
+  and *appears* to work because some unrelated file is usually newer.
+- **path set** — the `.qml` paths on disk versus those in the VFS. mtime is structurally
+  blind to a deletion: removing a file leaves every survivor older than the link.
+
+Verified in both directions by adding and then removing a `pragma Singleton` probe under
+`services/` and checking the VFS contents each time.
+
+## T37 — `--check` was not a flag, and a "dry run" rewrote 243 files
+
+`hybrid/tools/qml-section-order.py` writes by default and takes `--dry-run`/`-n`. It parsed
+its arguments like this:
+
+```python
+args = [a for a in sys.argv[1:] if not a.startswith("-")]
+dry_run = "--dry-run" in sys.argv or "-n" in sys.argv
+```
+
+Anything beginning with `-` that was not one of those two was **silently discarded**. So
+`--check` — the obvious guess, and the spelling the sibling checker's own docs use — parsed
+as "no flags at all", and a run intended to *measure* a blast radius rewrote 243 of 367
+files. It reported the damage in the past tense, `rewrote 243 of 367 file(s)`, which read as
+the dry-run summary it was supposed to be.
+
+Nothing was lost — the changes were cosmetic and `git checkout --` restored them — but one
+file showed the rewrite was not purely whitespace: a comment moved across a blank line and
+re-attached itself to the *next* member, so a note about `anchors.fill` came to sit above
+`layer.enabled` and now documents the wrong thing.
+
+Unknown flags are now a usage error (exit 2) and `--check` is a real dry-run alias. For any
+tool that writes by default, an unrecognised flag must never degrade to "write everything".
+
+## T38 — `qmlformat` on `PATH` is not the `qmlformat` the gate runs
+
+```
+$ which qmlformat && qmlformat --version
+/usr/bin/qmlformat
+qmlformat 1.0
+$ /usr/lib/qt6/bin/qmlformat --version
+qmlformat 6.11.2
+```
+
+`check-format.yml` and `hybrid/tools/verify.sh` both call the absolute Qt6 path. Typing the
+bare name gets a different binary with a different idea of correct formatting, so files
+formatted by hand with `qmlformat -i` come out *drifted* against the gate — which is how
+three freshly formatted files failed the format check immediately after being formatted.
+Always use `/usr/lib/qt6/bin/qmlformat`, as the scripts do.
+
+## T39 — Fixing a rule the sibling checker already fixes
+
+Chasing T36 I started teaching `qml-section-order.py` to insert the blank line that
+`missing-section-separator` wants. Two things were wrong with that, and both are worth
+remembering before extending either tool.
+
+First, `scripts/qml-lint-conventions.py` **already has** `fix_section_separators()` and a
+`--fix` mode. Our tool exists for exactly one reason: `section-order` is the rule upstream's
+checker reports but cannot fix. Anything else it "fixes" is duplicated logic that can drift.
+
+Second, it *did* drift, immediately. Reusing the tool's existing `join()` — whose blank-line
+rule is the stricter aesthetic one, blanking around any multiline member even inside a
+single section — would have rewritten **243 of 367 files and 858 bodies the gate does not
+object to**. A hand-written narrow version still disagreed at 12 sites, because this tool
+classifies attached properties (`Layout.fillWidth: ...`) as bindings while the checker
+returns `None` for them and cannot see them at all. The fixer saw a section transition where
+the gate saw nothing.
+
+Churning upstream-shaped files to satisfy a rule the gate is not enforcing buys nothing and
+costs merge conflicts against three upstreams. Run `qml-lint-conventions.py --fix`.
+
+## T40 — The presets README claimed a guarantee the matrix does not check
+
+`hybrid/presets/README.md` said of the `all-on`/`all-off` pair:
+
+> they prove a flag gates *instantiation* rather than visibility, because the components a
+> preset turns off report zero instantiations, not zero visible pixels
+
+Nothing measures that. `run_preset()` in `smoke-matrix.sh` asserts exactly three things: the
+shell is still alive when the timeout fires (`rc == 124`), the log carries no `ERROR` or
+`WARN` surviving `filter_ignored`, and every IPC call driven by `drive_shell` answers. There
+is no instantiation count anywhere in the harness, and no component reports one.
+
+So `all-off` proves a disabled feature does not *break* or *warn*. A feature gated with
+`visible: false` — precisely the mistake the rule exists to prevent — passes `all-off` and
+`all-on` both.
+
+The claim is now corrected in place rather than deleted, because the underlying rule is
+still right; it is enforced by review (the `feature-import` skill, the `qml-reviewer` agent)
+rather than by the harness. A real instantiation census is worth building.
+
+This is the third time in this project a documented guarantee turned out to be unmeasured —
+after the gate that could not fail (T23) and the checkers that passed on an empty file list
+(T30). The pattern is worth stating plainly: **a sentence in a README asserting that a gate
+proves something is not evidence that it does.** Read the assertion in the script.
+
+## T41 — OP's hotspot ships one Wi-Fi password for every install, and logs it
+
+Three findings in `services/Hotspot.qml`, all in the credential path, found while importing
+it. None is as severe as the pattern lock (T3, D10) — the user has to deliberately start an
+access point — but the first is a real vulnerability and the fix is a deletion.
+
+**A published default PSK.** The service declared:
+
+```qml
+property string password: "caelestia1234"
+```
+
+`start()` passes that to `nmcli device wifi hotspot ... password <psk>`. The important part
+is what the constant displaces. From `nmcli(1)`:
+
+> password — password to use for the created hotspot. **If not provided, nmcli will generate
+> a password.**
+
+So NetworkManager's behaviour is already correct: omit the argument and every install gets
+its own WPA key. OP's constant *overrides* that per-install secret with a value published in
+a public GPL repository. Anyone in radio range who has read the source is on the network,
+and on the LAN behind it. Fixed by making the default empty — a deletion, not a mechanism.
+No RNG is needed in QML, because the one in NetworkManager was there all along.
+
+**The generated key was logged in plaintext.** `startProc`'s stdout handler did:
+
+```qml
+console.log("[Hotspot stdout]", line);
+```
+
+and printing the password is exactly what that stdout is *for* — `nmcli -s dev wifi hotspot`
+is the documented way to learn a generated one. So the WPA PSK went into the shell log and
+the journal on every start. The handler is now empty.
+
+**The generated key never reached the user.** Nothing re-read the connection after a
+successful start, so with no default password the settings field would have stayed blank and
+the user would have had no way to see what nmcli chose. `onExited` now calls
+`readSavedConfig()` on success; `readConfigProc` already runs `nmcli -s` and populates the
+field, which the page renders masked with a reveal toggle.
+
+The general shape: **a hardcoded credential is worth checking against what the tool does
+without it.** Here the "default" was not filling a gap, it was overwriting a better answer.

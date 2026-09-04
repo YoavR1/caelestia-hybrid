@@ -214,6 +214,13 @@ def process_body(lines, start, end, indent, stats) -> list[str]:
             return join([members[n] for n in order], indent)
 
     # Nothing moved at this level: keep the original text so the diff stays minimal.
+    #
+    # Deliberately NOT fixing `missing-section-separator` here. `scripts/qml-lint-conventions.py
+    # --fix` already fixes that rule; this tool exists only for `section-order`, which upstream's
+    # checker reports but cannot fix. Adding a separator pass here also drifts from the checker,
+    # because this tool classifies attached properties (`Layout.fillWidth: ...`) as bindings and
+    # the checker cannot see them at all -- so it would insert blanks at 12 sites the gate does
+    # not object to, churning upstream-shaped files for nothing.
     return join(members, indent) if changed else lines[start:end]
 
 
@@ -260,7 +267,21 @@ def process_file(path: Path, stats: dict, dry_run: bool) -> bool:
 
 def main() -> int:
     args = [a for a in sys.argv[1:] if not a.startswith("-")]
-    dry_run = "--dry-run" in sys.argv or "-n" in sys.argv
+
+    # Reject unknown flags instead of dropping them. This tool WRITES by default, so a flag
+    # that looks like a dry run and is silently ignored is a foot-gun rather than a typo:
+    # `--check` (a very natural guess, and what the sibling checker's docs suggest) once
+    # sailed through here and rewrote 243 files that were only meant to be counted.
+    DRY_FLAGS = {"--dry-run", "--check", "-n"}
+    flags = [a for a in sys.argv[1:] if a.startswith("-")]
+    unknown = [f for f in flags if f not in DRY_FLAGS and f not in {"--write", "-h", "--help"}]
+    if unknown:
+        print(f"unknown flag(s): {' '.join(unknown)}", file=sys.stderr)
+        print(f"usage: {Path(sys.argv[0]).name} [--dry-run|--check|-n] [--write] [paths...]",
+              file=sys.stderr)
+        return 2
+
+    dry_run = any(f in DRY_FLAGS for f in flags)
 
     if args:
         targets = []

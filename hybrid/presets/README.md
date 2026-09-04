@@ -14,13 +14,23 @@ are inputs to `smoke-matrix.sh`.
 | `recommended.json` | `recommended` | none | the default a fresh install gets |
 | `midnight.json` | `midnight` | none | MiDnight's features, none of OP's |
 | `op.json` | `op` | none | OP's features, none of MiDnight's |
-| `all-on.json` | `recommended` | all 12 features true, all variants `op` | everything instantiated at once |
-| `all-off.json` | `recommended` | all 12 features false, all variants `midnight` | nothing instantiated |
+| `all-on.json` | `recommended` | all 13 features true, all variants `op` | everything instantiated at once |
+| `all-off.json` | `recommended` | all 13 features false, all variants `midnight` | nothing instantiated |
 | `variants-flipped.json` | `recommended` | mixed features, variants deliberately inconsistent | no two components agreeing |
 
-`all-on` and `all-off` are the interesting pair: they prove a flag gates *instantiation* rather than
-visibility, because the components a preset turns off report zero instantiations, not zero visible
-pixels.
+`all-on` and `all-off` are the interesting pair: one boots with every component built at once, the
+other with none of them.
+
+Be precise about what that pair actually proves, because this file used to overclaim it. The matrix
+asserts three things per run -- the shell stays up for the whole timeout, it logs no `ERROR` or
+`WARN` that is not explicitly ignored, and every driven IPC call answers. **Nothing counts
+instantiations.** So `all-off` proves a disabled feature does not *break* or *warn*; it does not
+prove the component was never built. A feature gated with `visible: false` instead of `active:`
+would pass both runs.
+
+That the flags gate instantiation is enforced by review (see the `feature-import` skill and the
+`qml-reviewer` agent), not by this harness. An instantiation census is worth building and does not
+exist yet.
 
 "Custom" is not a file. It is the computed state when a user overrides any key.
 

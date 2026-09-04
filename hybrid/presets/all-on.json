@@ -13,7 +13,8 @@
       "floatingLyrics": true,
       "shimeji": true,
       "badApple": true,
-      "dino": true
+      "dino": true,
+      "hotspot": true
     },
     "variants": {
       "lockCentre": "op",

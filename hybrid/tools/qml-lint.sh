@@ -67,7 +67,43 @@ esac
 #
 # So: clear, then create, then run. `-s` follows the link, so a dangling one is falsy
 # and regenerates.
-if [ ! -s .qmlls.ini ]; then
+#
+# It must ALSO regenerate when the tree has changed, and originally did not. The VFS that
+# .qmlls.ini points into is a *snapshot* of the QML tree at the moment it was written, so a
+# stale one that still resolves is worse than a missing one: a newly added file is reported
+# as an unresolved type, and a deleted one still resolves, which hides a real error. Adding
+# services/Hotspot.qml produced eight "Unqualified access" warnings against a snapshot taken
+# hours earlier, on a file that was perfectly correct.
+#
+# Cheapest sufficient test: is any .qml newer than the link itself.
+#
+# This must include UNTRACKED files. `git ls-files` lists only tracked ones, and a freshly
+# imported or newly written .qml is untracked at exactly the moment it needs to be picked
+# up -- so keying on tracked files alone would miss the one case this check exists for and
+# would appear to work only because some other file happened to be newer. `--others
+# --exclude-standard` adds untracked-but-not-ignored files; `--cached` keeps tracked ones.
+#
+# mtime alone cannot see a DELETION -- removing a .qml leaves every survivor older than the
+# link, so the snapshot would keep resolving a type that no longer exists. Compare the set
+# of paths as well: that is exact for both additions and deletions, and the mtime test then
+# only has to catch edits to files that were already there.
+stale=0
+if [ -s .qmlls.ini ]; then
+    vfs=$(grep -oP 'buildDir="\K[^"]+' .qmlls.ini 2>/dev/null || true)
+    newest=$(git ls-files -z --cached --others --exclude-standard '*.qml' 2>/dev/null |
+        xargs -0 -r ls -t 2>/dev/null | head -1)
+    if [ -z "$vfs" ] || [ ! -d "$vfs/qs" ]; then
+        stale=1
+    elif [ -n "$newest" ] && [ "$newest" -nt .qmlls.ini ]; then
+        stale=1
+    elif ! diff -q \
+        <(git ls-files --cached --others --exclude-standard '*.qml' | sort) \
+        <(cd "$vfs/qs" && find . -name '*.qml' | sed 's|^\./||' | sort) >/dev/null 2>&1; then
+        stale=1
+    fi
+fi
+
+if [ ! -s .qmlls.ini ] || [ "$stale" = 1 ]; then
     tmp=$(mktemp -d)
     rm -f .qmlls.ini
     touch .qmlls.ini

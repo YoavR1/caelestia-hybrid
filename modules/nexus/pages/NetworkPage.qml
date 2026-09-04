@@ -347,5 +347,21 @@ PageBase {
                 root.nState.openSubPage(4); // Add/edit provider sub-page
             }
         }
+
+        // ---- Hotspot ---------------------------------------------------------
+        // Only the entry point is gated. The page itself is a Component in the stack, so
+        // it is not built until it is pushed, and the Hotspot singleton is not created
+        // until the page reads it -- with the feature off, neither ever happens.
+        RowButton {
+            Layout.topMargin: Tokens.spacing.large
+            Layout.fillWidth: true
+            first: true
+            last: true
+            icon: "wifi_tethering"
+            text: qsTr("Hotspot")
+            trailingIcon: "chevron_right"
+            visible: GlobalConfig.hybrid.features.hotspot
+            onClicked: root.nState.openSubPage(7) // Hotspot sub-page
+        }
     }
 }

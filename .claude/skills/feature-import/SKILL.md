@@ -90,10 +90,19 @@ Add a row to `hybrid/docs/provenance.md` **in the same commit**:
 Binary assets get rows too — and check `hybrid/docs/provenance.md`'s asset watchlist. GPL-3.0
 covers the code; it does not launder bundled third-party artwork.
 
-## 5. Add a preset
+## 5. Put the flag in the presets
 
-Drop a preset in `hybrid/presets/` with **only this feature on**, so the smoke matrix covers the
-feature in isolation as well as in combination. Update `recommended.json` if it belongs there.
+Add the flag to the three preset tables in `plugin/src/Caelestia/Config/hybridconfig.cpp` --
+those are the source of truth for what a preset *means* -- and to the three `hybrid/presets/*.json`
+files that set flags explicitly (`all-on`, `all-off`, `variants-flipped`). The other three name a
+preset and nothing else, so they need no edit. Keep `hybrid/presets/README.md`'s feature count in
+step.
+
+**Do not add a preset per feature.** The six in `hybrid/presets/` each have a distinct job (see the
+table in its README) and the matrix runs every one against two compositor configs, so a file per
+feature multiplies the gate's runtime for very little: `all-off` already proves the feature does not
+instantiate and `all-on` proves it does. Add a preset here only for a *combination* that is
+interesting on its own -- something deliberately hostile, or two features that interact.
 
 ## 6. Verify
 
@@ -121,7 +130,7 @@ Kind:   copied | adapted | reimplemented
 
 | Feature | Source | Notes |
 |---|---|---|
-| Dock | `op` | `modules/dock/` (3 files) + `dockconfig.hpp` + `nexus/pages/panels/DockPanel.qml`. Own Wrapper/window, so Loader-hosting is safe. **Phase 4 proof-of-concept.** |
+| Dock | `op` | **Not the easy import this table used to claim.** It said "own Wrapper/window, so Loader-hosting is safe"; the source says otherwise. `modules/dock/Wrapper.qml` is an `Item` driven by `screenState.dock`, and `modules/drawers/` reaches into it from three places — `Regions.qml` (`panel: root.panels.dock`, plus its context-menu height in the region calculation), `ContentWindow.qml` (`dockBg`, and `dock.transform` fed by `dockBg.deformMatrix`) and `Interactions.qml` (`dockShortcutActive`). So it is a panel in the coupling graph, and importing it means editing the one area T1 and T2 exist to warn about. It also lands beside MiDnight's bar dock, which `hybrid.features.dock` already gates — two docks, not one behind a flag. Rescope before attempting: it needs either a second flag or a fifth `hybrid.variants` entry, and that is a design decision, not a port. |
 | Overview | `op` | 12 files under `modules/overview/`. Not 3D despite the name — a 2D carousel + grid. |
 | Hotspot / BtAgent | `op` | `services/{Hotspot,BtAgent,Nmcli}.qml` + `scripts/bt-agent.py`. Pulls a `dnsmasq` runtime dep. |
 | GPU detection | `op` | C++: `plugin/src/Caelestia/Services/gpu.{cpp,hpp}`. Upstream has since typed GPU kind as an enum — check for overlap. |
