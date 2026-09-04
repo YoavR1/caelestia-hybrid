@@ -45,7 +45,7 @@ The four checkers in that table each guard a bug class every other gate is blind
 was validated by being made to fail on purpose before being trusted — a checker that reports
 zero because it is looking in the wrong place is worse than no checker (T23).
 
-Read `hybrid/docs/traps.md` T12–T34 before touching the harness; **T18 and T19 in
+Read `hybrid/docs/traps.md` T12–T35 before touching the harness; **T18 and T19 in
 particular**, because qmllint silently lints against an installed `midnight-shell-git`
 unless `--bare` is passed, and because the two `-Werror` build legs sat red through a phase
 that reported CI green — they were never run locally, and a `clazy` finding is invisible to

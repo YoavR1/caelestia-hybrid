@@ -1408,3 +1408,40 @@ was still harmless and is what CI does, so nothing failed — the explanation wa
 fiction, repeated four times, and it took a passing test to expose it.
 
 **Reading code tells you what it says. Only running it tells you what it does.**
+
+---
+
+## T35 — `git push origin <branch>` succeeds while pushing nothing
+
+**Symptom:** every push reports success, the working tree is clean, and the commits are not
+on the remote.
+
+After PR #1 was merged I checked out `main` and kept working. The push command in my hands
+still said:
+
+```
+git push -q origin phase3/feature-flags
+```
+
+`phase3/feature-flags` had not moved, so that is a valid, successful, **empty** push. Two
+commits' worth of asset work sat unpushed while three consecutive pushes reported success,
+and — worse — CI never ran on them. `gh pr checks 1` kept returning green for the *merged*
+PR, so the staleness looked like confirmation.
+
+Three things conspired, and each is worth recognising on its own:
+
+- **A no-op push is not an error.** There is nothing for git to complain about.
+- **`-q` hides the one line that would have shown it.** Without `-q`, a real push prints
+  `9f9b6db0..e702406a  main -> main`; an empty one prints `Everything up-to-date`.
+- **The status query was pinned to a merged PR.** Checks on a merged PR never change again,
+  so it answers with history and looks like an answer about now.
+
+**What to do instead.** Push the branch you are on — `git push origin HEAD` — or check
+`git status -sb`, which prints `## main...origin/main [ahead 2]`. The local backup was
+unaffected because `git push backup --all` pushes every branch, which is why the work was
+never actually at risk.
+
+The general shape is the one this file keeps returning to: *a command that reports success
+for doing nothing is indistinguishable from one that did the work.* It is the same failure
+as the checkers that passed on an empty file list (T30) and the gate that could not fail
+(T23), arriving this time through a shell command rather than a script.
