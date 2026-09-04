@@ -1677,3 +1677,74 @@ Both paths are verified, because fixing one had already broken the other once:
 The lesson is narrower than T34's and worth keeping separate: **a variable can be set and
 still be empty, and `if(NOT DEFINED)` does not notice.** The guard has to match how callers
 actually pass the value, not how you imagine they do.
+
+## T44 — The component audit missed a dual implementation, and the flag already gated it
+
+`CLAUDE.md`'s "Component reality" table is the evidence behind D3 — feature flags rather than
+implementation selectors — because the forks were found to be ~90% disjoint, with only four
+components implemented by both. One row was wrong:
+
+```
+| Overview | 12 files | — | no — only OP |
+```
+
+MiDnight ships `modules/drawers/WorkspaceOverview.qml`. It is 447 lines. It has been in this
+tree since Phase 0, because MiDnight is the D1 baseline, and `hybrid.features.overview` has
+been gating it from `modules/Shortcuts.qml` this whole time — both the `workspaceOverview`
+shortcut and the `toggle("workspaceDrawer")` IPC path.
+
+So the flag named after OP's feature has, since it was introduced, been switching MiDnight's.
+Nothing misbehaved, and that is the point: a boolean called `overview` gating *an* overview
+looks correct from every direction except a file listing.
+
+Both are workspace overviews — MiDnight's shows each workspace's windows with drag-to-move and
+click-to-focus, OP's adds a carousel and an all-windows grid. Different designs of the same
+component, which is exactly what the table means by a dual site. There are five, not four.
+
+The consequence is a piece of work *not* done. The `feature-import` skill listed Overview as a
+straightforward OP import, and importing those 12 files behind `hybrid.features.overview` would
+have produced two overviews fighting over one boolean — the implementation-registry design D3
+and D5 exist to prevent. It is now marked "do not import": either leave it, or promote
+`overview` to `hybrid.variants` in Phase 7 (four entries to five, inside D4's cap of ~6).
+
+How it was found is worth keeping. Not by auditing the table, but by asking a mechanical
+question before starting the next import — *which flags have consumers, and do the directories
+they name exist?* `modules/overview/` was absent while `features.overview` had a live consumer.
+A flag whose feature directory does not exist is either dead or pointing somewhere unexpected,
+and it takes one command to ask:
+
+```sh
+for f in <flags>; do grep -rl "features\.$f\b" --include='*.qml' modules/ services/ shell.qml; done
+```
+
+**A locked decision is only as good as the audit under it, and audits are checkable.** D3's
+conclusion survives — the forks really are mostly disjoint, and four-versus-five dual sites does
+not change the design. The table under it needed a correction, and CLAUDE.md's "do not
+re-litigate without new evidence" is a bar to clear, not a door that is closed.
+
+### The same question found a larger error in the work plan
+
+Asking it of the rest of the `feature-import` skill's "Known import notes" turned up three more
+rows describing work that does not exist. Every `midnight` row was already in the tree:
+
+| row | claim | reality |
+|---|---|---|
+| Wallpaper features | "`services/Wallpapers.qml` is 125→486 lines … needs the merged CLI" | **525 lines in this tree.** Upstream 125, MiDnight 486, merged forward in Phase 2. |
+| Clipboard / emoji | "Launcher entries; needs CLI subcommands" | `modules/launcher/services/{Clipboard,Emojis}.qml` present, both flags gating them. |
+| Shimeji / Bad Apple / Dino | "46 + 74 + 8 asset files with unresolved licensing" | `modules/shimeji/` present, all three flags gated; the encumbered assets were removed and replaced with generated originals earlier. |
+
+The cause is structural rather than careless, which is why it is worth recording. **D1 makes
+MiDnight the baseline**, so every MiDnight feature arrived with the Phase 0 fork and was merged
+forward in Phase 2. A table of "features from the forks" is only a work list for the *other*
+fork; for the baseline it is a description of what is already here. Both halves read
+identically, and nothing in the table said which was which.
+
+What survives in those rows is the residual: `--extract-thumbs` and the clipboard/emoji
+subcommands live in `caelestia-dots/cli`, a **separate repository** (D6), not in this one. That
+is a real dependency, and it is the actual reason those features are not finished — not a
+pending import.
+
+Net effect on the plan: of nine rows, two are done (Hotspot, BtAgent), three were never work,
+one is blocked on security (pattern lock, T3/D10), two need a design decision before any port
+(Dock, Overview — both collide with a flag that already gates MiDnight's version), and two are
+genuinely open (GPU detection, theme manager). The roadmap was roughly half description.
