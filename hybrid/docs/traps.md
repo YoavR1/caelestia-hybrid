@@ -1355,6 +1355,26 @@ the fetch starts, the drive closes it, the `Item` is destroyed, and the reply la
 closure. A real race anywhere, needing only that the sidebar be closed inside the request
 window — which the drive does deterministically and a person rarely would.
 
+**And the first fix for it was wrong**, which is the more useful half of this entry. Guarding
+with `if (!root) return;` looks sufficient and is not: an object part way through teardown is
+still **truthy** while its methods have already gone, so the guard passes and the call fails
+one line later.
+
+```
+TypeError: Property 'parseNews' ... is not a function
+QQmlVMEMetaObject: Internal error - attempted to evaluate a function in an invalid context
+```
+
+That reached CI and failed 1 of 6 presets — intermittent, because it depends on where in
+teardown the reply lands. The guard was asking whether the object *exists*; the question is
+whether it is still *usable*.
+
+Testing the corpse is the wrong shape regardless. `Component.onDestruction` now aborts the
+request, so the callback cannot reach a dead component at all, and the callback checks
+`root.pendingRequest !== xhr` — which asks the real question ("is this still the request the
+live component is waiting for") and incidentally handles a superseded request too, which
+neither earlier version did.
+
 *Picker* — `mon.lastIpcObject.specialWorkspace` was assumed present. The binding already
 guarded `!mon`, which is the easy half: a monitor object can exist with an **empty**
 `lastIpcObject`, during startup before the first IPC reply and for an entire run under a

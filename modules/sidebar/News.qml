@@ -22,13 +22,17 @@ Item {
     readonly property color cOnSurfaceVariant: Colours.palette.m3onSurfaceVariant
     readonly property color cError: Colours.palette.m3error
 
+    // The in-flight request, so it can be abandoned if this Item goes away first.
+    property var pendingRequest: null
+
     function fetchNews() {
         if (isFetching)
             return;
         isFetching = true;
         errorMessage = "";
 
-        var xhr = new XMLHttpRequest();
+        const xhr = new XMLHttpRequest();
+        root.pendingRequest = xhr;
         xhr.open("GET", "https://archlinux.org/feeds/news/");
         // Everything in here must go through `root`. A plain function() has its own scope,
         // so the component's properties are not visible and a bare `isFetching = false` is
@@ -37,19 +41,26 @@ Item {
         // The assignments in fetchNews' own body above are fine -- a QML function body does
         // resolve against the component.
         xhr.onreadystatechange = function () {
-            // The request outlives the component: the sidebar can be closed, and this Item
-            // destroyed, while the fetch is still in flight. `root` is then null and every
-            // line below it throws. Nothing to update in that case -- just stop.
-            if (!root)
+            if (xhr.readyState !== XMLHttpRequest.DONE)
                 return;
-            if (xhr.readyState === XMLHttpRequest.DONE) {
-                root.isFetching = false;
-                if (xhr.status === 200) {
-                    root.parseNews(xhr.responseText);
-                } else {
-                    root.errorMessage = qsTr("Failed to fetch news (Status: %1)").arg(xhr.status);
-                }
-            }
+
+            // The reply can arrive after this Item has been destroyed -- the sidebar closes
+            // while the request is still open. Testing `root` is not enough: an object part
+            // way through teardown is still truthy while its methods have already gone, and
+            // the call then fails with
+            //   TypeError: Property 'parseNews' ... is not a function
+            //   QQmlVMEMetaObject: attempted to evaluate a function in an invalid context
+            // The identity check answers the real question -- is this still the request the
+            // live component is waiting for -- and onDestruction clears it.
+            if (!root || root.pendingRequest !== xhr)
+                return;
+            root.pendingRequest = null;
+            root.isFetching = false;
+
+            if (xhr.status === 200)
+                root.parseNews(xhr.responseText);
+            else
+                root.errorMessage = qsTr("Failed to fetch news (Status: %1)").arg(xhr.status);
         };
         xhr.send();
     }
@@ -91,6 +102,14 @@ Item {
 
         if (newsModel.count === 0) {
             errorMessage = qsTr("No news articles found.");
+        }
+    }
+
+    Component.onDestruction: {
+        // Abandon anything still in flight, so its callback cannot reach a dead component.
+        if (root.pendingRequest) {
+            root.pendingRequest.abort();
+            root.pendingRequest = null;
         }
     }
 
