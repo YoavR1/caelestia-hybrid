@@ -19,6 +19,7 @@ Protocol (QML → agent):
   {"type": "pin",     "value": "1234"}
 """
 
+import ctypes
 import json
 import os
 import signal
@@ -313,7 +314,39 @@ class BluezAgent(dbus.service.Object):
         print("[bt-agent] Released", flush=True)
 
 
+def die_with_parent():
+    """Ask the kernel to SIGTERM us when the shell that spawned us goes away.
+
+    Without this the agent outlives its parent. Quickshell does not always reap this child --
+    six of them accumulated on one development machine across six smoke-matrix runs, each one
+    still holding the *system* default BlueZ pairing agent role (RequestDefaultAgent), so
+    every shell restart quietly leaked another process that had taken over pairing for the
+    whole session and could no longer be reached by any of them.
+
+    PR_SET_PDEATHSIG is Linux-only, which is fine -- this shell does not run anywhere else.
+    The signal handler installed in main() then unregisters from BlueZ on the way out, so the
+    role goes back to whatever agent the desktop provides.
+    """
+    PR_SET_PDEATHSIG = 1
+    try:
+        libc = ctypes.CDLL("libc.so.6", use_errno=True)
+        if libc.prctl(PR_SET_PDEATHSIG, signal.SIGTERM, 0, 0, 0) != 0:
+            print("[bt-agent] prctl(PR_SET_PDEATHSIG) failed; agent may outlive the shell", flush=True)
+            return
+    except (OSError, AttributeError) as e:
+        print(f"[bt-agent] cannot set PDEATHSIG ({e}); agent may outlive the shell", flush=True)
+        return
+
+    # The parent can have died in the window between fork and here, in which case the signal
+    # has already been missed and nothing will ever arrive.
+    if os.getppid() == 1:
+        print("[bt-agent] parent already gone, exiting", flush=True)
+        sys.exit(0)
+
+
 def main():
+    die_with_parent()
+
     try:
         dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
         bus = dbus.SystemBus()

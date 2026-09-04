@@ -11,6 +11,13 @@ Singleton {
 
     // --- Public properties for UI binding ---
     property bool active: false
+
+    // Consecutive starts that never reached the socket. Reset once a connection succeeds, so
+    // a long-running agent that crashes later is still retried from scratch.
+    property int startFailures: 0
+    property bool everConnected: false
+
+    readonly property int maxStartFailures: 3
     property string requestType: ""    // "confirmation", "passkey", "pin", "display", "authorization"
     property string deviceName: ""
     property string devicePath: ""
@@ -145,9 +152,24 @@ Singleton {
         }
 
         onExited: (exitCode, exitStatus) => { // qmllint disable signal-handler-parameters
-            console.warn("[BtAgent] Agent exited with code", exitCode, "- restarting in 3s");
             root.resetState();
             sock.connected = false;
+
+            // An agent that never reached its socket did not crash mid-session -- it failed
+            // to start, and it will fail again for the same reason. The usual cause is a
+            // missing python-dbus or python-gobject, which exits immediately with a
+            // traceback; retrying that forever means a restart every 3 seconds and a
+            // tracebackleak into the log for as long as the shell runs. CI found this by
+            // lacking both modules. A crash *after* a successful connection is different and
+            // still retried indefinitely, because that is a transient worth recovering from.
+            if (root.everConnected) {
+                root.startFailures = 0;
+            } else if (++root.startFailures >= root.maxStartFailures) {
+                console.warn("[BtAgent] Agent exited with code", exitCode, "without ever connecting,", root.startFailures, "times - giving up. Bluetooth pairing prompts will not appear; check that python-dbus and python-gobject are installed.");
+                return;
+            }
+
+            console.warn("[BtAgent] Agent exited with code", exitCode, "- restarting in 3s");
             restartTimer.start();
         }
     }
@@ -187,6 +209,10 @@ Singleton {
                 console.warn("[BtAgent] Socket disconnected, reconnecting in 2s");
                 reconnectTimer.start();
             } else {
+                // The agent is up and talking, so any earlier start failures were transient
+                // and a later crash deserves the full retry budget again.
+                root.everConnected = true;
+                root.startFailures = 0;
                 console.log("[BtAgent] Socket connected to agent");
             }
         }

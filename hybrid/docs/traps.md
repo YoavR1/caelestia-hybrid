@@ -1767,3 +1767,50 @@ nothing): *the check passed* and *the check was performed* are different claims.
 The finding itself was real and pre-existing. `Toaster` is a C++ type registered by
 `plugin/src/Caelestia/toaster.cpp`, so it arrives with `import Caelestia`; `BtAgent.qml` uses
 only that and `GlobalConfig`, and OP's `import qs.services` was dead in the source. Removed.
+
+## T46 — The pairing agent outlived every shell that started it
+
+Running the smoke matrix a few times left this behind:
+
+```
+$ pgrep -af bt-agent.py
+231891 /usr/bin/python3 -u .../scripts/bt-agent.py
+233168 /usr/bin/python3 -u .../scripts/bt-agent.py
+233807 /usr/bin/python3 -u .../scripts/bt-agent.py
+248661 ... 249927 ... 250566 ...
+```
+
+Six orphans, one per run. Each had called `RequestDefaultAgent` and so held the **system**
+BlueZ pairing agent role, and none of them was reachable any more: the shell that owned their
+control socket was gone. Every shell restart leaks another, and the newest one wins the role
+while the previous five sit on the bus. On a developer's machine that is six stray processes;
+on a user's, it is pairing that silently stops working after the first shell restart, in the
+way T43 describes, except now caused by *our* own leftovers.
+
+`bt-agent.py` handles `SIGTERM` correctly -- it unregisters from BlueZ and quits. Nobody was
+sending it one. Quickshell does not reliably reap this child when it is itself killed, which
+is exactly what `timeout -s TERM` does to it at the end of every matrix run.
+
+Fixed inside the agent rather than by hoping the parent tidies up, because the agent is the
+one process that knows it must not outlive its owner:
+
+```python
+libc.prctl(PR_SET_PDEATHSIG, signal.SIGTERM, 0, 0, 0)
+if os.getppid() == 1:      # parent died in the fork/exec window; the signal is already lost
+    sys.exit(0)
+```
+
+Linux-only, which is fine -- this shell does not run anywhere else. The existing signal
+handler then unregisters on the way out, so the role returns to the desktop's own agent.
+
+Verified by spawning the agent from a parent that is then killed, and checking `/proc/<pid>`
+two seconds later: alive before, gone after.
+
+Two general points worth keeping:
+
+- **A child that claims a system-wide role must own its own lifetime.** Relying on the parent
+  to clean up means every abnormal exit -- a crash, a `kill -9`, a test harness -- leaves the
+  role held by something that cannot serve it.
+- **The leak was invisible to every gate.** The matrix passed 6/6 while doing this, because it
+  measures the shell's log, not what the shell leaves running. It was found by looking at
+  `pgrep` after a run, on a hunch, not by any check in this repository.
