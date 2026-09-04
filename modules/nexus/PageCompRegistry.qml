@@ -48,6 +48,9 @@ QtObject {
                 Component {
                     ThemeSelect {}
                 }
+                Component {
+                    DesktopBackground {}
+                }
             }
         },
         Component {
@@ -180,6 +183,9 @@ QtObject {
                 Component {
                     UtilitiesPanel {}
                 }
+                Component {
+                    OsdPanel {}
+                }
 
                 // Taskbar component sub-pages
                 Component {
@@ -282,6 +288,15 @@ QtObject {
             StackPage {
                 Component {
                     HybridPage {}
+                }
+            }
+        },
+
+        // Power & idle
+        Component {
+            StackPage {
+                Component {
+                    PowerIdlePage {}
                 }
             }
         },
