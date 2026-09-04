@@ -71,14 +71,14 @@ public release:
 | `assets/bongocat.gif` | `midnight` | **Resolved — removed.** Bongo Cat. Replaced by `assets/media-sparkle.gif`. |
 | `assets/kurukuru.gif` | `midnight` | **Resolved — removed.** Replaced by `assets/session-sparkle.gif`. |
 | `assets/dino/*` (8), `assets/dino.png` | `midnight` | **Resolved — removed.** The Chrome offline runner's T-Rex and cacti are Google's. Replaced by `assets/runner/` and `assets/no-notifs.png`. |
-| `assets/sounds/*` (74 files) | `midnight` | **Resolved — removed.** The notification set was Android's stock tones — Aldebaran, Altair, Antares, Betelgeuse, Beat_Box_Android and 61 more, 16 MB of Google's library. Replaced by 8 UI sounds and 8 notification tones synthesised here. |
+| `assets/sounds/*` (74 files) | `midnight` | **Accepted by the owner, 2026-09-04 — restored.** Android's stock tones: Aldebaran, Altair, Antares, Betelgeuse, Beat_Box_Android and 61 more, 16 MB of Google's library. They had been replaced by 16 synthesised files; the originals are back, byte-identical, on the same reasoning as `badapple.mp4` — MiDnight publishes them already and the repository is now public. The synthesised set is not deleted, it is unshipped: `hybrid/tools/mascot/make-sounds.py` regenerates it in one command, which is the remedy if a takedown ever arrives. |
 | `assets/badapple.mp4` | `midnight` | Unresolved — Touhou fan animation. It *is* the easter egg, so it cannot be substituted; the honest options are to drop the feature or to ship it without the video and let a user supply one. |
 | `assets/themes/{Deadpool,Gojo,Shinchan}/*` | `op` | Not imported. Arrives with OP's theme manager in Phase 5 — **do not import the art**. |
 
 ### Original work
 
 `assets/shimeji/sparkle/`, `assets/runner/`, `assets/media-sparkle.gif`,
-`assets/session-sparkle.gif`, `assets/no-notifs.png` and everything under `assets/sounds/`
+`assets/session-sparkle.gif`, `assets/no-notifs.png` and (until 2026-09-04) everything under `assets/sounds/`
 are made by this project and carry no third-party rights. They are generated, not hand-pixelled: `hybrid/tools/mascot/` holds
 the SVG generator and the three scripts that render every frame, so the character can be
 restyled or re-rendered at any size without redrawing it.
@@ -86,6 +86,10 @@ restyled or re-rendered at any size without redrawing it.
 The design is deliberately not arbitrary — it is the four-pointed sparkle from
 `assets/logo.svg`, in the same `#6AE5E1`, given a face. That is what makes the replacement
 look like it belongs to this shell rather than like a substitute for something else.
+
+**The sounds below are no longer what ships.** MiDnight's originals were restored on 2026-09-04
+(see the watchlist row and the section above); `make-sounds.py` still regenerates the synthesised
+set, and this is kept as the description of that fallback rather than of the current tree.
 
 The sounds are additive synthesis from the standard library — no numpy, no sox, nothing to
 install. Every tone is built from a fast raised-cosine attack, an exponential body and a
