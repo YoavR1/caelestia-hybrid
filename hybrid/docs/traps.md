@@ -2022,3 +2022,59 @@ exit code paid for itself immediately.
 Also verified inline rather than assumed: the disable survives a `--fix` pass followed by
 `qmlformat -i`, which is the sequence that destroyed the block-comment form.
 
+
+## T49 — One GPU's name beside another GPU's usage
+
+The dashboard on a hybrid laptop -- an Intel HD 4000 iGPU and an AMD Radeon HD 8750M dGPU --
+read:
+
+```
+GPU  HD 4000     68°C     Usage 0%
+```
+
+Every part of that is produced correctly and the whole is wrong. The name and the number come
+from **different graphics cards**.
+
+`Gpu::finishNameSource` picked the type like this:
+
+```cpp
+if (!name.isEmpty())              setType(Nvidia);
+else if (!m_busyFiles.isEmpty())  setType(Generic);   // <- taken
+else                              setType(intelGtDirs().isEmpty() ? None : Intel);
+```
+
+`gpu_busy_percent` is an amdgpu attribute, so `m_busyFiles` held the *discrete* card and the
+type resolved to `Generic` before the Intel branch was ever reached. Usage therefore came from
+the AMD card, which is runtime-suspended whenever nothing is using it and reads a flat 0
+forever. The **name** came from `glxinfo -B`, which reports whatever holds the GL context --
+the Intel iGPU, because that is what Hyprland composites on. `lspci` would have agreed with
+glxinfo for a different reason: it lists the integrated GPU first, since its PCI slot is lower.
+
+Two fixes, because there are two faults:
+
+- **Prefer a card that is awake.** Busy files whose `device/power/runtime_status` reads
+  `suspended` are dropped before the type is chosen, so a sleeping dGPU no longer shadows a
+  working iGPU. When the discrete card wakes for a game it is preferred again, which is the
+  right answer in both states.
+- **Name the card the numbers come from.** When a `Generic` card is selected its PCI slot is
+  recorded, and the `lspci` parse prefers the line for that slot instead of the first display
+  controller. Single-GPU machines are unaffected: with no preference set the old behaviour is
+  exactly what runs.
+
+**This was unreachable in development.** The dev machine is a VMware VM whose adapter exposes
+no `gpu_busy_percent`, no `gt` directory and no rc6 counter, so `m_busyFiles` was always empty
+and the branch that shadowed Intel could never be taken. It took a real laptop with two GPUs,
+and it was found by reading a photograph of a dashboard rather than by any gate in this
+repository.
+
+A diagnostic mistake is worth recording alongside it, because it nearly sent the fix the wrong
+way. Asked to look for the counter, I suggested:
+
+```sh
+find /sys/class/drm/ -name '*rc6*'      # printed nothing
+```
+
+`/sys/class/drm/card1` is a **symlink**, and `find` does not follow symlinks without `-L`. The
+file was there the whole time. The output said "this hardware has no rc6 counter", the truth
+was "this command cannot see it", and the next step would have been to add legacy sysfs paths
+that were never needed. Use `find -L` under `/sys/class`, or list the resolved directory.

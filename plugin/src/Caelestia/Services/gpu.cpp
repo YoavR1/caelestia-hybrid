@@ -3,6 +3,7 @@
 #include <qdir.h>
 #include <qdiriterator.h>
 #include <qfile.h>
+#include <qfileinfo.h>
 #include <qregularexpression.h>
 #include <qset.h>
 
@@ -118,6 +119,30 @@ qreal intelFrequencyUsage() {
     return count > 0 ? sum / static_cast<qreal>(count) : 0.0;
 }
 
+// "/sys/class/drm/card0/device/gpu_busy_percent" -> "/sys/class/drm/card0"
+QString cardDirFor(const QString& busyFile) {
+    return busyFile.left(busyFile.lastIndexOf(u"/device/"_s));
+}
+
+// A discrete GPU in a hybrid laptop is powered down whenever nothing is using it, and its
+// gpu_busy_percent then reads a flat 0 forever. Reporting that as "the GPU" is technically
+// true and practically useless -- worse, it is reported next to the *other* GPU's name.
+bool isRuntimeSuspended(const QString& cardDir) {
+    QFile f(cardDir + u"/device/power/runtime_status"_s);
+    if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        return false; // no runtime PM: assume it is awake
+    }
+    return f.readAll().trimmed() == "suspended";
+}
+
+// The PCI slot as lspci prints it: "0000:01:00.0" -> "01:00.0".
+QString pciSlotFor(const QString& cardDir) {
+    const QString target = QFileInfo(cardDir + u"/device"_s).canonicalFilePath();
+    const QString slot = target.mid(target.lastIndexOf(u'/') + 1);
+    const qsizetype colon = slot.indexOf(u':');
+    return colon >= 0 ? slot.mid(colon + 1) : slot;
+}
+
 QString cleanName(QString s) {
     static const QRegularExpression k_noise(u"\\(R\\)|\\(TM\\)|Graphics"_s, QRegularExpression::CaseInsensitiveOption);
     static const QRegularExpression k_spaces(u"\\s+"_s);
@@ -154,12 +179,36 @@ QString parseGlxinfoName(const QByteArray& out) {
     return {};
 }
 
+// Set while a Generic card is selected, so the lspci parse can name *that* device instead of
+// the first display controller it sees. Empty means "no preference", which is the old
+// behaviour and what every single-GPU machine gets.
+// Function-local rather than a namespace-scope QString: a non-POD global static has
+// static-initialisation-order hazards, and clazy rejects it (-Wclazy-non-pod-global-static).
+QString& preferredPciSlot() {
+    static QString s_slot;
+    return s_slot;
+}
+
 QString parseLspciName(const QByteArray& out) {
     static const QRegularExpression k_lineRe(u"vga|3d controller|display"_s, QRegularExpression::CaseInsensitiveOption);
 
     const QStringList lines = QString::fromUtf8(out).split(u'\n');
     QString match;
+    // A hybrid laptop lists both GPUs, and the integrated one comes first because its PCI
+    // slot is lower. Naming it while reporting the discrete card's usage is how the dashboard
+    // came to show "HD 4000" beside an AMD card's percentage.
+    if (!preferredPciSlot().isEmpty()) {
+        for (const QString& line : lines) {
+            if (line.startsWith(preferredPciSlot())) {
+                match = line;
+                break;
+            }
+        }
+    }
     for (const QString& line : lines) {
+        if (!match.isEmpty()) {
+            break;
+        }
         if (k_lineRe.match(line).hasMatch()) {
             match = line;
             break;
@@ -329,14 +378,28 @@ void Gpu::finishNameSource(int index, int generation, QString name) {
     if (m_userType == GpuType::Auto && index == k_nvidiaSource) {
         if (!name.isEmpty()) {
             setType(GpuType::Nvidia);
-        } else if (!m_busyFiles.isEmpty()) {
-            // gpu_busy_percent is amdgpu's, and it is a direct utilisation figure, so it wins
-            // wherever it exists.
-            setType(GpuType::Generic);
         } else {
-            // No busy file. Intel exposes none, which is why an Intel machine previously
-            // resolved to None and reported a flat 0% forever.
-            setType(intelGtDirs().isEmpty() ? GpuType::None : GpuType::Intel);
+            // Prefer a card that is actually powered on. On a hybrid laptop -- an Intel iGPU
+            // beside an AMD dGPU -- gpu_busy_percent exists only on the discrete card, which
+            // is runtime-suspended whenever nothing is using it. Taking it unconditionally
+            // reported a permanent 0% for a chip that was asleep, *next to the integrated
+            // GPU's name*, because the name comes from whatever is rendering. One GPU's name
+            // beside another's usage. Found on real hardware; unreachable in a VM.
+            m_busyFiles.removeIf([](const QString& f) {
+                return isRuntimeSuspended(cardDirFor(f));
+            });
+
+            if (!m_busyFiles.isEmpty()) {
+                // A direct utilisation figure, so it wins wherever it exists and is awake.
+                setType(GpuType::Generic);
+                // Name the card the numbers come from. glxinfo would name whatever holds the
+                // GL context, which on a hybrid machine is the other GPU.
+                preferredPciSlot() = pciSlotFor(cardDirFor(m_busyFiles.first()));
+            } else {
+                // Intel exposes no busy file, which is why an Intel machine previously
+                // resolved to None and reported a flat 0% forever.
+                setType(intelGtDirs().isEmpty() ? GpuType::None : GpuType::Intel);
+            }
         }
 
         if (m_type == GpuType::None) {
