@@ -1698,6 +1698,61 @@ The lesson is narrower than T34's and worth keeping separate: **a variable can b
 still be empty, and `if(NOT DEFINED)` does not notice.** The guard has to match how callers
 actually pass the value, not how you imagine they do.
 
+## T43 — A pairing agent that claims the default role and cannot answer
+
+`scripts/bt-agent.py` does not merely offer to handle pairing:
+
+```python
+manager.RegisterAgent(AGENT_PATH, AGENT_CAPABILITY)
+manager.RequestDefaultAgent(AGENT_PATH)
+```
+
+`RequestDefaultAgent` makes it the **system** BlueZ pairing agent for the session. Every
+pairing request on the machine is then routed to this process, and to no other.
+
+OP starts it at shell init — `shell.qml` has `Component.onCompleted: void(BtAgent.active)`,
+commented "Force BtAgent singleton to initialize at startup" — while mounting the dialog that
+answers it in exactly one place: `modules/nexus/pages/bluetooth/BluetoothPairing.qml`. So for
+the whole time the Nexus Bluetooth pairing page is *not* open, which is essentially always,
+the agent holds the default role with no UI able to respond. A pairing request arriving in
+that window — a phone initiating to this machine — is taken from whatever agent would
+otherwise have served it and then left unanswered until BlueZ times out.
+
+The failure is worse than not having an agent, because it is *silent* and it displaces a
+working one. Nothing logs, nothing prompts; pairing simply stops working, and it looks like a
+Bluetooth problem rather than a shell one.
+
+Fixed here by tying the agent's lifetime to the dialog's, not to the shell's:
+
+- the dialog is a `Loader` in `modules/nexus/Nexus.qml`, gated on `hybrid.features.btAgent`,
+  overlaying the whole Nexus window rather than one page. `PageBase` takes a single
+  `default property Item contentChild` and cannot host a sibling overlay, so the page was
+  never the right host anyway — mounting it there is what forced OP's narrow scope.
+- there is no eager load in `modules/ServiceLoader.qml`. Loading the dialog is what creates
+  the `BtAgent` singleton, which is what spawns the Python process, which is what registers
+  with BlueZ. One chain, one switch.
+
+The tradeoff is stated rather than hidden: we answer pairing requests while the Nexus window
+is open, and the rest of the time the desktop's own agent keeps the role it already had.
+That is a smaller feature than OP appears to offer, and a working one instead of a broken one.
+
+The general shape, and the reason this is worth a trap rather than a commit message: **taking
+over a system-wide role is a commitment to service it.** Registering as the handler for
+something is not a passive optimisation, and the cost of holding a role you cannot fulfil is
+paid by the user, silently, in a subsystem they will not think to blame.
+
+**What is not verified.** The smoke matrix boots with `btAgent` on and passes, which proves
+the schema accepts the key (an unknown one warns, and the matrix fails on warnings) and that
+nothing regressed. It does not exercise the agent at all: the matrix never opens the Nexus
+window, so the `Loader` never activates and the Python process never starts. `bt-agent.py`
+is checked only for parsing and byte-compilation, and `python-dbus`/`python-gobject` are
+confirmed importable.
+
+Actually pairing a device is untested, and deliberately so: the only way to test it is to run
+the agent, which claims the machine's default pairing agent role and would disrupt whatever
+holds it. That needs a real device and a person watching, like the QuickShare receive path
+(T27). Do not read a green matrix as evidence that pairing works.
+
 ## T44 — The component audit missed a dual implementation, and the flag already gated it
 
 `CLAUDE.md`'s "Component reality" table is the evidence behind D3 — feature flags rather than
@@ -1768,6 +1823,117 @@ Net effect on the plan: of nine rows, two are done (Hotspot, BtAgent), three wer
 one is blocked on security (pattern lock, T3/D10), two need a design decision before any port
 (Dock, Overview — both collide with a flag that already gates MiDnight's version), and two are
 genuinely open (GPU detection, theme manager). The roadmap was roughly half description.
+
+## T45 — I filtered `Info:` out of the QML gate and called it clean
+
+`lint-qml` failed on PR #4 with one line:
+
+```
+Info: services/BtAgent.qml:8:1: Unused import [unused-imports]
+import qs.services
+```
+
+`hybrid/tools/qml-lint.sh` had reported this correctly, locally, before the push. It was not
+seen because of how it was *checked*:
+
+```sh
+./hybrid/tools/qml-lint.sh 2>&1 | grep -E '^(Warning|Error)' || echo "clean"
+```
+
+qmllint emits three severities and that grep matches two. CI's rule is
+`test -z "$lint_out" || exit 1` — **any** output fails, `Info` included. So the filter dropped
+exactly the diagnostic that mattered and printed the word "clean".
+
+The script's own contract was right all along: it `cat`s the output and exits non-zero if the
+file is non-empty. Running it and reading `$?` would have caught this; wrapping it in a grep
+replaced its verdict with a different, weaker one.
+
+**Check a gate by its exit status, not by grepping its output.** A gate that already knows how
+to fail does not need help deciding, and any filter placed between it and the verdict is a
+second, unreviewed gate — one written in the moment, with no test, and biased toward the answer
+that lets work proceed. This is the same shape as T23 (a gate that could not fail), T30
+(checkers passing on an empty file list) and T35 (`git push` reporting success while pushing
+nothing): *the check passed* and *the check was performed* are different claims.
+
+The finding itself was real and pre-existing. `Toaster` is a C++ type registered by
+`plugin/src/Caelestia/toaster.cpp`, so it arrives with `import Caelestia`; `BtAgent.qml` uses
+only that and `GlobalConfig`, and OP's `import qs.services` was dead in the source. Removed.
+
+## T46 — The pairing agent outlived every shell that started it
+
+Running the smoke matrix a few times left this behind:
+
+```
+$ pgrep -af bt-agent.py
+231891 /usr/bin/python3 -u .../scripts/bt-agent.py
+233168 /usr/bin/python3 -u .../scripts/bt-agent.py
+233807 /usr/bin/python3 -u .../scripts/bt-agent.py
+248661 ... 249927 ... 250566 ...
+```
+
+Six orphans, one per run. Each had called `RequestDefaultAgent` and so held the **system**
+BlueZ pairing agent role, and none of them was reachable any more: the shell that owned their
+control socket was gone. Every shell restart leaks another, and the newest one wins the role
+while the previous five sit on the bus. On a developer's machine that is six stray processes;
+on a user's, it is pairing that silently stops working after the first shell restart, in the
+way T43 describes, except now caused by *our* own leftovers.
+
+`bt-agent.py` handles `SIGTERM` correctly -- it unregisters from BlueZ and quits. Nobody was
+sending it one. Quickshell does not reliably reap this child when it is itself killed, which
+is exactly what `timeout -s TERM` does to it at the end of every matrix run.
+
+Fixed inside the agent rather than by hoping the parent tidies up, because the agent is the
+one process that knows it must not outlive its owner:
+
+```python
+libc.prctl(PR_SET_PDEATHSIG, signal.SIGTERM, 0, 0, 0)
+if os.getppid() == 1:      # parent died in the fork/exec window; the signal is already lost
+    sys.exit(0)
+```
+
+Linux-only, which is fine -- this shell does not run anywhere else. The existing signal
+handler then unregisters on the way out, so the role returns to the desktop's own agent.
+
+Verified by spawning the agent from a parent that is then killed, and checking `/proc/<pid>`
+two seconds later: alive before, gone after.
+
+Two general points worth keeping:
+
+- **A child that claims a system-wide role must own its own lifetime.** Relying on the parent
+  to clean up means every abnormal exit -- a crash, a `kill -9`, a test harness -- leaves the
+  role held by something that cannot serve it.
+- **The leak was invisible to every gate.** The matrix passed 6/6 while doing this, because it
+  measures the shell's log, not what the shell leaves running. It was found by looking at
+  `pgrep` after a run, on a hunch, not by any check in this repository.
+
+### The first fix did not work, and the orphans said why
+
+`PR_SET_PDEATHSIG` alone was not enough. It was verified in isolation -- spawn a child from a
+Python parent, kill the parent, watch the child go -- and it passed. Under quickshell it does
+not: a later matrix run left a fresh orphan, reparented to `systemd --user`. The signal fires on
+the death of the *thread* that forked the child, and Qt's spawn path gives no guarantee about
+which thread that is. **A mechanism verified on a stand-in parent is not verified for the real
+one.**
+
+The replacement watches `os.getppid()` from a daemon thread and acts when it changes, which is
+indifferent to how the process was started or which signal killed the shell.
+
+Its first draft raised `SIGTERM` at itself so the existing handler could unregister from BlueZ
+cleanly. The orphans then demonstrated why that is not enough either:
+
+```
+$ kill -TERM 231891 233168 233807 248661 249927 250566
+$ ps -eo pid,args | grep -c bt-agent
+6
+```
+
+**All six ignored SIGTERM and needed SIGKILL.** A Python signal handler only runs between
+bytecodes, and this process spends its life inside GLib's main loop in C, so the signal is
+accepted and never acted on. A watchdog that politely requests an exit it cannot enforce is the
+exact bug it exists to fix. It now asks, waits three seconds, and calls `os._exit(0)`.
+
+Verified the way the first attempt was not: full matrix runs, counting agent processes
+afterwards. Zero.
 
 ## T47 — Adding an enumerator has two homes, and only one of them fails loudly
 

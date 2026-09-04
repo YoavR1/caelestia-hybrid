@@ -15,7 +15,8 @@
       "badApple": false,
       "dino": false,
       "hotspot": true,
-      "themeManager": true
+      "themeManager": true,
+      "btAgent": false
     },
     "variants": {
       "lockCentre": "op",

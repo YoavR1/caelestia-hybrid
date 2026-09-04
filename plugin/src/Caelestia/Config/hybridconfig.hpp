@@ -65,6 +65,7 @@ class HybridFeatures : public settings::ObjectNode {
     FEATURE(badApple)
     FEATURE(dino)
     FEATURE(hotspot)
+    FEATURE(btAgent)
     FEATURE(themeManager)
 };
 

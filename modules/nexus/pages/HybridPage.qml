@@ -161,13 +161,22 @@ PageBase {
 
         ToggleRow {
             first: true
-            last: true
             text: qsTr("Hotspot")
             subtext: qsTr("Share this machine's connection as a Wi-Fi access point")
             configNode: root.targetConfig.hybrid.features
             propertyName: "hotspot"
             checked: root.targetConfig.hybrid.features.hotspot
             onToggled: root.targetConfig.hybrid.features.hotspot = checked
+        }
+
+        ToggleRow {
+            last: true
+            text: qsTr("Bluetooth pairing agent")
+            subtext: qsTr("Answer pairing requests from other devices. Takes effect on restart")
+            configNode: root.targetConfig.hybrid.features
+            propertyName: "btAgent"
+            checked: root.targetConfig.hybrid.features.btAgent
+            onToggled: root.targetConfig.hybrid.features.btAgent = checked
         }
 
         SectionHeader {

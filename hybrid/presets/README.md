@@ -14,8 +14,8 @@ are inputs to `smoke-matrix.sh`.
 | `recommended.json` | `recommended` | none | the default a fresh install gets |
 | `midnight.json` | `midnight` | none | MiDnight's features, none of OP's |
 | `op.json` | `op` | none | OP's features, none of MiDnight's |
-| `all-on.json` | `recommended` | all 13 features true, all variants `op` | everything instantiated at once |
-| `all-off.json` | `recommended` | all 13 features false, all variants `midnight` | nothing instantiated |
+| `all-on.json` | `recommended` | all 14 features true, all variants `op` | everything instantiated at once |
+| `all-off.json` | `recommended` | all 14 features false, all variants `midnight` | nothing instantiated |
 | `variants-flipped.json` | `recommended` | mixed features, variants deliberately inconsistent | no two components agreeing |
 | `theme-nebula.json` | `recommended` | `paths.themeName` | the only preset touching a non-`hybrid` key: proves a themed path default resolves through `themeName` and falls back when it is unset |
 
