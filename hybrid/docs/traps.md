@@ -1997,7 +1997,21 @@ the stricter rule, so nothing else moved.
 **Both directions of a gate need a test.** T23 established that a gate nobody has watched fail is
 not known to work; this adds the other half — a gate nobody has watched *pass on known-bad input*
 is not known to be strict enough. The `--self-test` in `smoke-matrix.sh` does exactly that for the
-matrix. `qml-lint.sh` has no equivalent, and would have caught this the day it was written.
+matrix.
+
+`qml-lint.sh` now has one too, and its probe is deliberately an **Info-level** finding — an
+unused `import QtQml` in an `Item`. A Warning-level probe would have passed even with the bug
+present and proved nothing; a self-test has to exercise the boundary the gate actually got
+wrong. Validated by putting the bug back and watching it fail:
+
+```
+$ # final line changed back to `exit "${rc:-1}"`
+$ ./hybrid/tools/qml-lint.sh --self-test
+FAIL self-test: the gate PASSED a file with a known Info-level finding.
+     It is not enforcing what lint.yml enforces (`test -z "$lint_out"`).
+```
+
+It runs in `verify.sh` and in `lint.yml`, so the gate's strictness is now itself gated.
 
 ### A second, smaller trap in the same file
 

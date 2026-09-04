@@ -84,6 +84,12 @@ jobs:
       - name: Check for config keys nothing reads
         run: ./hybrid/tools/dead-config.py
 
+      # Proves the QML gate still rejects Info-level output, which is what CI itself enforces.
+      # It did not, once: qmllint exits 0 when every diagnostic is Info, so the script reported
+      # a clean tree while this job failed on it. See trap T48.
+      - name: Self-test the QML gate
+        run: ./hybrid/tools/qml-lint.sh --self-test
+
       - name: Configure
         run: |
           cmake -B build -G Ninja -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
