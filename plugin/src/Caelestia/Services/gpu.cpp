@@ -124,15 +124,16 @@ QString cardDirFor(const QString& busyFile) {
     return busyFile.left(busyFile.lastIndexOf(u"/device/"_s));
 }
 
-// A discrete GPU in a hybrid laptop is powered down whenever nothing is using it, and its
-// gpu_busy_percent then reads a flat 0 forever. Reporting that as "the GPU" is technically
-// true and practically useless -- worse, it is reported next to the *other* GPU's name.
-bool isRuntimeSuspended(const QString& cardDir) {
-    QFile f(cardDir + u"/device/power/runtime_status"_s);
-    if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        return false; // no runtime PM: assume it is awake
-    }
-    return f.readAll().trimmed() == "suspended";
+// Does this card own any display connector?
+//
+// Connectors are siblings in /sys/class/drm named after their card -- card1-LVDS-1,
+// card1-HDMI-A-1 and so on. A card with none renders nothing on its own: in a muxless hybrid
+// laptop the discrete GPU drives no screen at all and stays suspended unless DRI_PRIME sends
+// work to it. The card owning the connectors is the one the compositor renders on, so its
+// numbers are the live ones and it is what "my GPU" means on such a machine.
+bool cardDrivesDisplay(const QString& cardDir) {
+    const QString card = cardDir.mid(cardDir.lastIndexOf(u'/') + 1);
+    return !QDir(u"/sys/class/drm"_s).entryList({ card + u"-*"_s }, QDir::AllEntries | QDir::NoDotAndDotDot).isEmpty();
 }
 
 // The PCI slot as lspci prints it: "0000:01:00.0" -> "01:00.0".
@@ -324,39 +325,7 @@ void Gpu::setName(QString value) {
     emit nameChanged();
 }
 
-QStringList Gpu::awakeBusyFiles() const {
-    QStringList out;
-    for (const QString& f : m_busyFiles) {
-        if (!isRuntimeSuspended(cardDirFor(f))) {
-            out << f;
-        }
-    }
-    return out;
-}
-
-bool Gpu::autoTypeStale() const {
-    const bool anyAwake = !awakeBusyFiles().isEmpty();
-    // The discrete card went to sleep under us: keep reading it and both usage and
-    // temperature read zero forever.
-    if (m_type == GpuType::Generic && !anyAwake) {
-        return true;
-    }
-    // Or it woke up for a game, and the integrated GPU is no longer the interesting one.
-    return m_type == GpuType::Intel && anyAwake;
-}
-
 void Gpu::tick() {
-    // Suspend state changes while the shell runs, so the choice of GPU cannot be made once at
-    // startup. Re-resolving also re-runs the name probe, which is what keeps the name and the
-    // numbers describing the same device.
-    static constexpr qint64 k_minResolveIntervalMs = 5000;
-    if (m_userType == GpuType::Auto && autoTypeStale() &&
-        (!m_lastAutoResolve.isValid() || m_lastAutoResolve.elapsed() > k_minResolveIntervalMs)) {
-        m_lastAutoResolve.restart();
-        resolveGpu();
-        return;
-    }
-
     if (m_type == GpuType::Generic) {
         readGenericUsage();
         readGpuTemperature();
@@ -411,30 +380,45 @@ void Gpu::finishNameSource(int index, int generation, QString name) {
         if (!name.isEmpty()) {
             setType(GpuType::Nvidia);
         } else {
-            // Prefer a card that is actually powered on. On a hybrid laptop -- an Intel iGPU
-            // beside an AMD dGPU -- gpu_busy_percent exists only on the discrete card, which
-            // is runtime-suspended whenever nothing is using it. Taking it unconditionally
-            // reported a permanent 0% for a chip that was asleep, *next to the integrated
-            // GPU's name*, because the name comes from whatever is rendering. One GPU's name
-            // beside another's usage. Found on real hardware; unreachable in a VM.
+            // Prefer the card driving the screen. gpu_busy_percent is an amdgpu attribute,
+            // so on a muxless hybrid laptop it exists only on the *discrete* card -- which
+            // owns no connector, renders nothing unless DRI_PRIME targets it, and is
+            // therefore asleep and reading 0 essentially always. Choosing it reported a
+            // permanent 0% for a chip that was off, beside the other GPU's name, because the
+            // name comes from whatever is rendering.
             //
-            // Filtered, never removed. m_busyFiles is enumerated once at construction, and an
-            // earlier version of this deleted the suspended entries from it -- so a dGPU that
-            // slept a minute after boot could never be seen again, and the temperature it had
-            // been supplying dropped to 0 permanently.
-            const QStringList awake = awakeBusyFiles();
+            // Connector ownership is the right signal and, unlike runtime_status, it does not
+            // change while the shell runs. An earlier attempt tracked suspend state instead
+            // and oscillated: the discrete card woke and slept on its own about every half
+            // minute, and the dashboard swapped which GPU it described each time (T51).
+            QStringList display;
+            for (const QString& f : std::as_const(m_busyFiles)) {
+                if (cardDrivesDisplay(cardDirFor(f))) {
+                    display << f;
+                }
+            }
 
-            if (!awake.isEmpty()) {
-                // A direct utilisation figure, so it wins wherever it exists and is awake.
+            if (!display.isEmpty()) {
+                // The card on the screen reports usage directly. A single-GPU desktop, and a
+                // machine whose discrete card drives the monitor, both land here.
+                m_busyFiles = display;
                 setType(GpuType::Generic);
-                // Name the card the numbers come from. glxinfo would name whatever holds the
+                // Name the card the numbers come from; glxinfo would name whatever holds the
                 // GL context, which on a hybrid machine is the other GPU.
-                preferredPciSlot() = pciSlotFor(cardDirFor(awake.first()));
-            } else {
-                // Intel exposes no busy file, which is why an Intel machine previously
-                // resolved to None and reported a flat 0% forever.
+                preferredPciSlot() = pciSlotFor(cardDirFor(m_busyFiles.first()));
+            } else if (!intelGtDirs().isEmpty()) {
+                // The screen belongs to an Intel iGPU, which publishes no busy file -- which
+                // is why such a machine used to resolve to None and report a flat 0% forever.
                 preferredPciSlot().clear();
-                setType(intelGtDirs().isEmpty() ? GpuType::None : GpuType::Intel);
+                setType(GpuType::Intel);
+            } else if (!m_busyFiles.isEmpty()) {
+                // No card owns a connector: headless, or offload-only. Its usage is still
+                // better than nothing.
+                setType(GpuType::Generic);
+                preferredPciSlot() = pciSlotFor(cardDirFor(m_busyFiles.first()));
+            } else {
+                preferredPciSlot().clear();
+                setType(GpuType::None);
             }
         }
 
@@ -486,8 +470,7 @@ void Gpu::runProcess(const QString& program, const QStringList& args, std::funct
 void Gpu::readGenericUsage() {
     qreal sum = 0.0;
     int count = 0;
-    const QStringList awake = awakeBusyFiles();
-    for (const QString& path : awake) {
+    for (const QString& path : std::as_const(m_busyFiles)) {
         QFile f(path);
         if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
             continue;

@@ -2155,3 +2155,31 @@ against the state the machine happened to be in when I looked.** T49 was found i
 T50 in another, and this one only appeared a minute after boot, when the hardware changed state
 on its own. Hardware that has modes needs testing in each mode, and "it looked right when I
 checked" is the weakest evidence in this file.
+
+### The live version oscillated, and the fix was to stop tracking state at all
+
+Re-resolving on suspend transitions worked -- and produced a dashboard that swapped which GPU
+it was describing roughly every half minute, as the discrete card slept and woke on its own.
+Correct on each tick, useless as a display.
+
+The mistake was the choice of signal. `runtime_status` answers "is this card awake", which is
+dynamic by nature, so any rule built on it inherits the flapping. The question actually worth
+asking is "which card is on the screen", and that is answered by connector ownership:
+
+```
+/sys/class/drm/card1-LVDS-1  -> ../../devices/pci0000:00/0000:00:02.0/drm/card1/...
+/sys/class/drm/card1-DP-1    card1-HDMI-A-1    card1-VGA-1
+```
+
+All four connectors belong to `card1`, the Intel chip. `card0`, the AMD one, owns none -- it is
+a muxless render-offload device that drives no display and does nothing unless `DRI_PRIME`
+targets it. The card with the connectors is the one the compositor renders on, its numbers are
+always live, and **connector ownership does not change while the shell runs**.
+
+So the suspend tracking, the tick-time re-resolve and the rate limiter that guarded it were all
+deleted. The selection is static again and reads as four plain cases: a display-owning card
+with a busy file, an Intel `gt` when the screen belongs to the iGPU, a busy file with no
+connectors anywhere (headless or offload-only), and nothing.
+
+**A dynamic signal produced a dynamic bug.** Two fixes were spent making the flapping
+well-behaved before asking whether the thing being tracked was the right thing to track.
