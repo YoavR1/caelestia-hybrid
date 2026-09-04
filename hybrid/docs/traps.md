@@ -1635,3 +1635,58 @@ field, which the page renders masked with a reveal toggle.
 
 The general shape: **a hardcoded credential is worth checking against what the tool does
 without it.** Here the "default" was not filling a gap, it was overwriting a better answer.
+
+## T43 — A pairing agent that claims the default role and cannot answer
+
+`scripts/bt-agent.py` does not merely offer to handle pairing:
+
+```python
+manager.RegisterAgent(AGENT_PATH, AGENT_CAPABILITY)
+manager.RequestDefaultAgent(AGENT_PATH)
+```
+
+`RequestDefaultAgent` makes it the **system** BlueZ pairing agent for the session. Every
+pairing request on the machine is then routed to this process, and to no other.
+
+OP starts it at shell init — `shell.qml` has `Component.onCompleted: void(BtAgent.active)`,
+commented "Force BtAgent singleton to initialize at startup" — while mounting the dialog that
+answers it in exactly one place: `modules/nexus/pages/bluetooth/BluetoothPairing.qml`. So for
+the whole time the Nexus Bluetooth pairing page is *not* open, which is essentially always,
+the agent holds the default role with no UI able to respond. A pairing request arriving in
+that window — a phone initiating to this machine — is taken from whatever agent would
+otherwise have served it and then left unanswered until BlueZ times out.
+
+The failure is worse than not having an agent, because it is *silent* and it displaces a
+working one. Nothing logs, nothing prompts; pairing simply stops working, and it looks like a
+Bluetooth problem rather than a shell one.
+
+Fixed here by tying the agent's lifetime to the dialog's, not to the shell's:
+
+- the dialog is a `Loader` in `modules/nexus/Nexus.qml`, gated on `hybrid.features.btAgent`,
+  overlaying the whole Nexus window rather than one page. `PageBase` takes a single
+  `default property Item contentChild` and cannot host a sibling overlay, so the page was
+  never the right host anyway — mounting it there is what forced OP's narrow scope.
+- there is no eager load in `modules/ServiceLoader.qml`. Loading the dialog is what creates
+  the `BtAgent` singleton, which is what spawns the Python process, which is what registers
+  with BlueZ. One chain, one switch.
+
+The tradeoff is stated rather than hidden: we answer pairing requests while the Nexus window
+is open, and the rest of the time the desktop's own agent keeps the role it already had.
+That is a smaller feature than OP appears to offer, and a working one instead of a broken one.
+
+The general shape, and the reason this is worth a trap rather than a commit message: **taking
+over a system-wide role is a commitment to service it.** Registering as the handler for
+something is not a passive optimisation, and the cost of holding a role you cannot fulfil is
+paid by the user, silently, in a subsystem they will not think to blame.
+
+**What is not verified.** The smoke matrix boots with `btAgent` on and passes, which proves
+the schema accepts the key (an unknown one warns, and the matrix fails on warnings) and that
+nothing regressed. It does not exercise the agent at all: the matrix never opens the Nexus
+window, so the `Loader` never activates and the Python process never starts. `bt-agent.py`
+is checked only for parsing and byte-compilation, and `python-dbus`/`python-gobject` are
+confirmed importable.
+
+Actually pairing a device is untested, and deliberately so: the only way to test it is to run
+the agent, which claims the machine's default pairing agent role and would disrupt whatever
+holds it. That needs a real device and a person watching, like the QuickShare receive path
+(T27). Do not read a green matrix as evidence that pairing works.
