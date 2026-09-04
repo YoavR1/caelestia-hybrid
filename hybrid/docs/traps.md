@@ -2119,3 +2119,39 @@ Two things this is worth remembering for:
 - **Deriving a rate from a monotonic counter needs a liveness check.** The counter existing,
   being readable, and being nominally enabled were all true here and none of them meant it was
   counting. `rc6_enable: 1` is documentation of intent, not evidence of function.
+
+## T51 — I fixed the hybrid GPU by deleting the evidence
+
+The T49 fix preferred a GPU that was awake, like this:
+
+```cpp
+m_busyFiles.removeIf([](const QString& f) { return isRuntimeSuspended(cardDirFor(f)); });
+```
+
+`m_busyFiles` is enumerated **once at construction**, with a comment saying so -- "the card set
+is static at runtime". Removing entries from it is permanent. And the removal ran inside
+`finishNameSource`, which happens once, at startup.
+
+On the test laptop the discrete card was awake at that moment, so it survived the filter and
+the type resolved to `Generic`. A minute later it suspended. Nothing re-evaluated: usage kept
+reading a sleeping card's `gpu_busy_percent`, `gpuPciAverageTemp()` found no readable sensor,
+and the temperature fell to **0 °C and stayed there** -- while the CPU-package fallback sat
+unused, because it is keyed on the type being `Intel` and the type was still `Generic`.
+
+Three separate mistakes, worth separating:
+
+- **Destructive filtering of a cached enumeration.** The suspended entries were not skipped,
+  they were deleted, so the dGPU could never be chosen again even after waking. The fix filters
+  into a new list at the point of use and leaves `m_busyFiles` intact.
+- **A one-shot decision about dynamic state.** Runtime PM status changes constantly; resolving
+  the type once at startup and never again cannot be right. `tick()` now checks whether the
+  resolved type still matches reality and re-resolves when it does not -- which also re-runs
+  the name probe, keeping the name and the numbers describing the same device.
+- **Re-resolution had to be rate-limited.** `resolveGpu()` spawns `nvidia-smi`, `glxinfo` and
+  `lspci`. A card flapping at tick rate would spawn them every tick, so there is a 5s floor.
+
+The pattern, and the reason this is the third GPU trap in a row: **each fix was verified
+against the state the machine happened to be in when I looked.** T49 was found in one state,
+T50 in another, and this one only appeared a minute after boot, when the hardware changed state
+on its own. Hardware that has modes needs testing in each mode, and "it looked right when I
+checked" is the weakest evidence in this file.

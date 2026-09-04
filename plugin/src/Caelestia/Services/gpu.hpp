@@ -51,6 +51,12 @@ private:
     void tryNameSource(int index, int generation);
     void finishNameSource(int index, int generation, QString name);
 
+    // The busy files whose card is powered on *right now*. A discrete GPU suspends and wakes
+    // while the shell runs, so this cannot be computed once.
+    [[nodiscard]] QStringList awakeBusyFiles() const;
+    // Whether the resolved type no longer matches the hardware's current state.
+    [[nodiscard]] bool autoTypeStale() const;
+
     void readGenericUsage();
     void startNvidiaUsage();
 
@@ -88,6 +94,10 @@ private:
     // Whether rc6_residency_ms has ever been seen to advance. Until it has, the counter is
     // not trusted and usage comes from the frequency estimate instead -- see readIntelUsage.
     bool m_intelRc6Advanced = false;
+
+    // Rate-limits the re-resolve that a suspend/wake triggers. resolveGpu() spawns probe
+    // processes, and a card flapping at tick rate would spawn them every tick.
+    QElapsedTimer m_lastAutoResolve;
 
     // Bumped per resolution so callbacks from a superseded probe are dropped
     int m_generation = 0;

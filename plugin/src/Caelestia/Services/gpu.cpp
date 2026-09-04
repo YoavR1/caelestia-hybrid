@@ -324,7 +324,39 @@ void Gpu::setName(QString value) {
     emit nameChanged();
 }
 
+QStringList Gpu::awakeBusyFiles() const {
+    QStringList out;
+    for (const QString& f : m_busyFiles) {
+        if (!isRuntimeSuspended(cardDirFor(f))) {
+            out << f;
+        }
+    }
+    return out;
+}
+
+bool Gpu::autoTypeStale() const {
+    const bool anyAwake = !awakeBusyFiles().isEmpty();
+    // The discrete card went to sleep under us: keep reading it and both usage and
+    // temperature read zero forever.
+    if (m_type == GpuType::Generic && !anyAwake) {
+        return true;
+    }
+    // Or it woke up for a game, and the integrated GPU is no longer the interesting one.
+    return m_type == GpuType::Intel && anyAwake;
+}
+
 void Gpu::tick() {
+    // Suspend state changes while the shell runs, so the choice of GPU cannot be made once at
+    // startup. Re-resolving also re-runs the name probe, which is what keeps the name and the
+    // numbers describing the same device.
+    static constexpr qint64 k_minResolveIntervalMs = 5000;
+    if (m_userType == GpuType::Auto && autoTypeStale() &&
+        (!m_lastAutoResolve.isValid() || m_lastAutoResolve.elapsed() > k_minResolveIntervalMs)) {
+        m_lastAutoResolve.restart();
+        resolveGpu();
+        return;
+    }
+
     if (m_type == GpuType::Generic) {
         readGenericUsage();
         readGpuTemperature();
@@ -385,19 +417,23 @@ void Gpu::finishNameSource(int index, int generation, QString name) {
             // reported a permanent 0% for a chip that was asleep, *next to the integrated
             // GPU's name*, because the name comes from whatever is rendering. One GPU's name
             // beside another's usage. Found on real hardware; unreachable in a VM.
-            m_busyFiles.removeIf([](const QString& f) {
-                return isRuntimeSuspended(cardDirFor(f));
-            });
+            //
+            // Filtered, never removed. m_busyFiles is enumerated once at construction, and an
+            // earlier version of this deleted the suspended entries from it -- so a dGPU that
+            // slept a minute after boot could never be seen again, and the temperature it had
+            // been supplying dropped to 0 permanently.
+            const QStringList awake = awakeBusyFiles();
 
-            if (!m_busyFiles.isEmpty()) {
+            if (!awake.isEmpty()) {
                 // A direct utilisation figure, so it wins wherever it exists and is awake.
                 setType(GpuType::Generic);
                 // Name the card the numbers come from. glxinfo would name whatever holds the
                 // GL context, which on a hybrid machine is the other GPU.
-                preferredPciSlot() = pciSlotFor(cardDirFor(m_busyFiles.first()));
+                preferredPciSlot() = pciSlotFor(cardDirFor(awake.first()));
             } else {
                 // Intel exposes no busy file, which is why an Intel machine previously
                 // resolved to None and reported a flat 0% forever.
+                preferredPciSlot().clear();
                 setType(intelGtDirs().isEmpty() ? GpuType::None : GpuType::Intel);
             }
         }
@@ -450,7 +486,8 @@ void Gpu::runProcess(const QString& program, const QStringList& args, std::funct
 void Gpu::readGenericUsage() {
     qreal sum = 0.0;
     int count = 0;
-    for (const QString& path : std::as_const(m_busyFiles)) {
+    const QStringList awake = awakeBusyFiles();
+    for (const QString& path : awake) {
         QFile f(path);
         if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
             continue;
