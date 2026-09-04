@@ -434,13 +434,13 @@ Item {
             anchors.fill: parent
             source: {
                 if (root.isGameOver)
-                    return Paths.absolutePath("root:/assets/dino/Dead_Chrome_T-Rex.png");
+                    return Paths.absolutePath("root:/assets/runner/dead.png");
                 let groundLevel = ground.y - dino.height;
                 if (root.dinoY < groundLevel - 1)
-                    return Paths.absolutePath("root:/assets/dino/Chrome_T-Rex_Left_Run.png"); // Jump frame
+                    return Paths.absolutePath("root:/assets/runner/run_a.png"); // Jump frame
                 if (root.isDucking)
-                    return root.animationFrame === 0 ? Paths.absolutePath("root:/assets/dino/Chrome_T-Rex_Left_Duck.png") : Paths.absolutePath("root:/assets/dino/Chrome_T-Rex_Right_Duck.png");
-                return root.animationFrame === 0 ? Paths.absolutePath("root:/assets/dino/Chrome_T-Rex_Left_Run.png") : Paths.absolutePath("root:/assets/dino/Chrome_T-Rex_Right_Run.png");
+                    return root.animationFrame === 0 ? Paths.absolutePath("root:/assets/runner/duck_a.png") : Paths.absolutePath("root:/assets/runner/duck_b.png");
+                return root.animationFrame === 0 ? Paths.absolutePath("root:/assets/runner/run_a.png") : Paths.absolutePath("root:/assets/runner/run_b.png");
             }
             fillMode: Image.PreserveAspectFit
 
@@ -461,7 +461,7 @@ Item {
 
             Image {
                 anchors.fill: parent
-                source: parent.obsType === 0 ? Paths.absolutePath("root:/assets/dino/1_Cactus_Chrome_Dino.png") : parent.obsType === 1 ? Paths.absolutePath("root:/assets/dino/3_Cactus_Chrome_Dino.png") : ""
+                source: parent.obsType === 0 ? Paths.absolutePath("root:/assets/runner/shard_small.png") : parent.obsType === 1 ? Paths.absolutePath("root:/assets/runner/shard_large.png") : ""
                 visible: parent.obsType !== 2
                 fillMode: Image.PreserveAspectFit
                 layer.enabled: true
@@ -472,7 +472,7 @@ Item {
             }
             Image {
                 anchors.fill: parent
-                source: Paths.absolutePath("root:/assets/dino/Chrome_Pterodactyl.png")
+                source: Paths.absolutePath("root:/assets/runner/comet.png")
                 visible: parent.obsType === 2
                 fillMode: Image.PreserveAspectFit
                 layer.enabled: true

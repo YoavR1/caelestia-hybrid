@@ -162,7 +162,7 @@ Item {
     }
 
     Item {
-        id: bongocat
+        id: mediaGif
 
         anchors.top: controls.bottom
         anchors.bottom: parent.bottom

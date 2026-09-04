@@ -221,7 +221,7 @@ to something other than that default:
 },
 "shimeji": {
     "enabled": false,
-    "path": "root:/assets/shimeji/pusheen/",
+    "path": "root:/assets/shimeji/sparkle/",
     "count": 1,
     "autoHide": true,
     "excludedScreens": [],
@@ -1179,11 +1179,11 @@ For example, to automatically hide the bar on the monitor named `DP-1`:
     },
     "paths": {
         "cacheDir": "/home/dim/.cache/caelestia",
-        "lockNoNotifsPic": "root:/assets/dino.png",
+        "lockNoNotifsPic": "root:/assets/no-notifs.png",
         "lyricsDir": "/home/dim/Music/Lyrics/",
-        "mediaGif": "root:/assets/bongocat.gif",
-        "noNotifsPic": "root:/assets/dino.png",
-        "sessionGif": "root:/assets/kurukuru.gif",
+        "mediaGif": "root:/assets/media-sparkle.gif",
+        "noNotifsPic": "root:/assets/no-notifs.png",
+        "sessionGif": "root:/assets/session-sparkle.gif",
         "wallpaperDir": "/home/dim/Pictures/Wallpapers"
     },
     "services": {
@@ -1246,7 +1246,7 @@ For example, to automatically hide the bar on the monitor named `DP-1`:
         "count": 1,
         "enabled": true,
         "excludedScreens": [],
-        "path": "root:/assets/shimeji/pusheen/",
+        "path": "root:/assets/shimeji/sparkle/",
         "screenCounts": {}
     },
     "sidebar": {

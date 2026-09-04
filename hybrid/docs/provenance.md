@@ -64,9 +64,24 @@ public release:
 
 | Asset | Source | Status |
 |---|---|---|
-| `assets/themes/{Deadpool,Gojo,Shinchan}/*` | `op` | **Unresolved** — character art/GIFs, likely third-party copyright. Do not ship without clearing. |
-| `assets/shimeji/*` (46 files) | `midnight` | Unresolved — check sprite origin |
+| `assets/shimeji/pusheen/*` (46) | `midnight` | **Resolved — removed.** Pusheen is a registered trademark of Pusheen Corp. Replaced by `assets/shimeji/sparkle/`, drawn here. |
+| `assets/bongocat.gif` | `midnight` | **Resolved — removed.** Bongo Cat. Replaced by `assets/media-sparkle.gif`. |
+| `assets/kurukuru.gif` | `midnight` | **Resolved — removed.** Replaced by `assets/session-sparkle.gif`. |
+| `assets/dino/*` (8), `assets/dino.png` | `midnight` | **Resolved — removed.** The Chrome offline runner's T-Rex and cacti are Google's. Replaced by `assets/runner/` and `assets/no-notifs.png`. |
 | `assets/sounds/*` (74 files) | `midnight` | Unresolved — check sample licensing |
-| `assets/dino/*` | `midnight` | Unresolved |
+| `assets/badapple.mp4` | `midnight` | Unresolved — Touhou fan animation. It *is* the easter egg, so it cannot be substituted; the honest options are to drop the feature or to ship it without the video and let a user supply one. |
+| `assets/themes/{Deadpool,Gojo,Shinchan}/*` | `op` | Not imported. Arrives with OP's theme manager in Phase 5 — **do not import the art**. |
+
+### Original work
+
+`assets/shimeji/sparkle/`, `assets/runner/`, `assets/media-sparkle.gif`,
+`assets/session-sparkle.gif` and `assets/no-notifs.png` are drawn by this project and carry
+no third-party rights. They are generated, not hand-pixelled: `hybrid/tools/mascot/` holds
+the SVG generator and the three scripts that render every frame, so the character can be
+restyled or re-rendered at any size without redrawing it.
+
+The design is deliberately not arbitrary — it is the four-pointed sparkle from
+`assets/logo.svg`, in the same `#6AE5E1`, given a face. That is what makes the replacement
+look like it belongs to this shell rather than like a substitute for something else.
 
 GPL-3.0 covers the code. It does not launder third-party artwork that was bundled without a license.
