@@ -146,6 +146,15 @@ PageBase {
             onToggled: root.targetConfig.hybrid.features.floatingLyrics = checked
         }
 
+        ToggleRow {
+            text: qsTr("Theme packs")
+            subtext: qsTr("Swap wallpaper and shell artwork as a named set")
+            configNode: root.targetConfig.hybrid.features
+            propertyName: "themeManager"
+            checked: root.targetConfig.hybrid.features.themeManager
+            onToggled: root.targetConfig.hybrid.features.themeManager = checked
+        }
+
         SectionHeader {
             text: qsTr("Network")
         }

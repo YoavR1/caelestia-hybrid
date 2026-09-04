@@ -40,7 +40,6 @@ HybridVariant::Enum presetVariant(const settings::Node* self, const QString& key
 //   gpuDetection  upstream ships it unconditionally (Services/gpu.cpp, the GpuType enum).
 //                 A toggle for it would be a lie. OP's contribution is enhanced monitoring,
 //                 which is a service merge (D5), not a feature.
-//   themeManager  not imported yet -- Phase 5.
 //   patternLock   never ships as a toggle. It is a lock-screen bypass (D10, trap T3), and
 //                 a switch offering to enable it is exactly the wrong artefact. Recorded
 //                 in the traps, not in the user's settings schema.
@@ -66,6 +65,7 @@ class HybridFeatures : public settings::ObjectNode {
     FEATURE(badApple)
     FEATURE(dino)
     FEATURE(hotspot)
+    FEATURE(themeManager)
 };
 
 // The four components both forks genuinely implement. Capped at ~6 entries (D4): growth

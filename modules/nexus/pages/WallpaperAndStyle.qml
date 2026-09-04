@@ -247,6 +247,21 @@ PageBase {
                 verticalPadding: Tokens.padding.medium
                 onClicked: root.nState.openSubPage(3) // Colours page
             }
+
+            // Only the entry point is gated. ThemeSelect is a Component in the stack, so it
+            // is not built until it is pushed.
+            IconTextButton {
+                icon: "brush"
+                text: qsTr("Themes")
+                font: Tokens.font.body.large
+                isRound: true
+                shapeMorph: true
+                type: IconTextButton.Tonal
+                horizontalPadding: Tokens.padding.extraLarge
+                verticalPadding: Tokens.padding.medium
+                visible: GlobalConfig.hybrid.features.themeManager
+                onClicked: root.nState.openSubPage(6) // Themes page
+            }
         }
 
         SectionHeader {

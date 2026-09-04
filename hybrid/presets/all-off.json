@@ -14,7 +14,8 @@
       "shimeji": false,
       "badApple": false,
       "dino": false,
-      "hotspot": false
+      "hotspot": false,
+      "themeManager": false
     },
     "variants": {
       "lockCentre": "midnight",

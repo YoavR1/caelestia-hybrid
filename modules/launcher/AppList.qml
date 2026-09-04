@@ -39,6 +39,8 @@ StyledListView {
                 actionPrefixes.push("clipboard");
             if (features.windowSwitcher)
                 actionPrefixes.push("windows");
+            if (features.themeManager)
+                actionPrefixes.push("theme");
             for (const action of actionPrefixes)
                 if (text.startsWith(`${prefix}${action} `))
                     return action;
@@ -59,6 +61,8 @@ StyledListView {
             return Schemes.query(text);
         case "variant":
             return M3Variants.query(text);
+        case "theme":
+            return ThemeManager.query(text);
         case "emoji":
             {
                 const prefix = GlobalConfig.launcher.actionPrefix;
@@ -177,6 +181,13 @@ StyledListView {
 
             PropertyChanges {
                 root.delegate: variantItem
+            }
+        },
+        State {
+            name: "theme"
+
+            PropertyChanges {
+                root.delegate: themeItem
             }
         },
         State {
@@ -372,6 +383,14 @@ StyledListView {
         id: schemeItem
 
         SchemeItem {
+            list: root
+        }
+    }
+
+    Component {
+        id: themeItem
+
+        ThemeItem {
             list: root
         }
     }
