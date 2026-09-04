@@ -67,18 +67,18 @@ public release:
 
 | Asset | Source | Status |
 |---|---|---|
-| `assets/shimeji/pusheen/*` (46) | `midnight` | **Resolved — removed.** Pusheen is a registered trademark of Pusheen Corp. Replaced by `assets/shimeji/sparkle/`, drawn here. |
-| `assets/bongocat.gif` | `midnight` | **Resolved — removed.** Bongo Cat. Replaced by `assets/media-sparkle.gif`. |
-| `assets/kurukuru.gif` | `midnight` | **Resolved — removed.** Replaced by `assets/session-sparkle.gif`. |
-| `assets/dino/*` (8), `assets/dino.png` | `midnight` | **Resolved — removed.** The Chrome offline runner's T-Rex and cacti are Google's. Replaced by `assets/runner/` and `assets/no-notifs.png`. |
-| `assets/sounds/*` (74 files) | `midnight` | **Resolved — removed.** The notification set was Android's stock tones — Aldebaran, Altair, Antares, Betelgeuse, Beat_Box_Android and 61 more, 16 MB of Google's library. Replaced by 8 UI sounds and 8 notification tones synthesised here. |
+| `assets/shimeji/pusheen/*` (46) | `midnight` | **Accepted by the owner, 2026-09-04 — restored** and back as the `shimeji.directory` default. Pusheen remains a registered trademark of Pusheen Corp. `assets/shimeji/sparkle/` was removed with the rest of the generated set; `hybrid/tools/mascot/make-sprites.py` regenerates it, and `shimeji.directory` is a config key, so switching back is that command plus one setting. |
+| `assets/bongocat.gif` | `midnight` | **Accepted by the owner, 2026-09-04 — restored** as the `paths.mediaGif` default. `assets/media-sparkle.gif` was removed; `make-gifs.py` regenerates it. |
+| `assets/kurukuru.gif` | `midnight` | **Accepted by the owner, 2026-09-04 — restored** as the `paths.sessionGif` default. `assets/session-sparkle.gif` was removed; `make-gifs.py` regenerates it. |
+| `assets/dino/*` (8), `assets/dino.png` | `midnight` | **Accepted by the owner, 2026-09-04 — restored.** The Chrome offline runner's T-Rex and cacti remain Google's. `components/DinoGame.qml` hardcodes sprite paths, so unlike the others this one is a code change rather than a config key; `assets/runner/` was removed; `make-game.py` regenerates it, and the paths in that file are the whole switch. |
+| `assets/sounds/*` (74 files) | `midnight` | **Accepted by the owner, 2026-09-04 — restored.** Android's stock tones: Aldebaran, Altair, Antares, Betelgeuse, Beat_Box_Android and 61 more, 16 MB of Google's library. They had been replaced by 16 synthesised files; the originals are back, byte-identical, on the same reasoning as `badapple.mp4` — MiDnight publishes them already and the repository is now public. The synthesised set is not deleted, it is unshipped: `hybrid/tools/mascot/make-sounds.py` regenerates it in one command, which is the remedy if a takedown ever arrives. |
 | `assets/badapple.mp4` | `midnight` | **Accepted by the owner, 2026-09-04** — kept, and published with the repo. See the section below. Touhou fan animation. It *is* the easter egg, so it cannot be substituted; the honest options are to drop the feature or to ship it without the video and let a user supply one. |
 | `assets/themes/{Deadpool,Gojo,Shinchan}/*` | `op` | Not imported. Arrives with OP's theme manager in Phase 5 — **do not import the art**. |
 
 ### Original work
 
 `assets/shimeji/sparkle/`, `assets/runner/`, `assets/media-sparkle.gif`,
-`assets/session-sparkle.gif`, `assets/no-notifs.png` and everything under `assets/sounds/`
+`assets/session-sparkle.gif`, `assets/no-notifs.png` and (until 2026-09-04) everything under `assets/sounds/`
 are made by this project and carry no third-party rights. They are generated, not hand-pixelled: `hybrid/tools/mascot/` holds
 the SVG generator and the three scripts that render every frame, so the character can be
 restyled or re-rendered at any size without redrawing it.
@@ -86,6 +86,10 @@ restyled or re-rendered at any size without redrawing it.
 The design is deliberately not arbitrary — it is the four-pointed sparkle from
 `assets/logo.svg`, in the same `#6AE5E1`, given a face. That is what makes the replacement
 look like it belongs to this shell rather than like a substitute for something else.
+
+**The sounds below are no longer what ships.** MiDnight's originals were restored on 2026-09-04
+(see the watchlist row and the section above); `make-sounds.py` still regenerates the synthesised
+set, and this is kept as the description of that fallback rather than of the current tree.
 
 The sounds are additive synthesis from the standard library — no numpy, no sox, nothing to
 install. Every tone is built from a fast raised-cosine attack, an exponential body and a
@@ -130,8 +134,24 @@ it:
 history with `git filter-repo`, which rewrites every commit SHA, breaks open PRs and diverges every
 clone. Doing it while work is in flight is worse than doing it deliberately later.
 
-The replacement assets stay regardless. `assets/shimeji/sparkle/`, `assets/runner/`,
-`media-sparkle.gif`, `session-sparkle.gif`, `no-notifs.png`, the sixteen synthesised sounds and
-`assets/themes/nebula/` are original work generated by the tools in `hybrid/tools/mascot/`, and
-they are what the shell actually ships by default. The encumbered files are history and one
-easter-egg video, not the product.
+**Every asset in this tree is now byte-identical to one in an upstream.** Audited rather than
+assumed, in both directions: 148 files match a fork blob-for-blob, none differ, none is
+unaccounted for, and nothing MiDnight ships is missing here.
+
+The generated replacements were removed along the way -- `assets/shimeji/sparkle/`,
+`assets/runner/`, `media-sparkle.gif`, `session-sparkle.gif`, `no-notifs.png` and the sixteen
+synthesised sounds. Deleting them costs nothing, because the tools in `hybrid/tools/mascot/`
+rebuild each set in one command, and that is the point of keeping the tools: they are the remedy
+if a takedown ever arrives, not decoration.
+
+    make-sprites.py   assets/shimeji/sparkle/     shimeji.directory
+    make-gifs.py      media-/session-sparkle.gif  paths.mediaGif, paths.sessionGif
+    make-idle.py      no-notifs.png               paths.noNotifsPic, paths.lockNoNotifsPic
+    make-game.py      assets/runner/              hardcoded in components/DinoGame.qml
+    make-sounds.py    assets/sounds/              audio.sounds.*
+
+Four of the five are config keys. `DinoGame.qml` hardcodes its sprite paths, so that one needs an
+edit -- worth knowing before it is needed rather than after.
+
+`assets/themes/nebula/` is the exception and stays: it is a new feature's content rather than a
+substitute for anything, and no fork has an equivalent.
