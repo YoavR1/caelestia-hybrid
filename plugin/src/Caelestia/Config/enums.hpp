@@ -21,7 +21,10 @@ namespace caelestia::config {
 ENUM(BarWorkspaceDisplay, Shapes, Text)
 ENUM(BarWorkspaceCapitalisation, Preserve, Upper, Lower)
 ENUM(LyricsBackend, Auto, Local, LRCLIB, NetEase)
-ENUM(GpuType, Auto, Nvidia, Generic, None)
+// Intel is appended rather than slotted next to Nvidia. Config serialises enums by name
+// (EnumCodec), so position is free there -- but modules/nexus/pages/ServicesPage.qml keeps a
+// MenuItem list indexed by ordinal, and appending keeps every existing index correct.
+ENUM(GpuType, Auto, Nvidia, Generic, None, Intel)
 ENUM(NotifsFullscreen, On, Off)
 
 // Which fork's implementation to use for one of the four genuine overlaps (D3/D4).

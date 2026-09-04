@@ -26,7 +26,9 @@ PageBase {
         }
     ]
 
-    // GPU types, ordered to match config::GpuType (Auto, Nvidia, Generic, None)
+    // GPU types, ordered to match config::GpuType (Auto, Nvidia, Generic, None, Intel).
+    // Indexed by ordinal, so a new enumerator must be appended in both places or every entry
+    // after the insertion point silently labels the wrong type.
     readonly property list<MenuItem> gpuItems: [
         MenuItem {
             text: qsTr("Auto")
@@ -39,6 +41,9 @@ PageBase {
         },
         MenuItem {
             text: qsTr("None")
+        },
+        MenuItem {
+            text: "Intel"
         }
     ]
 
