@@ -28,6 +28,15 @@ jobs:
           cmake -B build -G Ninja -DCMAKE_CXX_COMPILER=clazy -DVERSION= -DGIT_REVISION=
           cmake --build build
 
+      # Proves the QML gate still rejects Info-level output, which is what this job enforces
+      # with `test -z "$lint_out"`. It did not, once: qmllint exits 0 when every diagnostic it
+      # printed is Info-level, so hybrid/tools/qml-lint.sh reported a clean tree while this job
+      # failed on the same files. See trap T48. Placed after Build because the gate needs
+      # build/qml for its import paths -- putting it with the no-build checkers failed here
+      # with "build/qml missing", which is this comment's reason for existing.
+      - name: Self-test the QML gate
+        run: ./hybrid/tools/qml-lint.sh --self-test
+
       - name: Lint QML
         shell: fish {0}
         run: |
@@ -83,12 +92,6 @@ jobs:
 
       - name: Check for config keys nothing reads
         run: ./hybrid/tools/dead-config.py
-
-      # Proves the QML gate still rejects Info-level output, which is what CI itself enforces.
-      # It did not, once: qmllint exits 0 when every diagnostic is Info, so the script reported
-      # a clean tree while this job failed on it. See trap T48.
-      - name: Self-test the QML gate
-        run: ./hybrid/tools/qml-lint.sh --self-test
 
       - name: Configure
         run: |
