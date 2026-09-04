@@ -4,6 +4,7 @@
 #include <qdiriterator.h>
 #include <qfile.h>
 #include <qregularexpression.h>
+#include <qset.h>
 
 #include "config/rootnodes.hpp"
 #include "config/serviceconfig.hpp"
@@ -31,6 +32,90 @@ QStringList gpuBusyFiles() {
         }
     }
     return files;
+}
+
+std::optional<qint64> readIntFile(const QString& path) {
+    QFile f(path);
+    if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        return std::nullopt;
+    }
+    bool ok = false;
+    const qint64 value = f.readAll().trimmed().toLongLong(&ok);
+    return ok ? std::optional<qint64>(value) : std::nullopt;
+}
+
+std::optional<qreal> readRealFile(const QString& path) {
+    QFile f(path);
+    if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        return std::nullopt;
+    }
+    bool ok = false;
+    const qreal value = f.readAll().trimmed().toDouble(&ok);
+    return ok ? std::optional<qreal>(value) : std::nullopt;
+}
+
+// The i915/xe render engines, as /sys/class/drm/card*/gt/gt* -- plus the gt root itself on
+// kernels that put the counters there directly rather than under a per-tile subdirectory.
+QStringList intelGtDirs() {
+    QStringList dirs;
+    const QStringList cards = QDir(u"/sys/class/drm"_s).entryList({ u"card*"_s }, QDir::Dirs | QDir::NoDotAndDotDot);
+
+    for (const QString& card : cards) {
+        const QDir gtRoot(u"/sys/class/drm/%1/gt"_s.arg(card));
+        if (!gtRoot.exists()) {
+            continue;
+        }
+
+        const QStringList gts = gtRoot.entryList({ u"gt*"_s }, QDir::Dirs | QDir::NoDotAndDotDot);
+        for (const QString& gt : gts) {
+            dirs.append(gtRoot.absoluteFilePath(gt));
+        }
+
+        if (QFile::exists(gtRoot.absoluteFilePath(u"rc6_residency_ms"_s)) ||
+            QFile::exists(gtRoot.absoluteFilePath(u"rps_cur_freq_mhz"_s))) {
+            dirs.append(gtRoot.absolutePath());
+        }
+    }
+    return dirs;
+}
+
+// Fallback for hardware exposing no rc6 counter: where the GPU sits between its minimum
+// and maximum frequency. A proxy, used only when the real measure is absent. Free rather
+// than a member -- it touches no state, and clang-tidy is right to say so.
+qreal intelFrequencyUsage() {
+    qreal sum = 0.0;
+    int count = 0;
+
+    // Bound to a local first: ranging over the temporary directly detaches the QStringList
+    // (-Wclazy-range-loop-detach), which g++ does not diagnose. OP's original has this bug.
+    const QStringList gtDirs = intelGtDirs();
+    for (const QString& gtDir : gtDirs) {
+        // rps_act_freq_mhz is the achieved frequency; rps_cur_freq_mhz is the requested one,
+        // and only stands in where the achieved figure is not published.
+        auto cur = readRealFile(gtDir + u"/rps_act_freq_mhz"_s);
+        if (!cur) {
+            cur = readRealFile(gtDir + u"/rps_cur_freq_mhz"_s);
+        }
+
+        auto min = readRealFile(gtDir + u"/rps_min_freq_mhz"_s);
+        if (!min) {
+            min = readRealFile(gtDir + u"/rps_RPn_freq_mhz"_s);
+        }
+
+        auto max = readRealFile(gtDir + u"/rps_max_freq_mhz"_s);
+        if (!max) {
+            max = readRealFile(gtDir + u"/rps_RP0_freq_mhz"_s);
+        }
+
+        if (!cur || !min || !max || *max <= *min) {
+            continue;
+        }
+
+        sum += std::clamp((*cur - *min) / (*max - *min), 0.0, 1.0);
+        ++count;
+    }
+
+    return count > 0 ? sum / static_cast<qreal>(count) : 0.0;
 }
 
 QString cleanName(QString s) {
@@ -194,6 +279,9 @@ void Gpu::tick() {
     if (m_type == GpuType::Generic) {
         readGenericUsage();
         readGpuTemperature();
+    } else if (m_type == GpuType::Intel) {
+        readIntelUsage();
+        readGpuTemperature();
     } else if (m_type == GpuType::Nvidia) {
         startNvidiaUsage();
     } else {
@@ -215,7 +303,9 @@ void Gpu::resolveGpu() {
     }
 
     setName(tr("Detecting GPU..."));
-    tryNameSource(m_userType == GpuType::Generic ? k_firstGenericSource : k_nvidiaSource, generation);
+    // Intel, like Generic, is named by the driver-agnostic probes rather than nvidia-smi.
+    const bool skipNvidiaProbe = m_userType == GpuType::Generic || m_userType == GpuType::Intel;
+    tryNameSource(skipNvidiaProbe ? k_firstGenericSource : k_nvidiaSource, generation);
 }
 
 int Gpu::probeEnd() const {
@@ -237,10 +327,17 @@ void Gpu::finishNameSource(int index, int generation, QString name) {
     // Under Auto the NVIDIA name probe doubles as the type probe: a non-empty result
     // means an NVIDIA GPU is present and queryable.
     if (m_userType == GpuType::Auto && index == k_nvidiaSource) {
-        if (!name.isEmpty())
+        if (!name.isEmpty()) {
             setType(GpuType::Nvidia);
-        else
-            setType(m_busyFiles.isEmpty() ? GpuType::None : GpuType::Generic);
+        } else if (!m_busyFiles.isEmpty()) {
+            // gpu_busy_percent is amdgpu's, and it is a direct utilisation figure, so it wins
+            // wherever it exists.
+            setType(GpuType::Generic);
+        } else {
+            // No busy file. Intel exposes none, which is why an Intel machine previously
+            // resolved to None and reported a flat 0% forever.
+            setType(intelGtDirs().isEmpty() ? GpuType::None : GpuType::Intel);
+        }
 
         if (m_type == GpuType::None) {
             setName(tr("None"));
@@ -310,6 +407,52 @@ void Gpu::readGenericUsage() {
     }
 }
 
+void Gpu::readIntelUsage() {
+    const QStringList gtDirs = intelGtDirs();
+    const qint64 elapsedMs = m_intelUsageTimer.isValid() ? m_intelUsageTimer.elapsed() : 0;
+    qreal sum = 0.0;
+    int count = 0;
+    QSet<QString> seen;
+
+    for (const QString& gtDir : gtDirs) {
+        const QString path = gtDir + u"/rc6_residency_ms"_s;
+        const auto current = readIntFile(path);
+        if (!current) {
+            continue;
+        }
+
+        seen.insert(path);
+        const auto lastIt = m_lastIntelRc6Residency.constFind(path);
+        // The first sample only seeds the baseline: a total is not a rate until there are two.
+        if (lastIt != m_lastIntelRc6Residency.constEnd() && elapsedMs > 0) {
+            // Clamped at zero because the counter resets across a suspend or a driver reload,
+            // which would otherwise read as a hugely negative idle and so as 100% busy.
+            const qint64 delta = std::max<qint64>(0, *current - *lastIt);
+            const qreal idle = std::clamp(static_cast<qreal>(delta) / static_cast<qreal>(elapsedMs), 0.0, 1.0);
+            sum += 1.0 - idle;
+            ++count;
+        }
+        m_lastIntelRc6Residency.insert(path, *current);
+    }
+
+    // Drop baselines for gt directories that have gone away, so a removed eGPU cannot keep a
+    // stale reading alive in the map forever.
+    const auto keys = m_lastIntelRc6Residency.keys();
+    for (const QString& key : keys) {
+        if (!seen.contains(key)) {
+            m_lastIntelRc6Residency.remove(key);
+        }
+    }
+
+    m_intelUsageTimer.restart();
+
+    const qreal newPerc = count > 0 ? sum / static_cast<qreal>(count) : intelFrequencyUsage();
+    if (std::abs(newPerc - m_percentage) > 0.0001) {
+        m_percentage = newPerc;
+        emit percentageChanged();
+    }
+}
+
 void Gpu::startNvidiaUsage() {
     if (m_nvidiaQuerying) {
         return;
@@ -346,7 +489,13 @@ void Gpu::startNvidiaUsage() {
 }
 
 void Gpu::readGpuTemperature() {
-    const auto t = sensorslib::gpuPciAverageTemp();
+    auto t = sensorslib::gpuPciAverageTemp();
+    if (!t && m_type == GpuType::Intel) {
+        // An integrated Intel GPU usually publishes no hwmon sensor of its own, because it
+        // shares the CPU package die -- and so its thermal zone. Without this the dashboard
+        // shows a flat 0 degrees, which reads as a broken sensor rather than an absent one.
+        t = sensorslib::cpuPackageTemp();
+    }
     const qreal newTemp = t.value_or(0.0);
     if (std::abs(newTemp - m_temperature) > 0.05) {
         m_temperature = newTemp;
