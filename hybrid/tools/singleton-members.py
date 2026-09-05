@@ -87,7 +87,71 @@ def declared_members(path: Path) -> set[str]:
     return names
 
 
+def self_test() -> int:
+    """Prove the detector still detects, on synthetic input.
+
+    A checker that has quietly stopped working reports zero and passes, which is
+    indistinguishable from a clean tree (T23). Only `qml-lint.sh` and
+    `smoke-matrix.sh` verified themselves continuously; this closes that for one
+    more, on input this file controls rather than on the tree.
+    """
+    import tempfile
+
+    # Declarations sit at the start of a line in every real file here -- qmlformat
+    # enforces it -- and the parser relies on that, so the fixtures must too.
+    def singleton(base: str, body: str) -> str:
+        return f"pragma Singleton\n\n{base} {{\n{body}\n}}\n"
+
+    cases = [
+        # (singleton source, member referenced, should_be_reported)
+        (singleton("QtObject", "    readonly property int good: 1"), "good", False),
+        (singleton("QtObject", "    readonly property int good: 1"), "typo", True),
+        (singleton("QtObject", "    function doIt() {}"), "doIt", False),
+        (singleton("QtObject", "    function doIt() {}"), "doItXX", True),
+        # `component Foo:` is reachable as Probe.Foo -- missing this produced
+        # thirty-odd false positives in the first draft.
+        (singleton("QtObject", "    component Thing: QtObject {}"), "Thing", False),
+        # A property implies a <name>Changed signal.
+        (singleton("QtObject", "    property int good: 1"), "goodChanged", False),
+        (singleton("QtObject", "    signal fired(int n)"), "fired", False),
+        # Base members are not declared anywhere but are always present.
+        (singleton("QtObject", "    property int good: 1"), "objectName", False),
+        # A base we cannot enumerate means staying silent, not guessing.
+        (singleton("Searcher", "    readonly property int good: 1"), "anything", False),
+    ]
+
+    failures = 0
+    for i, (singleton_src, member, expected) in enumerate(cases, 1):
+        with tempfile.TemporaryDirectory() as td:
+            probe = Path(td) / "Probe.qml"
+            probe.write_text(singleton_src)
+
+            base_m = ROOT_TYPE.search(singleton_src)
+            base = base_m.group(1) if base_m else "?"
+            if base not in KNOWN_EMPTY_BASES:
+                reported = False   # not enumerable, so never reported
+            else:
+                surface = declared_members(probe) | BASE_MEMBERS
+                reported = member not in surface
+
+            if reported != expected:
+                failures += 1
+                verb = "should have been reported" if expected else "should NOT have been reported"
+                print(f"  \033[0;31mcase {i}\033[0m: Probe.{member} {verb} "
+                      f"(base {base})")
+
+    if failures:
+        print(f"\033[1;31mFAIL\033[0m self-test: {failures} of {len(cases)} case(s) wrong")
+        return 1
+    print(f"\033[1;32mPASS\033[0m self-test: {len(cases)} cases, "
+          "detector fires on typos and stays silent on valid members")
+    return 0
+
+
 def main() -> int:
+    if "--self-test" in sys.argv:
+        return self_test()
+
     singletons: dict[str, Path] = {}
     for path in tracked("*.qml"):
         head = path.read_text(encoding="utf-8", errors="replace")[:200]
