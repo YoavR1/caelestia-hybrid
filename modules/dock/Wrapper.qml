@@ -14,7 +14,7 @@ Item {
 
     // The variant gate. With MiDnight's dock selected this never becomes true, so the panel
     // stays slid off-screen and every binding that reads offsetScale sees 1.
-    readonly property bool shouldBeActive: screenState.dock && Config.dock.enabled && GlobalConfig.hybrid.variants.dock === HybridVariant.Op
+    readonly property bool shouldBeActive: screenState.dock && Config.dock.enabled && GlobalConfig.hybrid.features.dock && GlobalConfig.hybrid.variants.dock === HybridVariant.Op
 
     property real offsetScale: shouldBeActive ? 0 : 1
     property bool editMode: false

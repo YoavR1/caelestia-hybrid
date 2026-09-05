@@ -2234,3 +2234,93 @@ else in the tree imports?** A one-line audit answers it, and the only remaining 
 grep -rhoE '^import [A-Z][A-Za-z0-9.]+' --include='*.qml' . | awk '{print $2}' | sort -u \
   | grep -vE '^(QtQuick|QtQml|Quickshell|Caelestia|QtMultimedia|M3Shapes)'
 ```
+
+## T53 — Two shells were running, and the one being debugged was not the one on screen
+
+Three symptoms were reported from a real laptop: the variant selectors did nothing, the
+notification centre did not work, and `>settings` in the launcher opened nothing. They looked
+like three bugs in the feature system. They were one fact about the machine:
+
+```
+pid  881: qs -c caelestia -n -d              started 13:40 by systemd --user
+pid 6045: qs -p /home/yoav/caelestia-hybrid  started 13:58 by hand
+```
+
+Two Quickshell instances. `881` is the **packaged `midnight-shell-git`**, autostarted from
+`execs.lua` via `caelestia shell -d`. `6045` is the fork. The bar, dock and notifications on
+screen belonged to the package; the config being edited belonged to the fork.
+
+`-c caelestia` selects a config *by name*, searching each XDG config dir for
+`quickshell/caelestia/shell.qml`. With no `~/.config/quickshell/caelestia`, it finds
+`/etc/xdg/quickshell/caelestia` — the package. Every `caelestia` CLI subcommand does this:
+
+```py
+subprocess.check_output(["qs", "-c", "caelestia", *args])   # caelestia/subcommands/shell.py
+```
+
+So on any machine with the package installed, `caelestia shell <anything>` talks to the
+package, not to a fork run with `-p`. This is the same shape as T18, where qmllint silently
+resolved imports against the installed `midnight-shell-git` instead of the tree.
+
+The notification centre was the clearest consequence. Only one process can own
+`org.freedesktop.Notifications`, and `busctl --user list` says which:
+
+```
+org.freedesktop.Notifications   881 qs   yoav :1.24
+```
+
+`881` won it at login, seventeen minutes before the fork started. The fork's notification
+server bound nothing and received nothing. Nothing in its log said so, because losing that
+race is not an error.
+
+**Before debugging any user-visible behaviour, establish which instance is on screen.** One
+command settles it:
+
+```sh
+for p in $(pgrep -x qs); do echo "$p: $(tr '\0' ' ' < /proc/$p/cmdline)"; done
+```
+
+The fix is to make the name resolve to the fork, so the CLI, the autostart and every
+`caelestia:` global shortcut agree with each other:
+
+```sh
+ln -s ~/caelestia-hybrid ~/.config/quickshell/caelestia
+```
+
+The user config dir precedes `/etc/xdg` in XDG search order, so this wins without touching the
+package. The fork also needs `QML2_IMPORT_PATH` and `CAELESTIA_LIB_DIR` exported from the
+compositor env — `direnv` supplies them on `cd`, and a shell started by systemd has neither.
+
+## T54 — A feature gated on a flag that nothing could set
+
+`hybrid.variants.dock` selected between MiDnight's bar section and OP's panel, and selecting
+OP's did nothing at all. The gate was correct:
+
+```qml
+readonly property bool shouldBeActive: screenState.dock && Config.dock.enabled && ...
+```
+
+`screenState.dock` appeared seven times in the tree. Every one was `= false`. The show path
+lived in OP's `modules/drawers/Interactions.qml`, which was deferred during the import as T1/T2
+risk — the file carries the panel alias and anchor graph — and was never brought back. The
+import shipped a dock that could hide seven ways and appear none.
+
+Every static gate passed, and would pass again. `dead-qml.py` sees the file referenced,
+`dead-config.py` sees the key read, `dead-signals.py` sees no orphan signal, and the smoke
+matrix boots the shell without error because a dock that never shows raises nothing. The
+feature was unreachable, not broken, and unreachable code is silent.
+
+This is what the `feature-import` skill's step 6 asks for and what a headless matrix cannot
+give: boot with the feature **on** and confirm it initialises. "The preset loads" is not that.
+
+The mechanical form of the question generalises past the dock, and is worth asking of any
+imported feature whose flag is a `bool` written by one side and read by another:
+
+```sh
+# For a state flag the UI depends on -- does anything ever turn it on?
+grep -rn 'screenState\.<flag> *= *true' --include='*.qml' .
+```
+
+An empty result for a flag that has readers is the bug. Compare with T44, where the opposite
+held: `features.overview` had a live consumer while the directory it appeared to name did not
+exist.

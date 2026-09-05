@@ -7,6 +7,7 @@ import Caelestia.Config
 import Caelestia.Services
 import qs.services
 import qs.utils
+import qs.modules.nexus
 
 Searcher {
     id: root
@@ -68,6 +69,13 @@ Searcher {
             } else if (command[0] === "setMode" && command.length > 1) {
                 list.screenState.launcher = false;
                 Colours.setMode(command[1]);
+            } else if (command[0] === "nexus") {
+                // Nexus lives in this same instance, so open it here. Going out through
+                // `caelestia shell nexus open` sends the call to `qs -c caelestia`, which is
+                // the shell installed at /etc/xdg/quickshell/caelestia -- not the one the
+                // launcher is running in. See T53.
+                list.screenState.launcher = false;
+                WindowFactory.create();
             } else {
                 list.screenState.launcher = false;
                 if (!SessionManager.exec(command))
