@@ -44,6 +44,17 @@ RIGHT=$((MX + MW - 2)); MIDY=$((MY + MH/2)); PARK_X=$((MX + MW/2)); PARK_Y=$((MY
 
 echo
 echo "hw-verify: ${MW}x${MH} at ${MX},${MY}"
+
+# Nothing this script does counts as input. `hl.dsp.cursor.move` repositions the
+# pointer without waking the idle timer, so a session that locks after N seconds
+# will lock *during* the run -- and the lock surface then takes every pointer
+# event, turning the hover block red for a reason that has nothing to do with the
+# panels. Hold the inhibitor for the duration and put it back afterwards.
+IDLE_WAS=$(ipc idleInhibitor isEnabled)
+if [ "$IDLE_WAS" != "true" ]; then
+    ipc idleInhibitor enable >/dev/null 2>&1
+    trap 'ipc idleInhibitor disable >/dev/null 2>&1' EXIT
+fi
 echo
 
 # --- 1. instance sanity -----------------------------------------------------
@@ -122,12 +133,28 @@ hover_test() {
     local name=$1 x=$2 y=$3 settle=${4:-1.2} mod=${5:-$1}
     case " $drawers " in *" $name "*) ;; *) skip "$name opens on hover" "no such drawer"; return;; esac
     [ "$HOVER_BLOCKED" = "1" ] && { skip "$name opens on hover" "screen locked"; return; }
+    # Re-checked per test: a session can lock partway through a run, and every
+    # assertion after that point is about the lock surface rather than the panel.
+    if [ "$(ipc lock isLocked)" = "true" ]; then
+        skip "$name opens on hover" "screen locked mid-run"
+        return
+    fi
     if [ "$(hover_enabled "$mod")" != "true" ]; then
         skip "$name opens on hover" "$mod.showOnHover=false -- opens on drag"
         return
     fi
     warp "$PARK_X" "$PARK_Y"; sleep 0.6
     local before; before=$(isopen "$name")
+    # An already-open drawer would satisfy "after = 1" without hover doing anything.
+    if [ "$before" = "1" ]; then
+        ipc drawers toggle "$name" >/dev/null 2>&1
+        sleep 0.8
+        before=$(isopen "$name")
+        if [ "$before" = "1" ]; then
+            skip "$name opens on hover" "already open and would not close -- result would be vacuous"
+            return
+        fi
+    fi
     warp "$x" "$y"; sleep "$settle"
     local after; after=$(isopen "$name")
     warp "$PARK_X" "$PARK_Y"; sleep 0.6
