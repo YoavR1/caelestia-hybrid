@@ -59,7 +59,7 @@ read|gameMode isEnabled|
 read|idleInhibitor isEnabled|
 read|notifs isDndEnabled|
 read|mpris list|
-read|mpris getActive|title
+read|mpris getActive|trackTitle
 read|wallpaper get|
 read|wallpaper list|
 read|brightness get|
@@ -114,10 +114,14 @@ run_probe() {
     if [ "${errs:-0}" -gt 0 ]; then
         bad "$label" "$errs error line(s) in the shell log"
         logtail "$new" | grep -E 'ERROR|error:|TypeError|ReferenceError' | head -2 | sed 's/^/      /'
-    elif printf '%s' "$out" | grep -qiE 'no running instance|not expected|does not exist|Unknown'; then
+    elif printf '%s' "$out" | grep -qiE 'no running instance|not expected|does not exist|Unknown option|Invalid property|invalid argument'; then
         bad "$label" "$(printf '%s' "$out" | head -1 | cut -c1-70)"
     else
         local detail; detail=$(printf '%s' "$out" | tr '\n' ' ' | cut -c1-46)
+        if [ "${MUST_ANSWER:-0}" = "1" ] && [ -z "$(printf '%s' "$out" | tr -d '[:space:]')" ]; then
+            bad "$label" "answered nothing, and this probe has to answer something"
+            return
+        fi
         ok "$label" "${detail:+-> $detail}"
         if [ "$new" -gt 0 ]; then
             local w; w=$(logtail "$new" | grep -cE 'WARN')
@@ -127,10 +131,16 @@ run_probe() {
 }
 
 echo "${B}reads${N}"
+# These have no meaningful empty answer: a shell that cannot say whether it is
+# locked, or what the wallpaper is, has not answered the question.
+MUST_ANSWER_PROBES="drawers list|lock isLocked|gameMode isEnabled|idleInhibitor isEnabled|notifs isDndEnabled|wallpaper get|brightness get"
 while IFS='|' read -r _ call arg; do
+    case "|$MUST_ANSWER_PROBES|" in *"|$call|"*) MUST_ANSWER=1 ;; *) MUST_ANSWER=0 ;; esac
+    export MUST_ANSWER
     # shellcheck disable=SC2086
     run_probe "$call ${arg}" ipc $call $arg
 done < <(printf '%s\n' "$PROBES" | grep '^read|')
+MUST_ANSWER=0
 
 echo
 echo "${B}toggles (restored)${N}"
