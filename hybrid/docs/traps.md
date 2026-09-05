@@ -2790,3 +2790,46 @@ and removes the window entirely.
 The general lesson for this project: **push early.** Both recoveries were painless only because
 every commit had already been pushed, so the remote was a complete copy. A long unpushed
 sequence of commits would have been lost outright.
+
+## T65 — Three gates are needed to say a setting works, and each proves a different third
+
+T62 was a setting that could be changed, was stored correctly, and did nothing. Working out
+what would have caught it is more useful than the fix, because it maps out what "this setting
+works" actually decomposes into:
+
+| question | gate | how it can fail |
+|---|---|---|
+| does the path exist? | `settings-paths.sh` | a typo or a renamed key writes nowhere |
+| does the write reach the right node? | `config-scope-test.sh` | **T62** -- an empty scope resolved to a layer nothing reads |
+| does a stored value change anything? | `hw-effects.sh` | a consumer that ignores it, or was never wired |
+
+None of the three subsumes another, and no single one would have caught T62 on its own. In
+particular `hw-effects.sh` would **not** have: it writes the config *file* directly, and
+writing the file worked throughout the bug -- it was the UI's write path that went astray. The
+scope test covers that path, because it writes through `GlobalConfig.forScreen("")` exactly as
+the settings pages do.
+
+**What `hw-effects.sh` observes, and what that does not include.** It reads Hyprland's
+`reserved` (left, top, right, bottom) -- the space layer surfaces claim -- which tracks the
+bar's exclusive zone exactly:
+
+```
+position=top  [10, 60, 10, 10]      persistent=false [10, 10, 10, 10]
+position=left [60, 10, 10, 10]      thickness=24     [24, 88, 24, 24]
+```
+
+That measures one specific consumer: `modules/drawers/Exclusions.qml`, which keys each edge's
+exclusive zone on `Config.bar.position`. It does **not** prove the bar is painted at that edge.
+A regression in the bar's visual anchoring that left the exclusions intact would pass. Proving
+where pixels land needs a screenshot and a person, which is the boundary this harness stops at.
+
+Validating it took two attempts, and the failed one is the point. Breaking the four
+`when: Config.bar.position === ...` states in `ContentWindow.qml` changed nothing the suite
+could see -- those states set `anchors.*Margin`, not the edge, so it was not a regression in
+what was being measured. Only breaking `Exclusions.qml` produced failures (5 of 6). **A fault
+injection that does not fail the suite has not validated it; it has found the wrong fault.**
+
+The general shape, and the reason this is worth writing down rather than just fixing: a setting
+crosses three boundaries between the click and the effect -- UI to node, node to store, store to
+consumer -- and a gate that watches one boundary reports success no matter what happens at the
+other two. T62 sat at the second, and gates existed for neither the second nor the third.
