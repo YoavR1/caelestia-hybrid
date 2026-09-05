@@ -2511,3 +2511,31 @@ The one real finding was already known: `QuickSharePrompt.qml` assigns to
 `QuickShare.hasPendingTransfer`, which nothing declares. `dead-qml.py` already allowlists that
 file and says so in its reason. That the new checker rediscovered it independently is the best
 evidence available that it works.
+
+## T59 — Editing a script while it is running produces a failure that is not real
+
+`verify.sh` reported a syntax error mid-run:
+
+```
+./hybrid/tools/verify.sh: line 111: syntax error near unexpected token `done'
+```
+
+`bash -n hybrid/tools/verify.sh` said the file was fine, before and after. Both were true.
+
+Bash does not read a script into memory. It reads and executes incrementally, remembering a
+byte offset, and re-reads from that offset when it needs the next command. Inserting two lines
+near the top of a script that is thirty seconds into a twenty-minute run shifts everything after
+the insertion point, so the next read resumes in the middle of a construct -- here, inside the
+`for` loop that runs the `-Werror` legs, landing on its `done`.
+
+The failure is indistinguishable from a real one in the log, and re-running makes it vanish,
+which is the worst combination: it looks flaky. It happened here because the gate takes long
+enough that carrying on with other work during it feels free, and the obvious other work was
+wiring a new self-test into that same file.
+
+**Do not edit any script while a run of it is in flight.** Editing files it *reads* is fine --
+the checkers re-read the tree per invocation, and `traps.md` is not executed. If a change to a
+runner is needed mid-run, either wait, or copy it: `cp verify.sh /tmp/v.sh && /tmp/v.sh`
+detaches the running copy from the file being edited.
+
+The same applies to `smoke-matrix.sh` and `hw-audit.sh`, both of which run for minutes.
