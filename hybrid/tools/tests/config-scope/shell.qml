@@ -30,9 +30,7 @@ ShellRoot {
     }
 
     function finish(): void {
-        lines.push(failures === 0
-            ? "PASS config-scope: every invariant holds"
-            : `FAIL config-scope: ${failures} invariant(s) broken`);
+        lines.push(failures === 0 ? "PASS config-scope: every invariant holds" : `FAIL config-scope: ${failures} invariant(s) broken`);
         resultFile.setText(lines.join("\n") + "\n");
     }
 
@@ -53,15 +51,12 @@ ShellRoot {
         global.bar.position = probe;
 
         Qt.callLater(() => {
-            check("a Global write reaches a screen layer", screen.bar.position === probe,
-                  `wrote ${probe}, layer reads ${screen.bar.position}`);
-            check("a Global write is visible on the root", GlobalConfig.bar.position === probe,
-                  `root reads ${GlobalConfig.bar.position}`);
+            check("a Global write reaches a screen layer", screen.bar.position === probe, `wrote ${probe}, layer reads ${screen.bar.position}`);
+            check("a Global write is visible on the root", GlobalConfig.bar.position === probe, `root reads ${GlobalConfig.bar.position}`);
 
             screen.bar.position = before;
             Qt.callLater(() => {
-                check("a screen write does not leak to the root", GlobalConfig.bar.position === probe,
-                      `root reads ${GlobalConfig.bar.position}`);
+                check("a screen write does not leak to the root", GlobalConfig.bar.position === probe, `root reads ${GlobalConfig.bar.position}`);
                 root.finish();
             });
         });
