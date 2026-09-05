@@ -22,6 +22,46 @@ PageBase {
 
     readonly property string defaultsPath: Quickshell.env("HOME") + "/.config/hypr/variables.lua"
 
+    // Two actions on one key combination is a silent failure: Hyprland fires whichever
+    // bind it reaches first and reports nothing, so the only symptom is a shortcut that
+    // "does nothing". This page already knows every binding, so it can say so instead.
+    // Maps a var key to the other var keys sharing its combination.
+    readonly property var conflicts: {
+        const byCombo = {};
+        const keys = new Set(Object.keys(root.defaults).concat(Object.keys(root.vars)));
+        for (const key of keys) {
+            const raw = root.vars[key] !== undefined ? root.vars[key] : root.defaults[key];
+            // A binding may be a single string or a list of alternatives.
+            for (const combo of Array.isArray(raw) ? raw : [raw]) {
+                if (combo === undefined || combo === null || String(combo).length === 0)
+                    continue;
+                // Compare on meaning, not spelling: "CTRL + SUPER" and "super+ctrl" collide.
+                const norm = String(combo).toUpperCase().split("+").map(part => part.trim()).filter(part => part.length > 0).sort().join("+");
+                if (norm.length === 0)
+                    continue;
+                if (!byCombo[norm])
+                    byCombo[norm] = [];
+                byCombo[norm].push(key);
+            }
+        }
+
+        const out = {};
+        for (const norm in byCombo) {
+            const sharing = byCombo[norm];
+            if (sharing.length < 2)
+                continue;
+            for (const key of sharing)
+                out[key] = sharing.filter(other => other !== key).map(other => root.prettyVarName(other));
+        }
+        return out;
+    }
+
+    // "kbToggleGroup" -> "toggle group", so the warning names the action a person
+    // recognises rather than the variable behind it.
+    function prettyVarName(key: string): string {
+        return key.replace(/^kb/, "").replace(/([a-z0-9])([A-Z])/g, "$1 $2").toLowerCase();
+    }
+
     function saveVar(key, val) {
         if (typeof val === "boolean")
             val = val ? "true" : "false";
@@ -592,8 +632,11 @@ PageBase {
                 }
 
                 StyledText {
-                    text: kroot.recording ? "Recording..." : (root.vars[kroot.varKey] !== undefined ? String(root.vars[kroot.varKey]) : (root.defaults[kroot.varKey] !== undefined ? String(root.defaults[kroot.varKey]) : "Unbound"))
-                    color: Colours.palette.m3outline
+                    readonly property var clash: root.conflicts[kroot.varKey] ?? []
+                    readonly property string binding: root.vars[kroot.varKey] !== undefined ? String(root.vars[kroot.varKey]) : (root.defaults[kroot.varKey] !== undefined ? String(root.defaults[kroot.varKey]) : "Unbound")
+
+                    text: kroot.recording ? "Recording..." : (clash.length > 0 ? qsTr("%1 — also bound to %2").arg(binding).arg(clash.join(", ")) : binding)
+                    color: !kroot.recording && clash.length > 0 ? Colours.palette.m3error : Colours.palette.m3outline
                     font: Tokens.font.label.small
                     Layout.fillWidth: true
                     elide: Text.ElideRight
