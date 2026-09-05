@@ -109,6 +109,14 @@ QtObject {
             category: "hybrid"
         },
 
+        // Power & idle
+        {
+            label: qsTr("Power & idle"),
+            icon: "power_settings_new",
+            description: qsTr("Idle timeouts, sleep and screen-off behaviour"),
+            category: "shell"
+        },
+
         // About
         {
             label: qsTr("About"),

@@ -16,7 +16,8 @@
       "dino": false,
       "hotspot": false,
       "themeManager": false,
-      "btAgent": false
+      "btAgent": false,
+      "lockPowerConfirm": false
     },
     "variants": {
       "lockCentre": "midnight",

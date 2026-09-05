@@ -15,6 +15,11 @@ import qs.services
 StyledRect {
     id: root
 
+    // The lock surface, so a session button can ask it to confirm before running. Optional:
+    // Resources is also used where no lock exists, and exec() falls through to running
+    // directly when it is null.
+    property var lock
+
     readonly property real fontScale: {
         const diff = width / 391 - 1; // 391 is the width at 1080 height screen
         return 1 + Math.pow(Math.abs(diff), 0.8) * Math.sign(diff);
@@ -178,6 +183,16 @@ StyledRect {
         required property list<string> command
 
         function exec(): void {
+            // Ask first, when the feature is on. Our lock screen ran these immediately, so a
+            // stray click on the lock screen could power the machine off mid-work.
+            if (GlobalConfig.hybrid.features.lockPowerConfirm && root.lock) {
+                root.lock.requestPowerConfirm(command); // qmllint disable missing-property
+                return;
+            }
+            run();
+        }
+
+        function run(): void {
             if (!SessionManager.exec(command)) {
                 if (command.length > 0) {
                     let hasShellOp = command.some(arg => arg.includes(" ") || arg === "&&" || arg === "||" || arg === ";" || arg === "|" || arg === ">" || arg === "<");
