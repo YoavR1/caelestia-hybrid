@@ -2606,3 +2606,43 @@ deliver an event and did not.
 
 `verify.sh` now prints the full smoke log on failure and keeps it, and the harness keeps the
 log on the IPC branch too.
+
+## T61 — The lock screen authenticates correctly, and the IPC beside it does not
+
+Two facts about `modules/lock/`, both worth knowing before Phase 8 touches it.
+
+**PAM authentication works.** Verified on hardware, both directions, which matters because only
+one direction is a test:
+
+```
+lock                       -> isLocked = true
+type "definitely-not-the-password", Enter  -> isLocked = true    (rejected)
+type the real password, Enter              -> isLocked = false   (accepted)
+```
+
+A lock screen that never unlocks would also "reject" a wrong password, so the second line alone
+proves nothing. Both were needed.
+
+**`qs ipc call lock unlock` does not authenticate at all.** The handler is three lines:
+
+```qml
+function unlock(): void {
+    lock.unlock();
+}
+```
+
+No PAM, no prompt. Any process running as the user can defeat the lock screen. All three
+upstreams ship this identically -- `caelestia-dots/shell` included -- so it is inherited design
+rather than something this fork introduced, and it is defensible on the usual threat model: the
+lock screen guards against someone at the keyboard, not against code already running as you,
+which could read the session's files anyway.
+
+It is recorded because it is easy to meet this handler while working on D10 and conclude the
+lock screen is already compromised, or to "fix" it and break `caelestia shell lock unlock` for
+everyone. Neither is right. If Phase 8 ever hardens the lock, this is a separate decision from
+the pattern-lock one, and diverging from upstream here needs its own reason.
+
+Note also what this does **not** say. D10 blocks OP's *pattern* lock, which is a different
+thing: a plaintext pattern with `patternAvailable` hardcoded true, calling `lock.unlock()` to
+skip PAM entirely. That code is not in this tree (T3), and the fact that PAM works here says
+nothing about it.
