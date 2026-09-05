@@ -8,13 +8,29 @@ on top of upstream **Caelestia**. One shell, one config, one CLI — features to
 
 ## Status
 
-**Phases 0, 1 and 2 are done. Phase 3 (the feature system) is in progress.**
+**Phases 0-5 are done and merged to `main`. Phase 6 has not started; Phase 7 is half done.**
 
-| branch | what |
-|---|---|
-| `phase0/scaffold-and-ci` | scaffold, docs, tooling, all four static gates brought to zero |
-| `phase2/upstream-catchup` | 51 upstream commits merged, incl. the config-module rewrite |
-| `phase3/feature-flags` | `hybrid.features` / `hybrid.variants` schema + Nexus page |
+| phase | what | state |
+|---|---|---|
+| 0 | scaffold, docs, tooling, all four static gates brought to zero | done |
+| 1 | offscreen smoke harness + preset matrix | done |
+| 2 | 51 upstream commits merged, incl. the config-module rewrite | done |
+| 3 | `hybrid.features` / `hybrid.variants` schema + Nexus page | done |
+| 4 | OP's dock behind `hybrid.variants.dock` | done, and verified on hardware |
+| 5 | OP overview, hotspot/BtAgent/Nmcli, GPU detection, themes | done |
+| 6 | **single merged CLI (D6)** | **not started** |
+| 7 | the real variants | 3 of 6 wired: `audioPopout`, `overview`, `dock` |
+| 8 | OP's pattern lock | satisfied by omission -- it is not in the tree (D10) |
+
+Phase 6 is not cosmetic. The installed `caelestia` binary is whichever CLI the user has, and
+every one of its subcommands runs `qs -c caelestia`, which resolves a config *by name* -- so on
+a machine with `midnight-shell-git` installed it drives the packaged shell rather than this
+tree. That is T53, and it is the single largest remaining source of "the shell ignores me".
+
+Phase 7's remaining three -- `lockCentre`, `desktopClock`, `colours` -- have no second
+implementation to select between: OP's side of each is edits to shared files rather than
+separate files. They are declared in the schema and deliberately absent from the Nexus page
+until that is resolved.
 
 Every gate upstream enforces is green on a tree that arrived with all of them failing:
 
@@ -34,6 +50,7 @@ Every gate upstream enforces is green on a tree that arrived with all of them fa
 | `hybrid/tools/shell-safety.py` | didn't exist; 15 injectable sites | 0 of 33 |
 | `hybrid/tools/dead-config.py` | didn't exist; the T28 sweep was prose | 0 of 368, 15 allowlisted |
 | `hybrid/tools/check-index-modes.sh` | didn't exist; 4 tools non-executable | clean |
+| `hybrid/tools/hw-verify.sh` | didn't exist; the dock could not appear at all | 12 ok, 1 skipped |
 
 `./hybrid/tools/verify.sh` runs every row of that table in one go and prints GREEN or RED.
 CI runs them too (`.github/workflows/smoke.yml` carries the last two, on headless sway).
@@ -55,7 +72,9 @@ that reported CI green — they were never run locally, and a `clazy` finding is
 `hybrid/docs/phase2-upstream-catchup.md` records every merge decision and the API mapping from
 the old `ConfigObject` to `settings::ObjectNode`.
 
-Still missing: `git remote add origin <your fork>`. Nothing has been pushed anywhere.
+The remote is `https://github.com/YoavR1/caelestia-hybrid` and `main` is pushed. The shell runs
+on real hardware; `hybrid/tools/hw-verify.sh` drives a live session and is the only gate that
+can see a feature that loads correctly and is then unreachable (T54).
 
 ## Locked decisions
 
