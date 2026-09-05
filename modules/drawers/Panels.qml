@@ -4,6 +4,7 @@ import Caelestia.Config
 import qs.components
 import qs.modules.bar as Bar
 import qs.modules.dashboard as Dashboard
+import qs.modules.dock as Dock
 import qs.modules.launcher as Launcher
 import qs.modules.notifications as Notifications
 import qs.modules.osd as Osd
@@ -34,6 +35,7 @@ Item {
     readonly property alias toasts: toasts
     readonly property alias sidebar: sidebar
     readonly property alias workspaceOverview: workspaceOverview
+    readonly property alias dock: dock
 
     readonly property real leftMargin: anchors.leftMargin
     readonly property real rightMargin: anchors.rightMargin
@@ -273,5 +275,21 @@ Item {
         screen: root.screen
 
         anchors.left: parent.left
+    }
+
+    // OP's dock, the second implementation of hybrid.variants.dock. The root is unconditional
+    // for the same reason WorkspaceOverview's is: Regions.qml and ContentWindow.qml bind to it,
+    // and a conditional root would leave those on a null (T1). Its own shouldBeActive carries
+    // the variant, so with MiDnight's dock selected it never activates, offsetScale stays 1,
+    // and the region and background it feeds both collapse to nothing.
+    Dock.Wrapper {
+        id: dock
+
+        screen: root.screen
+        screenState: root.screenState
+        panels: root
+
+        anchors.bottom: parent.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
     }
 }

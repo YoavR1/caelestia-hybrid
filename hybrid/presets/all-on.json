@@ -24,7 +24,8 @@
       "audioPopout": "op",
       "desktopClock": "op",
       "colours": "op",
-      "overview": "op"
+      "overview": "op",
+      "dock": "op"
     }
   }
 }

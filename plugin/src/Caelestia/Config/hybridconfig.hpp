@@ -85,6 +85,11 @@ class HybridVariants : public settings::ObjectNode {
     // fifth -- MiDnight ships modules/drawers/WorkspaceOverview.qml and OP ships
     // modules/overview/, two designs of the same thing (T44).
     VARIANT(overview)
+
+    // The sixth entry, which is exactly D4's stated cap. MiDnight's dock is a bar section
+    // (bar.dock), OP's a separate auto-hiding panel (dock.*). Same purpose, different objects,
+    // and wanting both at once is redundant UI -- which is what makes it a variant.
+    VARIANT(dock)
 };
 
 class HybridConfig : public settings::ObjectNode {

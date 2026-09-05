@@ -55,6 +55,19 @@ Region {
         width: panel.width * (1 - root.panels.workspaceOverview.offsetScale) + root.borderThickness
     }
 
+    // OP's dock, when hybrid.variants.dock selects it. With MiDnight's dock selected the panel
+    // never activates, offsetScale stays 1 and this height collapses to the border thickness,
+    // so the region costs nothing rather than needing its own condition.
+    R {
+        id: dockRegion
+
+        panel: root.panels.dock
+        height: {
+            const base = panel.height * (1 - root.panels.dock.offsetScale) + root.borderThickness;
+            return root.panels.dock.contextMenuOpen ? base + root.panels.dock.contextMenuHeight : base;
+        }
+    }
+
     R {
         id: sidebarRegion
 

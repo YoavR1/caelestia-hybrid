@@ -24,7 +24,8 @@
       "audioPopout": "midnight",
       "desktopClock": "midnight",
       "colours": "midnight",
-      "overview": "midnight"
+      "overview": "midnight",
+      "dock": "midnight"
     }
   }
 }

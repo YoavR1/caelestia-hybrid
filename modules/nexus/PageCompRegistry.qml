@@ -189,6 +189,9 @@ QtObject {
                 Component {
                     OverviewPanel {}
                 }
+                Component {
+                    DockPanel {}
+                }
 
                 // Taskbar component sub-pages
                 Component {

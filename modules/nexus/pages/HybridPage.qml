@@ -257,7 +257,6 @@ PageBase {
         }
 
         SelectRow {
-            last: true
             label: qsTr("Workspace overview")
             subtext: qsTr("MiDnight's drawer, or OP's carousel and window grid")
             configNode: root.targetConfig.hybrid.variants
@@ -266,6 +265,19 @@ PageBase {
             active: root.variantItems[root.targetConfig.hybrid.variants.overview === HybridVariant.Op ? 1 : 0]
             onSelected: item => {
                 root.targetConfig.hybrid.variants.overview = root.variantItems.indexOf(item) === 1 ? HybridVariant.Op : HybridVariant.Midnight;
+            }
+        }
+
+        SelectRow {
+            last: true
+            label: qsTr("Dock")
+            subtext: qsTr("MiDnight's bar section, or OP's auto-hiding panel")
+            configNode: root.targetConfig.hybrid.variants
+            propertyName: "dock"
+            menuItems: root.variantItems
+            active: root.variantItems[root.targetConfig.hybrid.variants.dock === HybridVariant.Op ? 1 : 0]
+            onSelected: item => {
+                root.targetConfig.hybrid.variants.dock = root.variantItems.indexOf(item) === 1 ? HybridVariant.Op : HybridVariant.Midnight;
             }
         }
     }
