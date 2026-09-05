@@ -2558,8 +2558,9 @@ failures=$((failures + 1))
 An early exit kept its log; an IPC failure did not. So the most common failure was the one that
 destroyed its own evidence.
 
-**The cause was a duration, not a bug.** `drive_shell()` began with `sleep 6`, then started
-calling IPC. `check_ipc` counts this as a failure:
+**The likeliest cause is a duration, not a bug — but this was not reproduced, and the
+distinction matters.** `drive_shell()` began with `sleep 6`, then started calling IPC.
+`check_ipc` counts this as a failure:
 
 ```
 Target not found.
@@ -2581,10 +2582,27 @@ while :; do
 done
 ```
 
-The general shape is worth keeping: **a fixed sleep before an assertion is a load-dependent
-gate**, and it fails on the busiest machines, which are usually the ones running the most other
-work — CI included. T57 is the same mistake from the other direction, where warping the cursor
-was assumed to deliver an event and did not.
+**What was actually established, and what was not.** Established: the failure happened twice,
+both times while this machine was busy with unrelated work; it never reproduced; and no log
+survived, which places it in the IPC branch, because that was the only branch deleting its own
+log. Also established: `qs ipc call` really does answer `Target not found.` before the shell
+registers its handlers, and `check_ipc` really does count that as a failure — so a too-short
+wait produces exactly this signature.
+
+Not established: that the wait was in fact too short on those two occasions. An A/B was run —
+the old `sleep 6` restored verbatim, under two CPU burners on a four-core machine, load average
+above 3 — and it passed 14/14, as did the polling version under the same load. So CPU pressure
+alone does not reproduce it. The original failures happened under *mixed* load (ssh sessions,
+screenshots, a hardware audit), which is I/O and scheduling pressure of a different shape, and
+that was not recreated.
+
+The change is still right, on its own terms rather than as a proven fix: **waiting for a
+condition is strictly better than waiting for a duration**, and a fixed sleep before an
+assertion is load-dependent by construction — it fails on the busiest machines, which are
+usually the ones running the most other work, CI included. But if this recurs, the fixed sleep
+has been ruled out as the whole story, and the kept log will say what the actual failure was.
+T57 is the same mistake from the other direction, where warping the cursor was assumed to
+deliver an event and did not.
 
 `verify.sh` now prints the full smoke log on failure and keeps it, and the harness keeps the
 log on the IPC branch too.
