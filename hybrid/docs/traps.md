@@ -2466,3 +2466,48 @@ The general lesson is T23 again, in its sharpest form: this checker reported *bo
 passes and false failures, from three independent causes, for a feature that worked. A check
 whose result does not depend on what it claims to measure is worse than no check, because it
 sends you looking for the bug in the wrong place -- and it did, twice.
+
+## T58 — qmllint checks nothing about singleton members, and this tree is 49 singletons
+
+A one-line change referenced `Paths.shortenHome(Paths.wallsdir)`. Verifying it the usual way --
+break the name on purpose, confirm the gate objects -- produced nothing:
+
+```sh
+sed -i 's/Paths\.shortenHome/Paths.shortenHomeXX/' modules/nexus/pages/wallandstyle/WallpaperSelect.qml
+./hybrid/tools/qml-lint.sh; echo $?     # 0. No diagnostic. No mention of the file.
+```
+
+It is not specific to `Paths`. Injecting `Colours.paletteXX.m3outlineYY` into a file produced
+three bogus member accesses and **zero findings, exit 0**.
+
+The cause is that no `qs.*` module has a `qmldir`. Only two exist in the whole tree
+(`modules/nexus/pages/background`, `.../hyprland`), both hand-written for something else, and
+nothing generates one. Without it qmllint never resolves the type behind `Paths` or `Colours`,
+so it cannot know what members they have, and it says nothing rather than guessing. This is the
+same root cause as the note in `caelestia-conventions` that `import ".."` does not carry
+qmldir singleton registration -- the consequence is just much larger than it looks.
+
+Why it matters more than a typo class usually would: **QML is silent about this at runtime
+too.** A stale `Colours.foo` evaluates to `undefined`, a binding on it produces an empty string
+or a zero size, and the symptom is a panel that renders blank. Nothing is logged. Renaming a
+singleton member is a routine change here, and neither the gate nor the running shell will tell
+you what you broke.
+
+`hybrid/tools/singleton-members.py` closes it. It resolves each `Singleton.member` reference
+against the singleton's own file, and is deliberately narrow so a finding is always real:
+
+- only the **first** member of a chain -- `Colours.palette.m3outline` checks `palette` and
+  stops, because resolving `palette`'s type means implementing QML's type system;
+- only singletons whose members can be **fully enumerated**: those rooted at `QtObject`,
+  `Singleton` or `Item`. Six of the 49 are built on `Searcher` or a plugin type whose members
+  are not readable here, and every reference to those is skipped rather than guessed at;
+- `component Foo: ...` counts as a member, because `Singleton.Foo` is how a nested type is
+  reached. Missing this produced 30-odd false positives in the first draft.
+
+It checks 2617 references across 43 singletons. Validated by renaming `Paths.shortenHome`,
+which flagged its four callers -- the exact scenario it exists for.
+
+The one real finding was already known: `QuickSharePrompt.qml` assigns to
+`QuickShare.hasPendingTransfer`, which nothing declares. `dead-qml.py` already allowlists that
+file and says so in its reason. That the new checker rediscovered it independently is the best
+evidence available that it works.
