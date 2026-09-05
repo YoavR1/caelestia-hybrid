@@ -22,7 +22,8 @@
       "lockCentre": "op",
       "audioPopout": "op",
       "desktopClock": "op",
-      "colours": "op"
+      "colours": "op",
+      "dock": "op"
     }
   }
 }

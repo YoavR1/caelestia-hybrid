@@ -366,7 +366,7 @@ drive_shell() {
 
     sleep 6   # let the shell finish loading before poking it
 
-    for drawer in dashboard launcher session sidebar utilities workspaceDrawer osd; do
+    for drawer in dashboard launcher session sidebar utilities workspaceDrawer osd dock; do
         check_ipc drawers toggle "$drawer"
         sleep 0.9
         check_ipc drawers toggle "$drawer"

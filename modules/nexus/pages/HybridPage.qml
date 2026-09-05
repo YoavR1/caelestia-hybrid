@@ -23,6 +23,17 @@ PageBase {
         }
     ]
 
+    // Ordered to match config::HybridVariant (Midnight, Op). Indexed by ordinal, so a new
+    // enumerator must be appended in both places -- see T47.
+    readonly property list<MenuItem> variantItems: [
+        MenuItem {
+            text: qsTr("MiDnight")
+        },
+        MenuItem {
+            text: qsTr("OP")
+        }
+    ]
+
     title: qsTr("Hybrid")
 
     ColumnLayout {
@@ -212,10 +223,26 @@ PageBase {
             onToggled: root.targetConfig.hybrid.features.dino = checked
         }
 
-        // The four genuine dual-implementation sites (lock centre, audio popout, desktop
-        // clock, colours) live in the config under `hybrid.variants` and are set by the
-        // presets, but there is no section for them here yet: each still has exactly one
-        // implementation, so a selector would visibly do nothing. Phase 7 is when they get
-        // a second one and this page grows a Variants section.
+        // ------------------------------------------------------------ variants
+
+        SectionHeader {
+            text: qsTr("Variants")
+        }
+
+        // Only sites that genuinely have two implementations appear here. A selector for one
+        // that does not would visibly do nothing, which is worse than its absence.
+        SelectRow {
+            first: true
+            last: true
+            label: qsTr("Dock")
+            subtext: qsTr("MiDnight's bar section, or OP's auto-hiding panel")
+            configNode: root.targetConfig.hybrid.variants
+            propertyName: "dock"
+            menuItems: root.variantItems
+            active: root.variantItems[root.targetConfig.hybrid.variants.dock === HybridVariant.Op ? 1 : 0]
+            onSelected: item => {
+                root.targetConfig.hybrid.variants.dock = root.variantItems.indexOf(item) === 1 ? HybridVariant.Op : HybridVariant.Midnight;
+            }
+        }
     }
 }

@@ -22,7 +22,8 @@
       "lockCentre": "midnight",
       "audioPopout": "midnight",
       "desktopClock": "midnight",
-      "colours": "midnight"
+      "colours": "midnight",
+      "dock": "midnight"
     }
   }
 }

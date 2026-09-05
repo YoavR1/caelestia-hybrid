@@ -180,6 +180,9 @@ QtObject {
                 Component {
                     UtilitiesPanel {}
                 }
+                Component {
+                    DockPanel {}
+                }
 
                 // Taskbar component sub-pages
                 Component {

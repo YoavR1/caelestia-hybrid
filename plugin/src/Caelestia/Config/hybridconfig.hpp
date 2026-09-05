@@ -79,6 +79,12 @@ class HybridVariants : public settings::ObjectNode {
     VARIANT(audioPopout)
     VARIANT(desktopClock)
     VARIANT(colours)
+
+    // Added in Phase 7, and the sixth entry -- D4's stated cap. MiDnight's dock is a bar section
+    // (bar.dock), OP's is a separate auto-hiding panel (dock.*). Same purpose, different objects,
+    // and wanting both at once would be redundant UI, which is what makes it a variant rather
+    // than two features.
+    VARIANT(dock)
 };
 
 class HybridConfig : public settings::ObjectNode {
