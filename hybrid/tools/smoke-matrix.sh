@@ -364,7 +364,24 @@ drive_shell() {
     local -a env=("$@")
     local ipc=(env "${env[@]}" "$QS" -p "$ROOT" ipc call)
 
-    sleep 6   # let the shell finish loading before poking it
+    # Wait for the shell to register its IPC targets rather than assuming a duration.
+    # Six seconds is enough on an idle machine and not always enough on a busy one,
+    # and when it is not the first call below returns "Target not found." -- which
+    # check_ipc counts as a failure, so the run fails for a reason that has nothing
+    # to do with the preset. That was 1/14 twice in one day, and neither reproduced
+    # on a quiet re-run, which is the signature of a fixed sleep rather than a bug.
+    local waited=0 probe
+    while :; do
+        probe=$("${ipc[@]}" drawers list 2>&1)
+        printf '%s' "$probe" | grep -qE '^(Target|Function) not found\.' || break
+        waited=$((waited + 1))
+        if [ "$waited" -ge 45 ]; then
+            IPC_ERRORS+="    shell did not register its ipc targets within ${waited}s"$'\n'
+            return
+        fi
+        sleep 1
+    done
+    sleep 1   # a beat past the first answer, for the rest of the graph to settle
 
     for drawer in dashboard launcher session sidebar utilities workspaceDrawer osd dock; do
         check_ipc drawers toggle "$drawer"
@@ -508,7 +525,9 @@ run_preset() {
         printf '%s\n' "$(red FAIL)"
         printf '%s' "$IPC_ERRORS"
         failures=$((failures + 1))
-        [ "$KEEP_LOGS" = 1 ] || rm -f "$log"
+        # Keep it. This branch used to delete the log unless --keep-logs, so an IPC
+        # failure -- the most common kind -- left no evidence at all.
+        printf '        (log kept at %s)\n' "$log"
         return
     fi
 

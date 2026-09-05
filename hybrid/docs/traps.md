@@ -2539,3 +2539,52 @@ runner is needed mid-run, either wait, or copy it: `cp verify.sh /tmp/v.sh && /t
 detaches the running copy from the file being edited.
 
 The same applies to `smoke-matrix.sh` and `hw-audit.sh`, both of which run for minutes.
+
+## T60 — A fixed sleep before the IPC drive made the smoke matrix fail under load
+
+The matrix reported `FAIL 1/14 run(s) failed` twice in one day. Neither reproduced: re-running
+the same fourteen on a quiet machine gave `PASS all 14 run(s) clean` both times. Two properties
+made it expensive to chase.
+
+**It left no evidence.** `verify.sh` piped the matrix through `tail -3`, so the output was the
+verdict and nothing else -- not even which of the fourteen failed. And the harness deleted the
+run's log in exactly the branch that had failed:
+
+```sh
+failures=$((failures + 1))
+[ "$KEEP_LOGS" = 1 ] || rm -f "$log"     # the IPC branch, and only this one
+```
+
+An early exit kept its log; an IPC failure did not. So the most common failure was the one that
+destroyed its own evidence.
+
+**The cause was a duration, not a bug.** `drive_shell()` began with `sleep 6`, then started
+calling IPC. `check_ipc` counts this as a failure:
+
+```
+Target not found.
+```
+
+which is exactly what `qs ipc call` returns while the shell is still loading and has not
+registered its `IpcHandler`s yet. Six seconds is enough on an idle machine. It is not always
+enough on one running ssh sessions, screenshots and a hardware audit at the same time, which
+is what this machine was doing on both occasions.
+
+The fix is to wait for the condition rather than for a length of time -- poll `drawers list`
+until the target exists, with a 45s ceiling that reports itself as a real failure:
+
+```sh
+while :; do
+    probe=$("${ipc[@]}" drawers list 2>&1)
+    printf '%s' "$probe" | grep -qE '^(Target|Function) not found\.' || break
+    ...
+done
+```
+
+The general shape is worth keeping: **a fixed sleep before an assertion is a load-dependent
+gate**, and it fails on the busiest machines, which are usually the ones running the most other
+work — CI included. T57 is the same mistake from the other direction, where warping the cursor
+was assumed to deliver an event and did not.
+
+`verify.sh` now prints the full smoke log on failure and keeps it, and the harness keeps the
+log on the IPC branch too.
