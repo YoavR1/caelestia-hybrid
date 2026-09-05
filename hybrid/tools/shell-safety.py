@@ -79,48 +79,98 @@ def tracked_files(*patterns):
     return files
 
 
+# the script argument of an sh -c / bash -c invocation, on one line
+CALL = re.compile(r'\[\s*(?:\.\.\.[\w.]+\s*,\s*)?"(?:ba)?sh"\s*,\s*"-c"\s*,\s*(.*)')
+
+
+def script_expr(rest):
+    """The third array element as a whole expression, stopping at the comma that ends
+    it. Both halves matter: a value can be interpolated *inside* the literal with ${},
+    or concatenated *outside* it with +, and reading only the literal misses the second
+    while reading the whole line misses nothing and flags correct calls."""
+    depth, quote, out, i = 0, None, [], 0
+    while i < len(rest):
+        c = rest[i]
+        if quote:
+            if c == "\\":
+                out.append(rest[i:i + 2]); i += 2; continue
+            if c == quote:
+                quote = None
+        elif c in "\"'`":
+            quote = c
+        elif c in "([{":
+            depth += 1
+        elif c in ")]}":
+            if depth == 0:
+                break           # the array's own closing bracket
+            depth -= 1
+        elif c == "," and depth == 0:
+            break               # end of the script argument
+        out.append(c)
+        i += 1
+    return "".join(out)
+
+
+def classify(line):
+    """(is_shell_call, builds_script_from_a_value) for one line."""
+    m = CALL.search(line)
+    if not m:
+        return False, False
+    script = script_expr(m.group(1))
+    return True, ("${" in script or "+" in script)
+
+
+def self_test():
+    """Prove the detector still detects, on lines this file controls.
+
+    Validated by hand when written, and by nothing since -- a checker that has
+    quietly stopped matching reports zero and passes, which looks exactly like a
+    clean tree (T23).
+    """
+    cases = [
+        # (line, is_shell_call, is_unsafe)
+        ('command: ["ls", "-la"]', False, False),
+        # The correct shape: constant script, values as positional arguments.
+        ("""command: ["sh", "-c", 'cp "$1" "$2"', "sh", src, dst]""", True, False),
+        # Interpolated into the script -- T26's exact bug.
+        ('command: ["sh", "-c", `rm -rf ${dir}`]', True, True),
+        # Concatenated outside the literal, which reading only the literal misses.
+        ('command: ["sh", "-c", "rm -rf " + dir]', True, True),
+        ('command: ["bash", "-c", `curl ${url}`]', True, True),
+        # A quoted interpolation is still unsafe: a quote in the value ends the quote.
+        ("""command: ["sh", "-c", `cat "${path}"`]""", True, True),
+        # Spread of a constant prefix is still a shell call.
+        ('command: [...root.pre, "sh", "-c", `x ${y}`]', True, True),
+        # A ${} after the script argument is an argument, not part of the script.
+        ("""command: ["sh", "-c", 'echo "$1"', "sh", `${value}`]""", True, False),
+    ]
+
+    failures = 0
+    for line, want_call, want_unsafe in cases:
+        got_call, got_unsafe = classify(line)
+        if (got_call, got_unsafe) != (want_call, want_unsafe):
+            failures += 1
+            print(f"  \033[0;31mmismatch\033[0m call={got_call} unsafe={got_unsafe} "
+                  f"(wanted {want_call}/{want_unsafe}): {line[:70]}")
+
+    if failures:
+        print(f"\033[1;31mFAIL\033[0m self-test: {failures} of {len(cases)} case(s) wrong")
+        return 1
+    print(f"\033[1;32mPASS\033[0m self-test: {len(cases)} cases, detector flags interpolation "
+          "and clears argv-style calls")
+    return 0
+
+
 def main():
     files = tracked_files("*.qml")
-
-    # the script argument of an sh -c / bash -c invocation, on one line
-    call = re.compile(r'\[\s*(?:\.\.\.[\w.]+\s*,\s*)?"(?:ba)?sh"\s*,\s*"-c"\s*,\s*(.*)')
-
-    def script_expr(rest):
-        """The third array element as a whole expression, stopping at the comma that ends
-        it. Both halves matter: a value can be interpolated *inside* the literal with ${},
-        or concatenated *outside* it with +, and reading only the literal misses the second
-        while reading the whole line misses nothing and flags correct calls."""
-        depth, quote, out, i = 0, None, [], 0
-        while i < len(rest):
-            c = rest[i]
-            if quote:
-                if c == "\\":
-                    out.append(rest[i:i + 2]); i += 2; continue
-                if c == quote:
-                    quote = None
-            elif c in "\"'`":
-                quote = c
-            elif c in "([{":
-                depth += 1
-            elif c in ")]}":
-                if depth == 0:
-                    break           # the array's own closing bracket
-                depth -= 1
-            elif c == "," and depth == 0:
-                break               # end of the script argument
-            out.append(c)
-            i += 1
-        return "".join(out)
 
     findings, skipped, total = [], [], 0
     for rel in files:
         for n, line in enumerate(Path(ROOT / rel).read_text().split("\n"), 1):
-            m = call.search(line)
-            if not m:
+            is_call, interpolated = classify(line)
+            if not is_call:
                 continue
             total += 1
-            script = script_expr(m.group(1))
-            interpolated = "${" in script or "+" in script
             why = allowed(rel, line)
             if why:
                 skipped.append((rel, n, why))
@@ -141,4 +191,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(self_test() if "--self-test" in sys.argv else main())
