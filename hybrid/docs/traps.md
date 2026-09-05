@@ -2745,3 +2745,48 @@ What survives is the part that *is* precise, and validated by making it fail: ev
 settings UI names must exist in the schema dumped from the running plugin
 (`settings-paths.sh`, 787 references against 867 paths). Whether a consumer then honours the
 value is not answerable by static analysis, and is left to the hardware audit and to use.
+
+## T64 — Killing the session corrupts the git repository, twice in a day
+
+Twice in one session `git log` stopped working entirely:
+
+```
+error: object file .git/objects/11/bc5d803562876fac10511afa1ba19c1d3e6ba7 is empty
+fatal: bad object HEAD
+```
+
+Five to seven objects, all **zero length**, including the commit `HEAD`, `main` and
+`origin/main` all pointed at. Both times the working tree was untouched and the disk had 80GB
+free, so it is not corruption in the usual sense: the object files were *created and never
+written*, which is what happens when a process dies between `open()` and the data reaching
+disk. Both times followed the session process being killed.
+
+Recovery is straightforward as long as the work was pushed, and is worth writing down because
+the instinct in the moment is to reclone:
+
+```sh
+git ls-remote origin refs/heads/main          # confirm the commit exists remotely FIRST
+find .git/objects -type f -size 0             # the empty ones, and only those
+# move them aside rather than delete, then:
+git fetch origin '+refs/heads/*:refs/remotes/origin/*'
+git fsck --no-progress                        # "dangling" lines are normal; errors are not
+```
+
+`git ls-remote` needs no local objects, so it works on a repository too broken to run
+`git log`. Check it before touching anything -- if the commit is not on the remote, the
+quarantined objects are the only copy and deleting them loses work.
+
+The mitigation is a config setting rather than a habit. Git does not fsync loose objects by
+default, which is a deliberate speed trade-off that assumes processes are not killed mid-write:
+
+```sh
+git config core.fsync objects,derived-metadata,reference
+git config core.fsyncMethod fsync
+```
+
+Set on this repo, the CLI repo and the laptop's checkout. It costs a little write throughput
+and removes the window entirely.
+
+The general lesson for this project: **push early.** Both recoveries were painless only because
+every commit had already been pushed, so the remote was a complete copy. A long unpushed
+sequence of commits would have been lost outright.
