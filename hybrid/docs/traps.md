@@ -2412,3 +2412,57 @@ shell's `XDG_SESSION_ID` matches the compositor's, and that no `polkit` or `lock
 is holding a grab. Either one makes the pointer results meaningless, and both used to fail
 silently — which is the same shape as T55, and the reason that file now refuses rather than
 reports.
+
+## T57 — Warping the cursor is not input, and a hover suite built on it measures nothing
+
+`hw-verify.sh` drove its hover tests by warping the pointer:
+
+```sh
+hyprctl dispatch 'hl.dsp.cursor.move({x=683, y=766})'
+```
+
+The cursor moves. `hyprctl cursorpos` confirms it. No motion event reaches any surface, so
+`onPositionChanged` in `modules/drawers/Interactions.qml` never runs and no drawer opens.
+
+One command proves it, and is worth keeping because "did that generate an event?" is otherwise
+unanswerable from outside:
+
+```sh
+# With input:follow_mouse = 1, focus follows real motion. Warp between two windows:
+hyprctl dispatch 'hl.dsp.cursor.move({x=400, y=700})'; hyprctl activewindow -j
+hyprctl dispatch 'hl.dsp.cursor.move({x=1000, y=700})'; hyprctl activewindow -j
+# Same window both times => the warp delivered nothing.
+```
+
+What made this expensive is that the suite did not fail consistently. It passed sometimes, and
+each pass had a different false cause:
+
+- **A drawer left open by the previous run.** `hover_test` asserted the drawer ended open, never
+  that it started closed, so an already-open dashboard passed without hover doing anything.
+- **A person using the machine.** Real mouse movement during a run does deliver motion, so the
+  suite passed whenever someone happened to touch the trackpad.
+
+And it failed sometimes for a third reason unrelated to either: **the session locks mid-run.**
+The idle timeout was 180s, and nothing the suite does resets the idle timer -- a warp is not
+input for that purpose either -- so a run longer than the timeout locks partway through, and
+the lock surface takes every pointer event from that point on. The lock was checked once,
+before the hover block, so a lock arriving between two tests was invisible.
+
+Three different causes, all producing "hover is broken", none of them about the shell. The dock
+worked the whole time; it was verified by hand with `ydotool` and a screenshot while all this
+was going on.
+
+The fixes, all in `hw-verify.sh`:
+
+- hover goes through `move_for_real`, which positions with a warp and lands the last 24 pixels
+  with relative `ydotool` moves, so a real event arrives at the destination;
+- without `ydotoold` the hover tests **skip and say what they need**, rather than failing on a
+  method that cannot work;
+- the shell's own idle inhibitor is held for the run and restored on exit;
+- `lock isLocked` is re-checked per test, not once;
+- a drawer that is already open is closed first, and the test skips as vacuous if it will not.
+
+The general lesson is T23 again, in its sharpest form: this checker reported *both* false
+passes and false failures, from three independent causes, for a feature that worked. A check
+whose result does not depend on what it claims to measure is worse than no check, because it
+sends you looking for the bug in the wrong place -- and it did, twice.
