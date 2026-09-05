@@ -188,6 +188,52 @@ fi
 # Close whatever those opened.
 for _ in $(seq 1 "$PAGES"); do hyprctl dispatch 'hl.dsp.window.close()' >/dev/null 2>&1; sleep 0.2; done
 
+# --- every feature flag, flipped and put back ------------------------------
+# The smoke matrix boots presets, so it proves a *combination* loads. It cannot
+# see a flag that breaks the shell when flipped at runtime, which is how a user
+# actually meets it: the config file is watched, the flag changes live, and
+# whatever the flag gates has to appear or disappear without complaint. T54 is
+# the reminder that a flag can also be wired to nothing at all.
+CFG=$HOME/.config/caelestia/shell.json
+echo
+echo "${B}feature flags (flipped live, then restored)${N}"
+if [ ! -f "$CFG" ]; then
+    skip "feature flags" "no $CFG to edit"
+else
+    CFG_BACKUP=$(mktemp)
+    cp "$CFG" "$CFG_BACKUP"
+    trap 'cp "$CFG_BACKUP" "$CFG" 2>/dev/null; rm -f "$CFG_BACKUP"; ipc idleInhibitor disable >/dev/null 2>&1' EXIT
+
+    set_feature() {
+        python3 - "$CFG" "$1" "$2" <<'PY'
+import json, sys
+path, key, val = sys.argv[1], sys.argv[2], sys.argv[3] == "true"
+d = json.load(open(path))
+d.setdefault("hybrid", {}).setdefault("features", {})[key] = val
+json.dump(d, open(path, "w"), indent=2)
+PY
+    }
+
+    for feat in $(grep -oP '^\s*FEATURE\(\K\w+' "$ROOT/plugin/src/Caelestia/Config/hybridconfig.hpp"); do
+        before=$(logn)
+        set_feature "$feat" true;  sleep 1.6
+        set_feature "$feat" false; sleep 1.6
+        after=$(logn); new=$((after - before))
+        errs=0
+        [ "$new" -gt 0 ] && errs=$(logtail "$new" | grep -cE 'ERROR|TypeError|ReferenceError|Cannot read|Unknown option')
+        if [ "${errs:-0}" -gt 0 ]; then
+            bad "feature $feat" "$errs error line(s) on flip"
+            logtail "$new" | grep -E 'ERROR|TypeError|ReferenceError|Cannot read|Unknown option' | head -2 | sed 's/^/      /'
+        else
+            ok "feature $feat" "on/off clean"
+        fi
+    done
+
+    cp "$CFG_BACKUP" "$CFG"
+    sleep 1.5
+    ok "config restored" "$(python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); print(len(d.get("hybrid",{}).get("features",{})), "feature key(s)")' "$CFG" 2>/dev/null)"
+fi
+
 if [ "$DISRUPTIVE" = "1" ]; then
     echo
     echo "${B}disruptive${N}"
