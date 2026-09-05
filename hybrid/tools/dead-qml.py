@@ -63,6 +63,52 @@ def tracked_files(*patterns):
     return files
 
 
+def is_referenced(stem, *corpora):
+    """Whether `stem` is named as a type anywhere in the given text.
+
+    No lookbehind on `.`: a namespaced `Namespace.Type` is a real reference, and
+    treating a leading dot as disqualifying made every namespaced use invisible.
+    Word boundaries on both sides so `FooBar` does not keep `Foo` alive.
+    """
+    pattern = rf"(?<![\w]){re.escape(stem)}(?![\w])"
+    return any(re.search(pattern, c) for c in corpora)
+
+
+def self_test():
+    """Prove the detector still detects, on synthetic corpora.
+
+    Both halves matter here. Missing a reference deletes working code; inventing
+    one hides a dead file forever. The two mistakes this made when it was written
+    are the first two cases (T23).
+    """
+    cases = [
+        ("nothing references it", "Foo", "Item { Bar {} }", False),
+        ("plain instantiation", "Foo", "Item { Foo {} }", True),
+        # The gotcha that made BarPopouts.ClipWrapper look dead.
+        ("namespaced instantiation", "ClipWrapper", "Item { BarPopouts.ClipWrapper {} }", True),
+        # A longer name must not keep a shorter one alive.
+        ("longer name is not a reference", "Foo", "Item { FooBar {} }", False),
+        ("prefixed name is not a reference", "Foo", "property int myFoo: 1", False),
+        ("used as a property type", "Monitor", "property Monitor mon", True),
+        ("named in a C++ corpus", "Widget", "qmlRegisterType<Widget>();", True),
+    ]
+
+    failures = 0
+    for name, stem, corpus, expected in cases:
+        got = is_referenced(stem, corpus)
+        if got != expected:
+            failures += 1
+            verb = "should have counted as referenced" if expected else "should NOT have"
+            print(f"  \033[0;31m{name}\033[0m: {stem} in {corpus!r} {verb}")
+
+    if failures:
+        print(f"\033[1;31mFAIL\033[0m self-test: {failures} of {len(cases)} case(s) wrong")
+        return 1
+    print(f"\033[1;32mPASS\033[0m self-test: {len(cases)} cases, detector sees real "
+          "references and is not fooled by longer names")
+    return 0
+
+
 def main():
     files = tracked_files("*.qml")
     texts = {f: (ROOT / f).read_text() for f in files}
@@ -76,7 +122,7 @@ def main():
             continue
         rest = "\n".join(t for g, t in texts.items() if g != f)
         # no lookbehind on `.` -- a namespaced `Namespace.Type` is a real reference
-        if re.search(rf'(?<![\w]){stem}(?![\w])', rest) or re.search(rf'(?<![\w]){stem}(?![\w])', outside):
+        if is_referenced(stem, rest, outside):
             continue
         (skipped if f in ALLOWED else dead).append(f)
 
@@ -92,4 +138,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(self_test() if "--self-test" in sys.argv else main())
