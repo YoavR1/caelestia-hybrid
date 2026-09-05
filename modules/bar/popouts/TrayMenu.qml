@@ -144,7 +144,11 @@ StackView {
 
                             required property var modelData
 
-                            implicitWidth: parent.width
+                            // groupLayout rather than `parent`: a Repeater assigns the
+                            // delegate's parent *after* constructing it, so this binding
+                            // evaluates once against null and throws. Same value, no window
+                            // in which it does not exist.
+                            implicitWidth: groupLayout.width
                             implicitHeight: childrenItem.implicitHeight
 
                             radius: Tokens.rounding.full

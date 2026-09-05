@@ -15,13 +15,6 @@ import Caelestia.Config
 ShellRoot {
     id: root
 
-    FileView {
-        id: out
-
-        path: Quickshell.env("CONFIG_PATHS_OUT") || "/tmp/config-paths.txt"
-        printErrors: true
-    }
-
     Component.onCompleted: {
         const paths = [];
         const seen = new Set();
@@ -60,6 +53,12 @@ ShellRoot {
         paths.sort();
         out.setText(paths.join("\n") + "\n");
         console.log(`config-paths: ${paths.length} path(s)`);
-        Qt.callLater(() => Quickshell.exit(0));
+    }
+
+    FileView {
+        id: out
+
+        path: Quickshell.env("CONFIG_PATHS_OUT") || "/tmp/config-paths.txt"
+        printErrors: true
     }
 }

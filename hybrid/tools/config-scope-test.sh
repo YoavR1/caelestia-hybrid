@@ -32,12 +32,16 @@ XDG_CACHE_HOME="$tmp/cache" \
 CONFIG_SCOPE_RESULT="$result" \
 QML2_IMPORT_PATH="$BUILD_DIR/qml${QML2_IMPORT_PATH:+:$QML2_IMPORT_PATH}" \
 CAELESTIA_LIB_DIR="$BUILD_DIR/lib" \
-    timeout 90 "$QS" -p "$ROOT/hybrid/tools/tests/config-scope" >"$out" 2>&1
-rc=$?
+    "$QS" -p "$ROOT/hybrid/tools/tests/config-scope" >"$out" 2>&1 &
+qs_pid=$!
+# Quickshell has no quit method, so wait for the file and stop the process.
+for _ in $(seq 1 90); do [ -s "$result" ] && break; sleep 1; done
+kill "$qs_pid" 2>/dev/null
+wait "$qs_pid" 2>/dev/null
 
 if [ ! -s "$result" ]; then
     # No verdict written at all: the shell failed to load, or died before finishing.
-    echo "  config-scope: the test wrote no result (qs rc=$rc)"
+    echo "  config-scope: the shell wrote no result -- it failed to load or died first"
     grep -aE 'ERROR|error:|Failed' "$out" | head -6 | sed 's/^/      /'
     exit 1
 fi

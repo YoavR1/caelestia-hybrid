@@ -34,14 +34,6 @@ ShellRoot {
             ? "PASS config-scope: every invariant holds"
             : `FAIL config-scope: ${failures} invariant(s) broken`);
         resultFile.setText(lines.join("\n") + "\n");
-        Qt.callLater(() => Quickshell.exit(failures === 0 ? 0 : 1));
-    }
-
-    FileView {
-        id: resultFile
-
-        path: Quickshell.env("CONFIG_SCOPE_RESULT") || "/tmp/config-scope-result.txt"
-        printErrors: true
     }
 
     Component.onCompleted: {
@@ -73,5 +65,12 @@ ShellRoot {
                 root.finish();
             });
         });
+    }
+
+    FileView {
+        id: resultFile
+
+        path: Quickshell.env("CONFIG_SCOPE_RESULT") || "/tmp/config-scope-result.txt"
+        printErrors: true
     }
 }
