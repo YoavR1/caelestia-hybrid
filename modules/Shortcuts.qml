@@ -229,7 +229,13 @@ Scope {
             const screenState = ShellState.forActive();
             if (!screenState)
                 return;
-            screenState.workspaceDrawer = !screenState.workspaceDrawer;
+            // The two implementations of hybrid.variants.overview keep their own visibility:
+            // MiDnight's is a panel in modules/drawers driven by workspaceDrawer, OP's is a
+            // separate Scope with its own per-screen flag. One shortcut, whichever is selected.
+            if (GlobalConfig.hybrid.variants.overview === HybridVariant.Op)
+                screenState.overview = !screenState.overview;
+            else
+                screenState.workspaceDrawer = !screenState.workspaceDrawer;
         }
     }
 

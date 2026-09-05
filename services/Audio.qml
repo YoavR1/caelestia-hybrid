@@ -99,6 +99,33 @@ Singleton {
         return !!stream?.audio?.muted;
     }
 
+    // Ported from OP alongside its audio popout, which needs a per-stream icon. Services
+    // merge rather than dual-implement (D5), so this lands here rather than in the popout.
+    function getStreamIcon(stream: PwNode): string {
+        if (!stream)
+            return "";
+
+        const props = stream.properties || {};
+        const iconName = props["application.icon-name"] || props["media.icon-name"] || "";
+        if (iconName) {
+            const path = Quickshell.iconPath(iconName, "");
+            if (path)
+                return path;
+        }
+
+        const appName = props["application.name"] || props["application.process.binary"] || stream.name || "";
+        if (appName) {
+            const icon = DesktopEntries.heuristicLookup(appName)?.icon;
+            if (icon) {
+                const path = Quickshell.iconPath(icon, "");
+                if (path)
+                    return path;
+            }
+        }
+
+        return "";
+    }
+
     function getStreamName(stream: PwNode): string {
         if (!stream)
             return qsTr("Unknown");

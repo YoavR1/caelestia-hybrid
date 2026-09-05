@@ -16,13 +16,15 @@
       "dino": false,
       "hotspot": true,
       "themeManager": true,
-      "btAgent": false
+      "btAgent": false,
+      "lockPowerConfirm": true
     },
     "variants": {
       "lockCentre": "op",
       "audioPopout": "midnight",
       "desktopClock": "op",
       "colours": "op",
+      "overview": "op",
       "dock": "op"
     }
   }

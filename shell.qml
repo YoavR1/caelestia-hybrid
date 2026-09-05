@@ -20,6 +20,7 @@ import Quickshell.Services.SystemTray
 import Caelestia.Config
 import qs.services
 import qs.utils
+import qs.modules.overview
 
 ShellRoot {
     id: root
@@ -56,6 +57,19 @@ ShellRoot {
     BadAppleOverlay {}
 
     Drawers {}
+
+    // OP's overview, the second implementation of hybrid.variants.overview. Unlike MiDnight's
+    // -- which is a panel inside modules/drawers and woven into the alias, region and
+    // deform-matrix graph there (T1) -- this one is a self-contained Scope with its own
+    // per-screen visibility, so hosting it is a Loader and nothing else.
+    //
+    // Both are gated on hybrid.features.overview, which is the on/off switch; the variant only
+    // decides which of the two that switch opens.
+    Loader {
+        active: GlobalConfig.hybrid.features.overview && GlobalConfig.hybrid.variants.overview === HybridVariant.Op
+
+        sourceComponent: Overview {}
+    }
     AreaPicker {}
 
     Lock {

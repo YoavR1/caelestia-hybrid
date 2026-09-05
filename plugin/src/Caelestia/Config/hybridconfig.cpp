@@ -35,10 +35,12 @@ const Preset& presetFor(HybridPreset::Enum which) {
                                          { u"hotspot"_s, true },
                                          { u"btAgent"_s, true },
                                          { u"themeManager"_s, true },
+                                         { u"lockPowerConfirm"_s, true },
                                      },
+
         .variants={ { u"lockCentre"_s, HybridVariant::Midnight }, { u"audioPopout"_s, HybridVariant::Op },
             { u"desktopClock"_s, HybridVariant::Midnight }, { u"colours"_s, HybridVariant::Midnight },
-            { u"dock"_s, HybridVariant::Midnight } } };
+            { u"overview"_s, HybridVariant::Midnight }, { u"dock"_s, HybridVariant::Midnight } } };
 
     // MiDnight as it ships: everything it added, nothing OP added.
     static const Preset k_midnight{ .features={
@@ -57,10 +59,12 @@ const Preset& presetFor(HybridPreset::Enum which) {
                                       { u"hotspot"_s, false },
                                       { u"btAgent"_s, false },
                                       { u"themeManager"_s, false },
+                                      { u"lockPowerConfirm"_s, false },
                                   },
+
         .variants={ { u"lockCentre"_s, HybridVariant::Midnight }, { u"audioPopout"_s, HybridVariant::Midnight },
             { u"desktopClock"_s, HybridVariant::Midnight }, { u"colours"_s, HybridVariant::Midnight },
-            { u"dock"_s, HybridVariant::Midnight } } };
+            { u"overview"_s, HybridVariant::Midnight }, { u"dock"_s, HybridVariant::Midnight } } };
 
     // OP as it ships.
     static const Preset k_op{ .features={
@@ -79,10 +83,12 @@ const Preset& presetFor(HybridPreset::Enum which) {
                                 { u"hotspot"_s, true },
                                 { u"btAgent"_s, true },
                                 { u"themeManager"_s, true },
+                                { u"lockPowerConfirm"_s, true },
                             },
+
         .variants={ { u"lockCentre"_s, HybridVariant::Op }, { u"audioPopout"_s, HybridVariant::Op },
             { u"desktopClock"_s, HybridVariant::Op }, { u"colours"_s, HybridVariant::Op },
-            { u"dock"_s, HybridVariant::Op } } };
+            { u"overview"_s, HybridVariant::Op }, { u"dock"_s, HybridVariant::Op } } };
 
     switch (which) {
     case HybridPreset::Midnight:

@@ -166,6 +166,16 @@ PageBase {
             onToggled: root.targetConfig.hybrid.features.themeManager = checked
         }
 
+        ToggleRow {
+            last: true
+            text: qsTr("Confirm power actions on the lock screen")
+            subtext: qsTr("Ask before shutdown, reboot or logout from the lock screen")
+            configNode: root.targetConfig.hybrid.features
+            propertyName: "lockPowerConfirm"
+            checked: root.targetConfig.hybrid.features.lockPowerConfirm
+            onToggled: root.targetConfig.hybrid.features.lockPowerConfirm = checked
+        }
+
         SectionHeader {
             text: qsTr("Network")
         }
@@ -230,9 +240,35 @@ PageBase {
         }
 
         // Only sites that genuinely have two implementations appear here. A selector for one
-        // that does not would visibly do nothing, which is worse than its absence.
+        // that does not would visibly do nothing, which is worse than its absence -- so
+        // lockCentre, desktopClock and colours stay out until their second side is imported,
+        // even though all their keys exist in the config and the presets already set them.
         SelectRow {
             first: true
+            label: qsTr("Audio popout")
+            subtext: qsTr("Which fork's audio panel the bar opens")
+            configNode: root.targetConfig.hybrid.variants
+            propertyName: "audioPopout"
+            menuItems: root.variantItems
+            active: root.variantItems[root.targetConfig.hybrid.variants.audioPopout === HybridVariant.Op ? 1 : 0]
+            onSelected: item => {
+                root.targetConfig.hybrid.variants.audioPopout = root.variantItems.indexOf(item) === 1 ? HybridVariant.Op : HybridVariant.Midnight;
+            }
+        }
+
+        SelectRow {
+            label: qsTr("Workspace overview")
+            subtext: qsTr("MiDnight's drawer, or OP's carousel and window grid")
+            configNode: root.targetConfig.hybrid.variants
+            propertyName: "overview"
+            menuItems: root.variantItems
+            active: root.variantItems[root.targetConfig.hybrid.variants.overview === HybridVariant.Op ? 1 : 0]
+            onSelected: item => {
+                root.targetConfig.hybrid.variants.overview = root.variantItems.indexOf(item) === 1 ? HybridVariant.Op : HybridVariant.Midnight;
+            }
+        }
+
+        SelectRow {
             last: true
             label: qsTr("Dock")
             subtext: qsTr("MiDnight's bar section, or OP's auto-hiding panel")

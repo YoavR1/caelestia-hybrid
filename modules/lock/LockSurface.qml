@@ -11,12 +11,25 @@ import qs.services
 WlSessionLockSurface {
     id: root
 
+    // Set by a session button asking to be confirmed before it runs.
+    property bool powerConfirmActive
+
+    property list<string> powerConfirmCommand
+
     required property WlSessionLock lock
+
     required property Pam pam
 
     readonly property alias unlocking: unlockAnim.running
+
     readonly property real lockHeight: Math.min(root.screen?.width ?? 0, root.screen?.height ?? 0)
+
     readonly property bool isPortrait: (root.screen?.width ?? 0) < (root.screen?.height ?? 0)
+
+    function requestPowerConfirm(cmd: list<string>): void {
+        powerConfirmCommand = cmd;
+        powerConfirmActive = true;
+    }
 
     contentItem.Config.screen: screen.name
     contentItem.Tokens.screen: screen.name
@@ -251,6 +264,22 @@ WlSessionLockSurface {
             lock: root
             opacity: 0
             scale: 0
+        }
+    }
+
+    // Confirmation for the lock screen's session buttons. Loaded rather than merely hidden:
+    // with the feature off it must not exist at all, and it is only reachable through
+    // requestPowerConfirm() below.
+    Loader {
+        anchors.fill: parent
+        active: GlobalConfig.hybrid.features.lockPowerConfirm
+
+        sourceComponent: PowerConfirm {
+            active: root.powerConfirmActive
+            blurSource: lockContent
+            command: root.powerConfirmCommand
+            onAccepted: root.powerConfirmActive = false
+            onCancelled: root.powerConfirmActive = false
         }
     }
 }

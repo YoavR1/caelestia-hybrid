@@ -67,6 +67,7 @@ class HybridFeatures : public settings::ObjectNode {
     FEATURE(hotspot)
     FEATURE(btAgent)
     FEATURE(themeManager)
+    FEATURE(lockPowerConfirm)
 };
 
 // The four components both forks genuinely implement. Capped at ~6 entries (D4): growth
@@ -80,10 +81,14 @@ class HybridVariants : public settings::ObjectNode {
     VARIANT(desktopClock)
     VARIANT(colours)
 
-    // Added in Phase 7, and the sixth entry -- D4's stated cap. MiDnight's dock is a bar section
-    // (bar.dock), OP's is a separate auto-hiding panel (dock.*). Same purpose, different objects,
-    // and wanting both at once would be redundant UI, which is what makes it a variant rather
-    // than two features.
+    // Added in Phase 7. The component audit originally recorded four dual sites; Overview is a
+    // fifth -- MiDnight ships modules/drawers/WorkspaceOverview.qml and OP ships
+    // modules/overview/, two designs of the same thing (T44).
+    VARIANT(overview)
+
+    // The sixth entry, which is exactly D4's stated cap. MiDnight's dock is a bar section
+    // (bar.dock), OP's a separate auto-hiding panel (dock.*). Same purpose, different objects,
+    // and wanting both at once is redundant UI -- which is what makes it a variant.
     VARIANT(dock)
 };
 
