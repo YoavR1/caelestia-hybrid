@@ -2700,3 +2700,37 @@ The lesson generalises past config. **A gate that checks "the write raised no er
 checking that the write did anything.** `hw-audit.sh` flipped every feature flag and every
 variant and reported 51 ok while this was broken, because nothing it did compared a written
 value against the value a consumer reads.
+
+## T63 — The "setting with no consumer" check could not be made to fail, so it was dropped
+
+After T62, the obvious next question was the last mechanically-checkable class: a settings
+control whose value nothing outside the settings UI reads. Valid path, correct scope, no
+effect. A first pass reported **0 of 277 settings paths** with no consumer, which looked like
+good news.
+
+It was not news at all. The check treated a path as consumed if any *ancestor* was referenced
+outside `modules/nexus`, and ten top-level config nodes are referenced bare:
+
+```
+ai  background  bar  border  general  launcher  lock  services  shimeji  sidebar
+```
+
+So every `bar.*` setting counted as consumed because something, somewhere, mentions
+`Config.bar`. Deleting the only real consumer of `bar.showOnHover` did not produce a finding.
+A second attempt -- excluding the key's own `CONFIG_PROPERTY` line from the C++ search, which
+was a real bug and worth fixing -- did not help either, for the same reason.
+
+The ancestor rule cannot simply be removed. `Config.bar` is legitimately passed to components
+that read several fields off it, so a bare node reference really can mean any child is
+consumed. The imprecision is in the question, not the implementation.
+
+**So the check was dropped rather than shipped.** A gate that reports zero because it cannot
+see the condition is worse than no gate, because it is read as evidence (T23) -- and this one
+would have reported a confident `0 with no consumer` forever. The rule this project has used
+all day applies to deleting a checker as much as to writing one: if it cannot be made to fail
+on a real instance, it does not go in.
+
+What survives is the part that *is* precise, and validated by making it fail: every path the
+settings UI names must exist in the schema dumped from the running plugin
+(`settings-paths.sh`, 787 references against 867 paths). Whether a consumer then honours the
+value is not answerable by static analysis, and is left to the hardware audit and to use.
