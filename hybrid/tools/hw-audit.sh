@@ -229,6 +229,33 @@ PY
         fi
     done
 
+    # Variants select between two implementations, so both sides have to load.
+    set_variant() {
+        python3 - "$CFG" "$1" "$2" <<'PY'
+import json, sys
+path, key, val = sys.argv[1], sys.argv[2], sys.argv[3]
+d = json.load(open(path))
+d.setdefault("hybrid", {}).setdefault("variants", {})[key] = val
+json.dump(d, open(path, "w"), indent=2)
+PY
+    }
+    echo
+    echo "${B}variants (both sides loaded, then restored)${N}"
+    for var in $(grep -oP '^\s*VARIANT\(\K\w+' "$ROOT/plugin/src/Caelestia/Config/hybridconfig.hpp"); do
+        before=$(logn)
+        set_variant "$var" Midnight; sleep 1.8
+        set_variant "$var" Op;       sleep 1.8
+        after=$(logn); new=$((after - before))
+        errs=0
+        [ "$new" -gt 0 ] && errs=$(logtail "$new" | grep -cE 'ERROR|TypeError|ReferenceError|Cannot read|Unknown option')
+        if [ "${errs:-0}" -gt 0 ]; then
+            bad "variant $var" "$errs error line(s) switching sides"
+            logtail "$new" | grep -E 'ERROR|TypeError|ReferenceError|Cannot read|Unknown option' | head -2 | sed 's/^/      /'
+        else
+            ok "variant $var" "Midnight and Op both load"
+        fi
+    done
+
     cp "$CFG_BACKUP" "$CFG"
     sleep 1.5
     ok "config restored" "$(python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); print(len(d.get("hybrid",{}).get("features",{})), "feature key(s)")' "$CFG" 2>/dev/null)"
