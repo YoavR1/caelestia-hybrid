@@ -84,6 +84,10 @@ hover_enabled() {
 
 echo "hover edges"
 [ "$HOVER_BLOCKED" = "1" ] && echo "  (screen is locked -- hover cannot be tested)"
+# A modal with a pointer grab -- the shell's own polkit prompt is the usual one --
+# swallows every motion event, and every hover assertion below then fails for a
+# reason that has nothing to do with the panels. If these all fail at once, look
+# at the screen before believing them.
 hover_test() {
     local name=$1 x=$2 y=$3 settle=${4:-1.2} mod=${5:-$1}
     case " $drawers " in *" $name "*) ;; *) skip "$name opens on hover" "no such drawer"; return;; esac
@@ -125,7 +129,24 @@ shortcut_test() {
         bad "$name -> $drawer" "stayed $before"
     fi
 }
-shortcut_test launcher          launcher
+# The launcher binding is release-triggered on both sides: the shell acts in
+# `onReleased`, and the keybind carries Hyprland's `release` flag because it is
+# bound to a bare Super tap. `hyprctl dispatch global` is a one-shot that never
+# delivers the release, so this needs a real key event or nothing happens --
+# which the harness reported as a failure until it was checked by hand.
+if [ -n "${YDOTOOL_SOCKET:-}" ] && command -v ydotool >/dev/null; then
+    before=$(isopen launcher)
+    ydotool key 125:1 125:0 2>/dev/null; sleep 1.5
+    after=$(isopen launcher)
+    if [ "$after" != "$before" ]; then
+        ydotool key 1:1 1:0 2>/dev/null; sleep 0.5
+        ok "launcher (real Super tap)" "$before -> $after"
+    else
+        bad "launcher (real Super tap)" "stayed $before"
+    fi
+else
+    skip "launcher" "release-triggered; needs ydotool (set YDOTOOL_SOCKET)"
+fi
 shortcut_test sidebar           sidebar
 shortcut_test dashboard         dashboard
 shortcut_test utilities         utilities
