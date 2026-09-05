@@ -596,6 +596,20 @@ PageBase {
                         color: Colours.palette.m3outline
                         font: Tokens.font.title.small
                     }
+
+                    // Naming the directory is the whole difference between "this is
+                    // broken" and "put some images here". It is configurable, and the
+                    // default is created by nothing, so a fresh install lands on this
+                    // message with no way to guess the answer from the screen.
+                    StyledText {
+                        Layout.alignment: Qt.AlignHCenter
+                        Layout.maximumWidth: parent.width
+                        text: qsTr("Add images to %1").arg(Paths.shortenHome(Paths.wallsdir))
+                        color: Colours.palette.m3outline
+                        font: Tokens.font.label.small
+                        elide: Text.ElideMiddle
+                        horizontalAlignment: Text.AlignHCenter
+                    }
                 }
             }
         }
