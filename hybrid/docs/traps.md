@@ -2646,3 +2646,57 @@ Note also what this does **not** say. D10 blocks OP's *pattern* lock, which is a
 thing: a plaintext pattern with `patternAvailable` hardcoded true, calling `lock.unlock()` to
 skip PAM entirely. That code is not in this tree (T3), and the fact that PAM works here says
 nothing about it.
+
+## T62 — The settings' Global scope wrote to a layer nothing reads
+
+Changing the taskbar position in the settings did nothing. Everything about the interaction
+said it had worked: the dropdown showed the new value, the override marker appeared next to
+the label, and a config file was written. The bar did not move -- not live, and not after a
+restart.
+
+`forScreen(screen)` resolves which config layer a settings page writes to, and the Nexus
+monitor selector passes `""` for its "Global" scope:
+
+```qml
+readonly property var targetConfig: GlobalConfig.forScreen(nState.targetScreen)   // "" for Global
+```
+
+The resolver had no case for an empty name, so it went to the layer registry, which built a
+layer for a monitor called `""`. Its file is `monitors/shell.json` -- written on every change,
+and read by nothing, because real screen layers fall back to the **root**, not to it. Per
+monitor scope worked throughout, which is why this presented as "the position setting is
+broken" rather than "one scope of every setting is broken".
+
+**It is a merge defect, and neither upstream has it.** The two halves come from different
+projects:
+
+| piece | where it comes from |
+|---|---|
+| `MonitorTargetSelector.qml`, which passes `""` for Global | MiDnight only |
+| the rewritten `forScreen`, with no empty-name case | upstream only, via the Phase 2 config rewrite |
+
+MiDnight's own resolver opens with exactly the missing line:
+
+```cpp
+GlobalConfig* MonitorConfigManager::configForScreen(const QString& screen) {
+    if (screen.isEmpty())
+        return GlobalConfig::instance();
+```
+
+Upstream never hits the gap because upstream ships no monitor selector. MiDnight never hits it
+because MiDnight never took the rewrite -- it is still on the old plugin layout. Only a tree
+carrying both does. This is the exact failure mode D1 and the Phase 2 catch-up were supposed to
+manage, and it survived because **a merge can drop an invariant that neither side's tests
+cover**: upstream has no test needing the empty case, and MiDnight's code that needed it was
+replaced wholesale.
+
+`hybrid/tools/config-scope-test.sh` now asserts the resolver's semantics against the real
+plugin, in an isolated `XDG_CONFIG_HOME`. Six invariants, and the important property is that
+they are about the **resolver**, not about any key -- so one test covers all 372 config keys at
+once, which is the only tractable way to answer "does every setting actually apply". Validated
+by removing the guard and rebuilding: 4 of the 6 fail.
+
+The lesson generalises past config. **A gate that checks "the write raised no error" is not
+checking that the write did anything.** `hw-audit.sh` flipped every feature flag and every
+variant and reported 51 ok while this was broken, because nothing it did compared a written
+value against the value a consumer reads.

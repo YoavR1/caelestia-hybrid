@@ -90,6 +90,7 @@ step "dead config";   ./hybrid/tools/dead-config.py       | tail -1; ./hybrid/to
 step "singleton self-test"
 ./hybrid/tools/singleton-members.py --self-test | tail -1; ./hybrid/tools/singleton-members.py --self-test >/dev/null || fail=1
 step "singletons";    ./hybrid/tools/singleton-members.py | tail -1; ./hybrid/tools/singleton-members.py >/dev/null || fail=1
+step "config scope";  ./hybrid/tools/config-scope-test.sh | tail -1; ./hybrid/tools/config-scope-test.sh >/dev/null 2>&1 || fail=1
 step "index modes";   ./hybrid/tools/check-index-modes.sh || fail=1
 
 step "plugin tests"
