@@ -2197,3 +2197,40 @@ connectors anywhere (headless or offload-only), and nothing.
 
 **A dynamic signal produced a dynamic bug.** Two fixes were spent making the flapping
 well-behaved before asking whether the thing being tracked was the right thing to track.
+
+## T52 — An import brought a system dependency the dev machine already had
+
+`modules/lock/PowerConfirm.qml` came from OP using `FastBlur` and `OpacityMask`, both from
+`Qt5Compat.GraphicalEffects`. Every local gate passed: qmllint clean, conventions clean, smoke
+matrix 7/7. CI then failed *everything*:
+
+```
+Warning: PowerConfirm.qml:96:13: unknown grouped property scope anchors. [unqualified]
+  all-off          FAIL  (exited early, rc=255)
+  all-on           FAIL  (exited early, rc=255)      ... all seven
+```
+
+`Qt5Compat.GraphicalEffects` ships in `qt6-5compat`. That package is installed on the
+development machine and is not in the CI container, so locally the types resolved and the shell
+ran, while in CI qmllint could not resolve `FastBlur` -- reporting its `anchors` as an unknown
+grouped property, which reads like a syntax error and is nothing of the kind -- and the shell
+failed to load at all.
+
+**The local gate cannot see this class of problem by construction.** It runs on a machine that
+has whatever the developer has installed. A dependency added by an import is invisible until it
+runs somewhere that does not have it, which is exactly what a clean container is for.
+
+Fixed by removing the dependency rather than adding it to the image. `MultiEffect` does blur and
+masking in one, is already imported in that file via `QtQuick.Effects`, and is what the rest of
+this tree uses -- `modules/background/DesktopLyrics.qml` blurs a wallpaper with
+`blurEnabled`/`maskSource` in exactly this shape. `PowerConfirm` was the only file in the tree
+importing `Qt5Compat` at all.
+
+Worth a check before importing anything: **which QML modules does this file import that nothing
+else in the tree imports?** A one-line audit answers it, and the only remaining answer here is
+`QtCore`, which comes with `qt6-base` and is already a declared dependency:
+
+```sh
+grep -rhoE '^import [A-Z][A-Za-z0-9.]+' --include='*.qml' . | awk '{print $2}' | sort -u \
+  | grep -vE '^(QtQuick|QtQml|Quickshell|Caelestia|QtMultimedia|M3Shapes)'
+```

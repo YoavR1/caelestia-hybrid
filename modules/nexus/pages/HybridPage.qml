@@ -166,6 +166,16 @@ PageBase {
             onToggled: root.targetConfig.hybrid.features.themeManager = checked
         }
 
+        ToggleRow {
+            last: true
+            text: qsTr("Confirm power actions on the lock screen")
+            subtext: qsTr("Ask before shutdown, reboot or logout from the lock screen")
+            configNode: root.targetConfig.hybrid.features
+            propertyName: "lockPowerConfirm"
+            checked: root.targetConfig.hybrid.features.lockPowerConfirm
+            onToggled: root.targetConfig.hybrid.features.lockPowerConfirm = checked
+        }
+
         SectionHeader {
             text: qsTr("Network")
         }

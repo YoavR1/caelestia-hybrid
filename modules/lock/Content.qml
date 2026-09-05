@@ -81,6 +81,8 @@ Item {
                     id: resourcesBox
                     Layout.fillWidth: true
                     Layout.preferredWidth: 1
+
+                    lock: root.lock
                 }
             }
         }
@@ -125,6 +127,7 @@ Item {
 
             Resources {
                 Layout.fillWidth: true
+                lock: root.lock
             }
 
             StyledRect {
