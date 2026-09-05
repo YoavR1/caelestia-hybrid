@@ -2324,3 +2324,43 @@ grep -rn 'screenState\.<flag> *= *true' --include='*.qml' .
 An empty result for a flag that has readers is the bug. Compare with T44, where the opposite
 held: `features.overview` had a live consumer while the directory it appeared to name did not
 exist.
+
+## T55 — Restarting the shell while the session is locked strands the session
+
+Killing the shell to pick up a QML change is routine. Doing it while the screen is locked
+is not: the lock surface belongs to the shell, and Hyprland treats the process disappearing
+while a `WlSessionLock` is held as the lockscreen crashing. What is left is a compositor that
+is still locked with nothing able to unlock it:
+
+```
+Oopsie daisy, it looks like you locked your screen but the lockscreen app died :(
+```
+
+Recovery is a single command, but it needs a shell on the box -- another tty, or ssh:
+
+```sh
+hyprctl --instance 0 eval 'hl.clear_crashed_lockscreen()'   # lua config
+hyprctl --instance 0 dispatch clearcrashedlockscreen        # conf config
+```
+
+The trap is that laptops lock themselves. A session that was unlocked when a test run started
+can be locked twenty minutes later, so "I know the screen is unlocked" is not something to
+remember, it is something to check immediately before the kill:
+
+```sh
+[ "$(qs -c caelestia ipc call lock isLocked)" = "true" ] && { echo "locked, refusing"; exit 1; }
+```
+
+Two related consequences of the same idle behaviour, both of which cost time here:
+
+- **`grim` hangs, it does not fail**, when the display is in DPMS off. There is no error and no
+  timeout; the screenshot simply never returns. Wake the output first with
+  `hyprctl dispatch 'hl.dsp.dpms("on")'`, and put a `timeout` around `grim` regardless.
+- **A locked screen invalidates every pointer test**, because the lock surface takes all input.
+  `hw-verify.sh` refuses to run its hover block when locked for this reason.
+
+And one that is not about idling at all: **a modal with a pointer grab swallows hover.** The
+shell's own polkit prompt is the common one, and on this machine NetworkManager's Wi-Fi scan
+policy raised it repeatedly. Every hover assertion failed for two full runs, looking exactly
+like broken hover, until a screenshot showed the dialog sitting there. If every pointer test
+fails at once, photograph the screen before believing any of them.
