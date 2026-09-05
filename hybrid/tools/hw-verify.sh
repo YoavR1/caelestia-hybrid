@@ -18,6 +18,7 @@ export XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}
 : "${HYPRLAND_INSTANCE_SIGNATURE:=$(ls -t "$XDG_RUNTIME_DIR/hypr" 2>/dev/null | head -1)}"
 export HYPRLAND_INSTANCE_SIGNATURE
 
+ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 QS_SEL=(-c caelestia)
 [ -n "${HW_VERIFY_PATH:-}" ] && QS_SEL=(-p "$HW_VERIFY_PATH")
 
@@ -63,11 +64,34 @@ else bad "drawers list answers" "no response -- is the shell running?"; fi
 echo
 
 # --- 2. hover edges ---------------------------------------------------------
-# name : x : y : settle-seconds
+# The lock surface takes all pointer input, so every hover assertion below is
+# meaningless while locked -- and it fails rather than erroring, which is the
+# worst way to be wrong. Refuse instead (T23).
+LOCKED=$(ipc lock isLocked)
+HOVER_BLOCKED=0
+[ "$LOCKED" = "true" ] && HOVER_BLOCKED=1
+
+# showOnHover decides whether a panel responds to hover at all. Read the compiled
+# default so this tracks the source, and let a user shell.json win.
+CFG=$HOME/.config/caelestia/shell.json
+hover_enabled() {
+    local mod=$1 hpp="$ROOT/plugin/src/Caelestia/Config/${mod}config.hpp" def user
+    def=$(grep -oP 'CONFIG_PROPERTY\(bool, showOnHover, \K(true|false)' "$hpp" 2>/dev/null | head -1)
+    user=$(python3 -c 'import json,sys;d=json.load(open(sys.argv[1]));v=d.get(sys.argv[2],{}).get("showOnHover");print("" if v is None else str(v).lower())' "$CFG" "$mod" 2>/dev/null)
+    [ -n "$user" ] && { echo "$user"; return; }
+    echo "${def:-true}"
+}
+
 echo "hover edges"
+[ "$HOVER_BLOCKED" = "1" ] && echo "  (screen is locked -- hover cannot be tested)"
 hover_test() {
-    local name=$1 x=$2 y=$3 settle=${4:-1.2}
+    local name=$1 x=$2 y=$3 settle=${4:-1.2} mod=${5:-$1}
     case " $drawers " in *" $name "*) ;; *) skip "$name opens on hover" "no such drawer"; return;; esac
+    [ "$HOVER_BLOCKED" = "1" ] && { skip "$name opens on hover" "screen locked"; return; }
+    if [ "$(hover_enabled "$mod")" != "true" ]; then
+        skip "$name opens on hover" "$mod.showOnHover=false -- opens on drag"
+        return
+    fi
     warp "$PARK_X" "$PARK_Y"; sleep 0.6
     local before; before=$(isopen "$name")
     warp "$x" "$y"; sleep "$settle"
