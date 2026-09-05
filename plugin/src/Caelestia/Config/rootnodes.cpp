@@ -91,6 +91,14 @@ TokensRoot::TokensRoot(const QString& path, TokensRoot* fallback, QObject* paren
     }                                                                                                                  \
                                                                                                                        \
     Root* Type::forScreen(const QString& screen) {                                                                     \
+        /* An empty name is the global scope, not a monitor called "". Without this the         */                     \
+        /* registry happily creates a layer whose file is monitors/<file> -- written, never     */                     \
+        /* read, because every real screen layer falls back to this root rather than to it.     */                     \
+        /* MiDnight's config had the same guard and its Nexus monitor selector relies on it;    */                     \
+        /* upstream's rewrite dropped it, and merging the two lost it. See T62.                 */                     \
+        if (screen.isEmpty())                                                                                          \
+            return this;                                                                                               \
+                                                                                                                       \
         bool created;                                                                                                  \
         auto* const layer = m_layers.get(screen, this, &created);                                                      \
         if (created)                                                                                                   \
