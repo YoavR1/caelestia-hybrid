@@ -127,11 +127,16 @@ if [ "$SMOKE" = 1 ]; then
     smoke_rc=$?
     if [ "$smoke_rc" -eq 0 ]; then
         tail -3 "$smoke_log"
+        rm -f "$smoke_log"
     else
-        grep -aE 'ok$|FAIL|PASS|starting nested' "$smoke_log" || tail -20 "$smoke_log"
+        # Everything, not a filtered view of it. The harness already caps what it
+        # prints per run, and the useful part of an IPC failure is the error text,
+        # which matches none of the obvious patterns -- a grep here would rebuild
+        # the same blind spot `tail -3` had.
+        cat "$smoke_log"
+        echo "  (full smoke output kept at $smoke_log)"
         fail=1
     fi
-    rm -f "$smoke_log"
 fi
 
 if [ "$fail" -eq 0 ]; then
