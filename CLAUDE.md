@@ -53,6 +53,8 @@ Every gate upstream enforces is green on a tree that arrived with all of them fa
 | `hybrid/tools/dead-config.py` | didn't exist; the T28 sweep was prose | 0 of 368, 15 allowlisted |
 | `hybrid/tools/check-index-modes.sh` | didn't exist; 4 tools non-executable | clean |
 | `hybrid/tools/hw-verify.sh` | didn't exist; the dock could not appear at all | 12 ok, 1 skipped |
+| `hybrid/tools/singleton-members.py` | didn't exist; qmllint checks no singleton member at all | 2617 refs, 0 unexplained |
+| `hybrid/tools/hw-audit.sh` | didn't exist; no IPC entry point had ever been driven | 51 ok, 0 skipped |
 
 `./hybrid/tools/verify.sh` runs every row of that table in one go and prints GREEN or RED.
 CI runs them too (`.github/workflows/smoke.yml` carries the last two, on headless sway).
@@ -61,9 +63,16 @@ lacks. `hybrid/tools/plugin-test.sh` is ours too, and runs the only executable t
 tree: the UKEY2 handshake, the `BeatTracker::beat` forward, the mDNS name decode and the
 QuickShare payload frames.
 
-The five checkers in that table each guard a bug class every other gate is blind to, and each
-was validated by being made to fail on purpose before being trusted — a checker that reports
-zero because it is looking in the wrong place is worse than no checker (T23).
+The checkers in that table each guard a bug class every other gate is blind to, and each was
+validated by being made to fail on purpose before being trusted — a checker that reports zero
+because it is looking in the wrong place is worse than no checker (T23). That rule has earned
+its place repeatedly: `hw-verify.sh` reported hover passing on a method that could not work
+(T57), and `hw-audit.sh` scored a rejected IPC call as a pass on its first run.
+
+`singleton-members.py` exists because **qmllint checks nothing about singleton members** — no
+`qs.*` module has a qmldir, so it never resolves the type behind any of the 49 singletons here,
+and `Colours.paletteXX.m3outlineYY` is three bogus accesses and zero findings. QML is silent at
+runtime too. See T58.
 
 Read `hybrid/docs/traps.md` T12–T35 before touching the harness; **T18 and T19 in
 particular**, because qmllint silently lints against an installed `midnight-shell-git`
