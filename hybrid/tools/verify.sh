@@ -79,9 +79,13 @@ step "qmllint"
 ./hybrid/tools/qml-lint.sh >/dev/null 2>&1 && echo clean || { echo FAILED; fail=1; }
 
 # The four checks below cover bug classes every other gate is blind to. Each needs no build.
+step "dead-signals self-test"; ./hybrid/tools/dead-signals.py --self-test | tail -1; ./hybrid/tools/dead-signals.py --self-test >/dev/null || fail=1
 step "dead signals";  ./hybrid/tools/dead-signals.py      | tail -1; ./hybrid/tools/dead-signals.py      >/dev/null || fail=1
+step "dead-qml self-test"; ./hybrid/tools/dead-qml.py --self-test | tail -1; ./hybrid/tools/dead-qml.py --self-test >/dev/null || fail=1
 step "dead qml";      ./hybrid/tools/dead-qml.py          | tail -1; ./hybrid/tools/dead-qml.py          >/dev/null || fail=1
+step "shell-safety self-test"; ./hybrid/tools/shell-safety.py --self-test | tail -1; ./hybrid/tools/shell-safety.py --self-test >/dev/null || fail=1
 step "shell safety";  ./hybrid/tools/shell-safety.py      | tail -1; ./hybrid/tools/shell-safety.py      >/dev/null || fail=1
+step "dead-config self-test"; ./hybrid/tools/dead-config.py --self-test | tail -1; ./hybrid/tools/dead-config.py --self-test >/dev/null || fail=1
 step "dead config";   ./hybrid/tools/dead-config.py       | tail -1; ./hybrid/tools/dead-config.py       >/dev/null || fail=1
 step "singleton self-test"
 ./hybrid/tools/singleton-members.py --self-test | tail -1; ./hybrid/tools/singleton-members.py --self-test >/dev/null || fail=1
@@ -115,8 +119,19 @@ if [ "$SMOKE" = 1 ]; then
     [ "${PIPESTATUS[0]}" -eq 0 ] || fail=1
 
     step "smoke matrix"
-    ./hybrid/tools/smoke-matrix.sh --hypr both 2>&1 | tail -3
-    [ "${PIPESTATUS[0]}" -eq 0 ] || fail=1
+    # Keep the whole run. `tail -3` showed only the verdict, so a failure said
+    # "1/14 run(s) failed" and nothing about which one -- twice in one day, and
+    # both times the answer needed a separate re-run to recover.
+    smoke_log=$(mktemp)
+    ./hybrid/tools/smoke-matrix.sh --hypr both > "$smoke_log" 2>&1
+    smoke_rc=$?
+    if [ "$smoke_rc" -eq 0 ]; then
+        tail -3 "$smoke_log"
+    else
+        grep -aE 'ok$|FAIL|PASS|starting nested' "$smoke_log" || tail -20 "$smoke_log"
+        fail=1
+    fi
+    rm -f "$smoke_log"
 fi
 
 if [ "$fail" -eq 0 ]; then
