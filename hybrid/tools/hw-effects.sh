@@ -40,6 +40,8 @@ bar|position|"left"|[60, 10, 10, 10]|the bar reserves the left edge
 bar|position|"right"|[10, 10, 60, 10]|the bar reserves the right edge
 bar|persistent|false|[10, 10, 10, 10]|a non-persistent bar reserves nothing
 border|thickness|24|[24, 88, 24, 24]|border thickness scales every edge
+appearance|islands|true|[10, 88, 10, 10]|islands widens the bar's reserved zone
+bar|excludedScreens|["LVDS-1"]|[10, 10, 10, 10]|an excluded screen gets no bar
 EOP
 )
 
@@ -83,6 +85,8 @@ baseline() {
     set_key bar persistent true
     set_key bar position '"top"'
     set_key border thickness 10
+    set_key appearance islands false
+    set_key bar excludedScreens '[]'
     sleep "$SETTLE"
 }
 
@@ -95,8 +99,12 @@ if [ "$start" != "[10, 10, 10, 10]" ] && [ "$start" != "[10, 60, 10, 10]" ]; the
 fi
 echo
 
+MONITOR=$(hyprctl monitors -j | python3 -c 'import json,sys; print(json.load(sys.stdin)[0]["name"])')
+
 while IFS='|' read -r node key val exp desc; do
     [ -z "$node" ] && continue
+    # The excludedScreens case names a monitor; use whichever one is actually here.
+    case "$key" in excludedScreens) val="[\"$MONITOR\"]" ;; esac
     baseline
     set_key "$node" "$key" "$val"
     sleep "$SETTLE"
