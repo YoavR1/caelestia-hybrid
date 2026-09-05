@@ -152,6 +152,73 @@ def tracked(*patterns):
     return out
 
 
+def has_reader(key: str, qml_text: str, cpp_text: str) -> bool:
+    """Whether anything reads `key`.
+
+    QML reaches a key as `.name` or, for a computed lookup, as the string "name".
+    C++ names it bare, but never after a dot -- `foo.name` in C++ is a member of
+    something else, not this key.
+    """
+    if re.search(rf"\.{re.escape(key)}\b", qml_text) or f'"{key}"' in qml_text:
+        return True
+    return bool(re.search(rf"(?<![\w.]){re.escape(key)}\b", cpp_text))
+
+
+def self_test() -> int:
+    """Prove both halves still work: what counts as a declaration, and what counts
+    as a reader. A checker that stops recognising declarations reports a smaller
+    key count and a clean result, which is the failure mode T23 exists for -- and
+    the #define case below is one this tool actually got wrong once.
+    """
+    decl_cases = [
+        ("    CONFIG_PROPERTY(bool, showOnHover, true)", ["showOnHover"]),
+        ("    CONFIG_GLOBAL_PROPERTY(int, scale, 1)", ["scale"]),
+        ("    CONFIG_ENUM_PROPERTY(Mode, mode, Mode::A)", ["mode"]),
+        ("    CONFIG_LIST(QString, names, {})", ["names"]),
+        ("    FEATURE(dock)", ["dock"]),
+        ("    VARIANT(audioPopout)", ["audioPopout"]),
+        ("    THEMED_PATH(icon)", ["icon"]),
+        # The macro definition itself must not register a key called `name`,
+        # which would look live because `.name` appears all over the QML.
+        ("#define CONFIG_PROPERTY(Type, name, defaultVal) \\", []),
+        ("    // CONFIG_PROPERTY(bool, commented, true)", ["commented"]),  # comments not stripped
+        ("    int somethingElse = 3;", []),
+    ]
+
+    reader_cases = [
+        ("read as .key in QML", "showOnHover", "Config.dock.showOnHover", "", True),
+        ("read as a string subscript", "showOnHover", 'Config.dock["showOnHover"]', "", True),
+        ("read bare in C++", "showOnHover", "", "if (showOnHover) {}", True),
+        # A longer name must not keep a shorter key alive.
+        ("longer name is not a read", "show", "Config.dock.showOnHover", "", False),
+        # In C++ a dotted use belongs to some other object.
+        ("dotted use in C++ is not this key", "scale", "", "other.scale = 2;", False),
+        ("nothing reads it", "orphan", "Config.dock.showOnHover", "int x = 1;", False),
+    ]
+
+    failures = 0
+    for line, expected in decl_cases:
+        got = declared_names(line)
+        if got != expected:
+            failures += 1
+            print(f"  \033[0;31mdeclaration\033[0m: {line.strip()[:52]!r} -> {got}, wanted {expected}")
+
+    for name, key, qml, cpp, expected in reader_cases:
+        got = has_reader(key, qml, cpp)
+        if got != expected:
+            failures += 1
+            verb = "should have counted as read" if expected else "should NOT have"
+            print(f"  \033[0;31m{name}\033[0m: {key} {verb}")
+
+    total = len(decl_cases) + len(reader_cases)
+    if failures:
+        print(f"\033[1;31mFAIL\033[0m self-test: {failures} of {total} case(s) wrong")
+        return 1
+    print(f"\033[1;32mPASS\033[0m self-test: {total} cases, declarations parsed and readers "
+          "resolved in both directions")
+    return 0
+
+
 def main():
     headers = [f for f in tracked("plugin/src/Caelestia/Config/*.hpp")]
 
@@ -177,9 +244,7 @@ def main():
 
     dead, skipped = [], []
     for key, (f, n) in sorted(keys.items()):
-        if re.search(rf"\.{key}\b", qml_text) or f'"{key}"' in qml_text:
-            continue
-        if re.search(rf"(?<![\w.]){key}\b", cpp_text):
+        if has_reader(key, qml_text, cpp_text):
             continue
         (skipped if key in ALLOWED else dead).append((key, f, n))
 
@@ -196,4 +261,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(self_test() if "--self-test" in sys.argv else main())
