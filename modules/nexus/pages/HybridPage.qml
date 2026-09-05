@@ -239,13 +239,12 @@ PageBase {
             text: qsTr("Variants")
         }
 
-        // Only the sites that genuinely have two implementations appear here. A selector for
-        // one that does not would visibly do nothing, which is worse than its absence -- so
+        // Only sites that genuinely have two implementations appear here. A selector for one
+        // that does not would visibly do nothing, which is worse than its absence -- so
         // lockCentre, desktopClock and colours stay out until their second side is imported,
-        // even though all four keys exist in the config and the presets already set them.
+        // even though all their keys exist in the config and the presets already set them.
         SelectRow {
             first: true
-            last: true
             label: qsTr("Audio popout")
             subtext: qsTr("Which fork's audio panel the bar opens")
             configNode: root.targetConfig.hybrid.variants
@@ -254,6 +253,19 @@ PageBase {
             active: root.variantItems[root.targetConfig.hybrid.variants.audioPopout === HybridVariant.Op ? 1 : 0]
             onSelected: item => {
                 root.targetConfig.hybrid.variants.audioPopout = root.variantItems.indexOf(item) === 1 ? HybridVariant.Op : HybridVariant.Midnight;
+            }
+        }
+
+        SelectRow {
+            last: true
+            label: qsTr("Workspace overview")
+            subtext: qsTr("MiDnight's drawer, or OP's carousel and window grid")
+            configNode: root.targetConfig.hybrid.variants
+            propertyName: "overview"
+            menuItems: root.variantItems
+            active: root.variantItems[root.targetConfig.hybrid.variants.overview === HybridVariant.Op ? 1 : 0]
+            onSelected: item => {
+                root.targetConfig.hybrid.variants.overview = root.variantItems.indexOf(item) === 1 ? HybridVariant.Op : HybridVariant.Midnight;
             }
         }
     }

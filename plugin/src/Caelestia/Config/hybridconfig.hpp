@@ -80,6 +80,11 @@ class HybridVariants : public settings::ObjectNode {
     VARIANT(audioPopout)
     VARIANT(desktopClock)
     VARIANT(colours)
+
+    // Added in Phase 7. The component audit originally recorded four dual sites; Overview is a
+    // fifth -- MiDnight ships modules/drawers/WorkspaceOverview.qml and OP ships
+    // modules/overview/, two designs of the same thing (T44).
+    VARIANT(overview)
 };
 
 class HybridConfig : public settings::ObjectNode {
