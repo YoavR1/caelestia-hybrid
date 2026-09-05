@@ -25,6 +25,11 @@ CustomMouseArea {
 
     readonly property bool isBarHorizontal: Config.bar.position === "top" || Config.bar.position === "bottom"
 
+    // Mirrors Dock.Wrapper's shouldBeActive minus screenState.dock, which is what these
+    // interactions set. With MiDnight's dock selected, or the feature off, the bottom edge
+    // belongs to the launcher alone.
+    readonly property bool dockActive: Config.dock.enabled && GlobalConfig.hybrid.features.dock && GlobalConfig.hybrid.variants.dock === HybridVariant.Op
+
     function inBarArea(x: real, y: real): bool {
         if (Config.bar.position === "left")
             return x < bar.x + bar.implicitWidth;
@@ -120,6 +125,9 @@ CustomMouseArea {
 
             if (Config.sidebar.showOnHover)
                 screenState.sidebar = false;
+
+            if (root.dockActive && Config.dock.showOnHover && !panels.dock.contextMenuOpen)
+                dockHideTimer.start();
         }
     }
 
@@ -254,13 +262,41 @@ CustomMouseArea {
 
         // Show launcher on hover, or show/hide on drag if hover is disabled
         if (Config.launcher.showOnHover) {
-            if (!screenState.launcher && inBottomPanel(panels.launcher, x, y))
+            if (!screenState.launcher && inBottomPanel(panels.launcher, x, y)) {
                 screenState.launcher = true;
+                screenState.dock = false;
+                dockHideTimer.stop();
+            }
         } else if (pressed && inBottomPanel(panels.launcher, dragStart.x, dragStart.y) && withinPanelWidth(panels.launcher, x, y)) {
-            if (dragY < -Config.launcher.dragThreshold)
+            if (dragY < -Config.launcher.dragThreshold) {
                 screenState.launcher = true;
-            else if (dragY > Config.launcher.dragThreshold)
+                screenState.dock = false;
+                dockHideTimer.stop();
+            } else if (dragY > Config.launcher.dragThreshold)
                 screenState.launcher = false;
+        }
+
+        // OP's dock shares the bottom edge with the launcher, so it takes whichever gesture the
+        // launcher leaves free: drag when the launcher is on hover, hover when it is on drag.
+        // This is the only thing in the tree that sets screenState.dock true -- without it the
+        // dock has seven ways to hide and none to appear.
+        if (root.dockActive) {
+            if (Config.launcher.showOnHover) {
+                if (pressed && !screenState.launcher && inBottomPanel(panels.dock, dragStart.x, dragStart.y)) {
+                    if (dragY < -Config.dock.dragThreshold) {
+                        dockHideTimer.stop();
+                        screenState.dock = true;
+                    } else if (dragY > Config.dock.dragThreshold)
+                        screenState.dock = false;
+                }
+            } else if (!pressed) {
+                const showDock = !screenState.launcher && inBottomPanel(panels.dock, x, y);
+                if (showDock) {
+                    dockHideTimer.stop();
+                    screenState.dock = true;
+                } else if (screenState.dock && !dockHideTimer.running && !panels.dock.contextMenuOpen)
+                    dockHideTimer.start();
+            }
         }
 
         // Show dashboard on hover
@@ -373,5 +409,12 @@ CustomMouseArea {
         }
 
         target: root.screenState
+    }
+
+    Timer {
+        id: dockHideTimer
+
+        interval: 100
+        onTriggered: root.screenState.dock = false
     }
 }
