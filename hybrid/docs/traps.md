@@ -2364,3 +2364,51 @@ shell's own polkit prompt is the common one, and on this machine NetworkManager'
 policy raised it repeatedly. Every hover assertion failed for two full runs, looking exactly
 like broken hover, until a screenshot showed the dialog sitting there. If every pointer test
 fails at once, photograph the screen before believing any of them.
+
+## T56 — Restarting the shell over ssh moves it out of the graphical session
+
+The shell was restarted many times while verifying on hardware, with the obvious command:
+
+```sh
+setsid qs -c caelestia -n -d
+```
+
+Run from an ssh login, that puts the shell in the **ssh session's** cgroup, not the
+compositor's. `loginctl` tells the difference plainly:
+
+```
+Hyprland   XDG_SESSION_ID=2    seat0  tty1        Active=yes
+qs         XDG_SESSION_ID=101  -      Remote=yes  Type=tty
+```
+
+polkit authorises by session. NetworkManager's `wifi.scan` action ships
+`<allow_active>yes</allow_active>`, so a shell in the seat's active session is never asked
+anything. A shell in an ssh session is not that session, so the same scan starts raising an
+authentication prompt — one that had never appeared before and looks like a shell bug.
+
+The prompt is the expensive part. It is a `caelestia-polkit` layer surface, 1296x748 on
+overlay level 3, above `caelestia-drawers` on level 2. It takes every pointer event, so **every
+hover assertion in `hw-verify.sh` fails while it is up**, and a screenshot of the desktop comes
+back solid black. Two full verification runs were read as "hover is broken" before
+`hyprctl layers` showed what was actually on screen.
+
+Restart the shell as a child of the compositor, which is in the right session:
+
+```sh
+hyprctl dispatch 'hl.dsp.exec_cmd("qs -c caelestia -n -d")'        # lua config
+hyprctl dispatch exec 'qs -c caelestia -n -d'                      # conf config
+```
+
+Note that the compositor's own environment is whatever it had at login, so a shell spawned this
+way does not pick up later edits to `env.lua`. Pass what it needs inline until the next
+compositor restart:
+
+```sh
+hyprctl dispatch 'hl.dsp.exec_cmd("env QML2_IMPORT_PATH=... CAELESTIA_LIB_DIR=... qs -c caelestia -n -d")'
+```
+
+`hw-verify.sh` now checks both conditions before it asserts anything about hover: that the
+shell's `XDG_SESSION_ID` matches the compositor's, and that no `polkit` or `lockscreen` surface
+is holding a grab. Either one makes the pointer results meaningless, and both used to fail
+silently — which is the same shape as T55, and the reason that file now refuses rather than
+reports.

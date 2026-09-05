@@ -58,6 +58,36 @@ if [ -n "$owner" ] && [ "$owner" = "$me" ]; then ok "owns org.freedesktop.Notifi
 elif [ -z "$owner" ]; then bad "owns org.freedesktop.Notifications" "nobody owns it"
 else bad "owns org.freedesktop.Notifications" "owned by pid $owner, not $me -- T53"; fi
 
+# A shell started over ssh -- `setsid qs ...` from a remote login -- lands in that
+# ssh session's cgroup rather than the compositor's. polkit then sees its requests
+# as coming from a session that is not the seat's active one, and actions whose
+# policy is `allow_active=yes` start raising an authentication prompt that never
+# used to appear. That prompt is a near-fullscreen overlay layer, so it swallows
+# every hover and turns this whole file red for a reason that has nothing to do
+# with the shell. Restart it as a child of the compositor instead:
+#
+#   hyprctl dispatch 'hl.dsp.exec_cmd("qs -c caelestia -n -d")'
+#
+qs_pid=$(pgrep -x qs | head -1)
+if [ -n "$qs_pid" ] && [ -r "/proc/$qs_pid/environ" ]; then
+    shell_session=$(tr '\0' '\n' < "/proc/$qs_pid/environ" | sed -n 's/^XDG_SESSION_ID=//p')
+    wm_pid=$(pgrep -x Hyprland | head -1)
+    wm_session=$(tr '\0' '\n' < "/proc/$wm_pid/environ" 2>/dev/null | sed -n 's/^XDG_SESSION_ID=//p')
+    if [ -n "$shell_session" ] && [ -n "$wm_session" ] && [ "$shell_session" != "$wm_session" ]; then
+        bad "shell is in the compositor's session" "shell=$shell_session wm=$wm_session -- expect polkit prompts"
+    else
+        ok "shell is in the compositor's session" "${shell_session:+session $shell_session}"
+    fi
+fi
+
+# A modal on the overlay layer takes every pointer event before a drawer sees it.
+grabs=$(hyprctl layers 2>/dev/null | grep -cE 'polkit|lockscreen')
+if [ "${grabs:-0}" -gt 0 ]; then
+    bad "no modal holding a pointer grab" "$grabs overlay surface(s) -- hover results below are meaningless"
+else
+    ok "no modal holding a pointer grab"
+fi
+
 drawers=$(ipc drawers list | tr '\n' ' ')
 if [ -n "$drawers" ]; then ok "drawers list answers" "($(echo "$drawers" | wc -w) keys)"
 else bad "drawers list answers" "no response -- is the shell running?"; fi
