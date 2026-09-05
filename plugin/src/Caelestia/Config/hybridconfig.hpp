@@ -67,6 +67,7 @@ class HybridFeatures : public settings::ObjectNode {
     FEATURE(hotspot)
     FEATURE(btAgent)
     FEATURE(themeManager)
+    FEATURE(lockPowerConfirm)
 };
 
 // The four components both forks genuinely implement. Capped at ~6 entries (D4): growth

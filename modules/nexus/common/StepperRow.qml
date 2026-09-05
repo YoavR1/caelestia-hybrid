@@ -11,6 +11,11 @@ import qs.modules.nexus.common
 ConnectedRect {
     id: root
 
+    // Matches ToggleRow, which has had this since upstream. OP's settings pages bind it to
+    // gate a stepper on the feature it configures -- a hide-delay stepper is meaningless when
+    // the OSD is switched off.
+    property bool disabled: false
+
     property bool showDelete: false
 
     property bool showReset: false
@@ -101,6 +106,7 @@ ConnectedRect {
         }
 
         StyledSpinBox {
+            enabled: !root.disabled
             from: root.from
             to: root.to
             stepSize: root.stepSize
