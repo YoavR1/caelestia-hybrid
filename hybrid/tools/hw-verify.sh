@@ -28,6 +28,35 @@ G=$'\033[1;32m'; R=$'\033[1;31m'; Y=$'\033[0;33m'; N=$'\033[0m'
 ipc()    { qs "${QS_SEL[@]}" ipc call "$@" 2>/dev/null; }
 isopen() { ipc drawers isOpen "$1"; }
 warp()   { hyprctl dispatch "hl.dsp.cursor.move({x=$1, y=$2})" >/dev/null 2>&1; }
+
+# Warping is not input. `hl.dsp.cursor.move` repositions the pointer, and the
+# compositor does not synthesise a motion event for it -- proved by warping
+# between two windows under `follow_mouse=1` and watching focus never change. So
+# a warp alone cannot trigger a hover, and a hover suite driven by warps reports
+# whatever the drawers happened to be doing already.
+#
+# Real events need /dev/uinput, which means ydotoold. Position roughly with a
+# warp, then land the last pixels with a relative ydotool move so the compositor
+# delivers motion to the surface under the pointer.
+HAVE_REAL_INPUT=0
+if [ -n "${YDOTOOL_SOCKET:-}" ] && command -v ydotool >/dev/null && pgrep -x ydotoold >/dev/null; then
+    HAVE_REAL_INPUT=1
+fi
+
+move_for_real() {
+    local x=$1 y=$2
+    if [ "$HAVE_REAL_INPUT" = "1" ]; then
+        # Approach from 24px away so the final motion is a genuine event at (x,y).
+        local from_y=$((y > 24 ? y - 24 : y + 24))
+        warp "$x" "$from_y"
+        sleep 0.3
+        local step=$(( y > from_y ? 4 : -4 ))
+        local i=0
+        while [ $i -lt 6 ]; do ydotool mousemove -x 0 -y $step 2>/dev/null; sleep 0.05; i=$((i + 1)); done
+    else
+        warp "$x" "$y"
+    fi
+}
 global() { hyprctl dispatch "hl.dsp.global(\"caelestia:$1\")" >/dev/null 2>&1; }
 
 ok()   { PASS=$((PASS+1)); printf "  %-34s ${G}ok${N} %s\n" "$1" "${2:-}"; }
@@ -143,7 +172,11 @@ hover_test() {
         skip "$name opens on hover" "$mod.showOnHover=false -- opens on drag"
         return
     fi
-    warp "$PARK_X" "$PARK_Y"; sleep 0.6
+    if [ "$HAVE_REAL_INPUT" != "1" ]; then
+        skip "$name opens on hover" "needs real input; run ydotoold and set YDOTOOL_SOCKET"
+        return
+    fi
+    move_for_real "$PARK_X" "$PARK_Y"; sleep 0.6
     local before; before=$(isopen "$name")
     # An already-open drawer would satisfy "after = 1" without hover doing anything.
     if [ "$before" = "1" ]; then
@@ -155,9 +188,9 @@ hover_test() {
             return
         fi
     fi
-    warp "$x" "$y"; sleep "$settle"
+    move_for_real "$x" "$y"; sleep "$settle"
     local after; after=$(isopen "$name")
-    warp "$PARK_X" "$PARK_Y"; sleep 0.6
+    move_for_real "$PARK_X" "$PARK_Y"; sleep 0.6
     local back; back=$(isopen "$name")
     if [ "$after" = "1" ]; then
         if [ "$back" = "0" ]; then ok "$name opens on hover" "and closes on leave"
