@@ -240,9 +240,15 @@ PageBase {
         }
 
         // Only sites that genuinely have two implementations appear here. A selector for one
-        // that does not would visibly do nothing, which is worse than its absence -- so
-        // lockCentre, desktopClock and colours stay out until their second side is imported,
-        // even though all their keys exist in the config and the presets already set them.
+        // that does not would visibly do nothing, which is worse than its absence.
+        //
+        // `desktopClock` and `colours` were declared alongside these and are now gone. OP's
+        // DesktopClock.qml is byte-identical to upstream's, so there was never a second clock
+        // to select between, and its Colours.qml change is +52/-2 on a *service*, which D5 says
+        // is merged rather than dual-implemented. `lockCentre` is still declared and still
+        // absent here, because OP genuinely has a second one -- but its PasswordInput refers to
+        // PatternGrid eight times, so importing it means importing the lock-screen bypass that
+        // D10 and T3 block. It waits on Phase 8.
         SelectRow {
             first: true
             label: qsTr("Audio popout")

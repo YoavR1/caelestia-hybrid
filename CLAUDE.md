@@ -18,14 +18,16 @@ on top of upstream **Caelestia**. One shell, one config, one CLI — features to
 | 3 | `hybrid.features` / `hybrid.variants` schema + Nexus page | done |
 | 4 | OP's dock behind `hybrid.variants.dock` | done, and verified on hardware |
 | 5 | OP overview, hotspot/BtAgent/Nmcli, GPU detection, themes | done |
-| 6 | **single merged CLI (D6)** | **not started** |
+| 6 | single CLI (D6) | done -- separate repo, [`YoavR1/caelestia-hybrid-cli`](https://github.com/YoavR1/caelestia-hybrid-cli) |
 | 7 | the real variants | 3 of 6 wired: `audioPopout`, `overview`, `dock` |
 | 8 | OP's pattern lock | satisfied by omission -- it is not in the tree (D10) |
 
-Phase 6 is not cosmetic. The installed `caelestia` binary is whichever CLI the user has, and
-every one of its subcommands runs `qs -c caelestia`, which resolves a config *by name* -- so on
-a machine with `midnight-shell-git` installed it drives the packaged shell rather than this
-tree. That is T53, and it is the single largest remaining source of "the shell ignores me".
+Phase 6 was not cosmetic. Every CLI subcommand ran `qs -c caelestia`, which resolves a config
+*by name* -- so on a machine with `midnight-shell-git` installed it drove the packaged shell
+rather than this tree. That is T53, and it is what broke the launcher's Settings action. The
+fork centralises that decision in `utils/instance.py`, which honours `$CAELESTIA_SHELL_PATH`
+(for a checkout) and `$CAELESTIA_SHELL_CONFIG` before falling back to the historical default,
+and carries a test that greps the subcommand tree for anyone re-hardcoding it.
 
 Phase 7's remaining three -- `lockCentre`, `desktopClock`, `colours` -- have no second
 implementation to select between: OP's side of each is edits to shared files rather than
@@ -87,7 +89,7 @@ These were settled by source audit on 2026-09-02. Do not re-litigate without new
 | D3 | **Feature flags, not implementation selectors** | The forks are ~90% disjoint. Only 4 components have two real implementations. |
 | D4 | **`hybrid.variants` is capped at ~6 entries** | If it grows, the design is drifting back toward a registry we deliberately rejected. |
 | D5 | **Services are merged, never dual-implemented** | Both forks *extended* a shared service set. Their diffs are additive and non-overlapping. |
-| D6 | **One CLI**, forked from `caelestia-dots/cli` | Both CLIs install the binary as `caelestia`; you cannot have both. MiDnight's delta is ~850 lines, additive. |
+| D6 | **One CLI**, forked from `dim-ghub/midnight-cli` | All of them install the binary as `caelestia`, so they cannot coexist. Corrected 2026-09-05: the fork source is MiDnight's CLI, not upstream's, because MiDnight's already contains all 665 of upstream's commits (`merge-base` = upstream `HEAD`) and OP ships no CLI at all. There was never a merge to do. Its delta is +3664/−108 across 22 files, not ~850 lines. |
 | D7 | **Upstream catch-up is Phase 2**, before the feature system | Upstream rewrote the config module and rearranged the plugin layout. Build presets on the system we keep. |
 | D8 | **Presets are config layers**, and config stores the preset *name* | Lets "Recommended Hybrid" be improved later for existing users. |
 | D9 | **Merge upstream; cherry-pick OP** | Upstream is a true ancestor. OP shares ancestor `ad8dca0a`, so `git cherry-pick -x` works directly. Never rebase onto an upstream. |
@@ -129,6 +131,8 @@ hybrid/                                                ← ours. Upstream will n
 ../caelestia-refs/upstream    caelestia-dots/shell   @ caelestia/main
 ../caelestia-refs/op          OVERxPOWERED/…         @ op/main
 ../caelestia-refs/midnight    dim-ghub/midnight-shell@ midnight/main
+../caelestia-refs/cli-upstream.git  caelestia-dots/cli     (bare)
+../caelestia-refs/cli-midnight.git  dim-ghub/midnight-cli  (bare)
 ```
 
 Agents and skills read these. Never edit them; they are throwaway checkouts.
@@ -157,7 +161,9 @@ Agents and skills read these. Never edit them; they are throwaway checkouts.
 | Wallpaper | 1 line | `services/Wallpapers.qml` 125→486 lines | no — only MiDnight |
 | Clipboard, emoji, switcher, shimeji | — | yes | no — only MiDnight |
 | Hotspot, BtAgent, GPU, themes | yes | — | no — only OP |
-| **Lock centre, audio popout, background/clock, colours** | yes | yes | **yes — these four** |
+| **Lock centre, audio popout** | yes | yes | **yes — real dual sites** |
+| Background/clock | — | 2-line delta | no — OP's `DesktopClock.qml` is byte-identical to upstream's |
+| Colours | +52/−2 | yes | no — a *service*, and D5 merges services |
 
 The Overview row was `no — only OP` until 2026-09-04. That was wrong: MiDnight ships
 `modules/drawers/WorkspaceOverview.qml`, it is 447 lines, it is in this tree as part of the D1
@@ -168,8 +174,20 @@ is the definition this table uses for a dual site.
 So there are **five** dual sites, not four, and OP's `modules/overview/` must not be imported
 as a second boolean-gated implementation — that is precisely what D3 and D5 exist to prevent.
 It is either left alone (MiDnight's works and is the baseline) or `overview` is promoted to
-`hybrid.variants` in Phase 7, taking that list from four entries to five, still inside D4's
-cap of about six. That is a design decision, not a cleanup, and it is open.
+`hybrid.variants` in Phase 7. That was done, and the list then went the other way.
+
+**`hybrid.variants` holds four entries: `lockCentre`, `audioPopout`, `overview`, `dock`.**
+`desktopClock` and `colours` were declared and were removed on 2026-09-05, because neither is a
+dual site and the evidence is mechanical: OP never touched `modules/background/DesktopClock.qml`
+(its copy is identical to upstream's 161 lines), and its `services/Colours.qml` change is +52/−2
+on a service, which D5 merges rather than dual-implements. Three of the four are wired. The
+fourth, `lockCentre`, is a genuine dual site that Phase 8 blocks: OP's `PasswordInput.qml`
+refers to `PatternGrid` eight times, so its lock centre cannot be imported without the
+lock-screen bypass D10 rejects.
+
+The lesson is worth keeping: a `hybrid.variants` entry needs *two implementations that exist as
+files*, not two forks that both have opinions about an area. Four of the original six failed
+that test on inspection, and two of them only failed once someone diffed the actual files.
 
 ## Verification
 

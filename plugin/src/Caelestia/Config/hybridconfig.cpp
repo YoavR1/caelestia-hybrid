@@ -39,7 +39,6 @@ const Preset& presetFor(HybridPreset::Enum which) {
                                      },
 
         .variants={ { u"lockCentre"_s, HybridVariant::Midnight }, { u"audioPopout"_s, HybridVariant::Op },
-            { u"desktopClock"_s, HybridVariant::Midnight }, { u"colours"_s, HybridVariant::Midnight },
             { u"overview"_s, HybridVariant::Midnight }, { u"dock"_s, HybridVariant::Midnight } } };
 
     // MiDnight as it ships: everything it added, nothing OP added.
@@ -63,7 +62,6 @@ const Preset& presetFor(HybridPreset::Enum which) {
                                   },
 
         .variants={ { u"lockCentre"_s, HybridVariant::Midnight }, { u"audioPopout"_s, HybridVariant::Midnight },
-            { u"desktopClock"_s, HybridVariant::Midnight }, { u"colours"_s, HybridVariant::Midnight },
             { u"overview"_s, HybridVariant::Midnight }, { u"dock"_s, HybridVariant::Midnight } } };
 
     // OP as it ships.
@@ -87,7 +85,6 @@ const Preset& presetFor(HybridPreset::Enum which) {
                             },
 
         .variants={ { u"lockCentre"_s, HybridVariant::Op }, { u"audioPopout"_s, HybridVariant::Op },
-            { u"desktopClock"_s, HybridVariant::Op }, { u"colours"_s, HybridVariant::Op },
             { u"overview"_s, HybridVariant::Op }, { u"dock"_s, HybridVariant::Op } } };
 
     switch (which) {

@@ -22,8 +22,6 @@
     "variants": {
       "lockCentre": "op",
       "audioPopout": "midnight",
-      "desktopClock": "op",
-      "colours": "op",
       "overview": "op",
       "dock": "op"
     }
