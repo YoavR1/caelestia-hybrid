@@ -2533,10 +2533,21 @@ which is the worst combination: it looks flaky. It happened here because the gat
 enough that carrying on with other work during it feels free, and the obvious other work was
 wiring a new self-test into that same file.
 
-**Do not edit any script while a run of it is in flight.** Editing files it *reads* is fine --
-the checkers re-read the tree per invocation, and `traps.md` is not executed. If a change to a
-runner is needed mid-run, either wait, or copy it: `cp verify.sh /tmp/v.sh && /tmp/v.sh`
-detaches the running copy from the file being edited.
+**Do not edit any script while a run of it is in flight, or any script that run invokes.**
+The second half was learned the hard way a few hours after the first. `verify.sh` calls each
+checker *twice* -- once for its output, once for its exit code:
+
+```sh
+step "settings paths"; ./hybrid/tools/settings-paths.sh | tail -1; ./hybrid/tools/settings-paths.sh >/dev/null || fail=1
+```
+
+Editing `settings-paths.sh` between those two calls produced a run where every step printed a
+passing line and the verdict was still RED, with nothing in the log to explain it. The first
+call had already printed its clean result; the second ran a half-written file.
+
+Editing files a run only *reads* is fine -- the checkers re-read the tree per invocation, and
+`traps.md` is not executed. If a change to a runner is needed mid-run, either wait, or copy it:
+`cp verify.sh /tmp/v.sh && /tmp/v.sh` detaches the running copy from the file being edited.
 
 The same applies to `smoke-matrix.sh` and `hw-audit.sh`, both of which run for minutes.
 
