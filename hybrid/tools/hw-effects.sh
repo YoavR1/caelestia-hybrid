@@ -34,21 +34,24 @@ PASS=0; FAIL=0; SKIP=0
 # node | key | value (json) | expected reserved [l, t, r, b]
 # Baseline for every case: bar.persistent=true, bar.position=top, border.thickness=10.
 CASES=$(cat <<'EOP'
-bar|position|"top"|[10, 60, 10, 10]|the bar reserves the top edge
-bar|position|"bottom"|[10, 10, 10, 60]|the bar reserves the bottom edge
-bar|position|"left"|[60, 10, 10, 10]|the bar reserves the left edge
-bar|position|"right"|[10, 10, 60, 10]|the bar reserves the right edge
-bar|persistent|false|[10, 10, 10, 10]|a non-persistent bar reserves nothing
-border|thickness|24|[24, 88, 24, 24]|border thickness scales every edge
-appearance|islands|true|[10, 88, 10, 10]|islands widens the bar's reserved zone
-bar|excludedScreens|["LVDS-1"]|[10, 10, 10, 10]|an excluded screen gets no bar
+bar.position|"top"|reserved|[10, 60, 10, 10]|the bar reserves the top edge
+bar.position|"bottom"|reserved|[10, 10, 10, 60]|the bar reserves the bottom edge
+bar.position|"left"|reserved|[60, 10, 10, 10]|the bar reserves the left edge
+bar.position|"right"|reserved|[10, 10, 60, 10]|the bar reserves the right edge
+bar.persistent|false|reserved|[10, 10, 10, 10]|a non-persistent bar reserves nothing
+border.thickness|24|reserved|[24, 88, 24, 24]|border thickness scales every edge
+appearance.islands|true|reserved|[10, 88, 10, 10]|islands widens the bar's reserved zone
+bar.excludedScreens|["LVDS-1"]|reserved|[10, 10, 10, 10]|an excluded screen gets no bar
+background.wallpaperEnabled|false|layer:caelestia-background|level=1|no wallpaper drops the background out of the wallpaper layer
+hybrid.features.floatingLyrics|false|layer:caelestia-desktopLyricsOverlay|absent|the lyrics overlay is not created when its feature is off
+hybrid.features.floatingLyrics|true|layer:caelestia-desktopLyricsOverlay|level=3|and is created when it is on
 EOP
 )
 
 if [ "${1:-}" = "--list" ]; then
-    printf '%s\n' "$CASES" | while IFS='|' read -r node key val exp desc; do
-        [ -z "$node" ] && continue
-        printf "  %-8s %-12s = %-10s -> %-18s  %s\n" "$node" "$key" "$val" "$exp" "$desc"
+    printf '%s\n' "$CASES" | while IFS='|' read -r path val obs exp desc; do
+        [ -z "$path" ] && continue
+        printf "  %-32s = %-14s  %-38s -> %-10s  %s\n" "$path" "$val" "$obs" "$exp" "$desc"
     done
     exit 0
 fi
@@ -57,20 +60,45 @@ command -v hyprctl >/dev/null || { echo "hyprctl not found" >&2; exit 2; }
 [ -f "$CFG" ] || { echo "no config at $CFG" >&2; exit 2; }
 pgrep -x qs >/dev/null || { echo "no shell running" >&2; exit 2; }
 
-reserved() {
-    hyprctl monitors -j 2>/dev/null | python3 -c 'import json,sys; print(json.load(sys.stdin)[0]["reserved"])'
+# Two kinds of observable, both read from the compositor rather than from the shell:
+#   reserved          the space layer surfaces claim, as [left, top, right, bottom]
+#   layer:<namespace> the layer's level, or "absent" if it does not exist at all
+observe() {
+    case "$1" in
+        reserved)
+            hyprctl monitors -j 2>/dev/null |
+                python3 -c 'import json,sys; print(json.load(sys.stdin)[0]["reserved"])' ;;
+        layer:*)
+            hyprctl layers -j 2>/dev/null | python3 -c '
+import json, sys
+want = sys.argv[1]
+for mon in json.load(sys.stdin).values():
+    for level, layers in mon.get("levels", {}).items():
+        for layer in layers:
+            if (layer.get("namespace") or "") == want:
+                print("level=" + level)
+                sys.exit(0)
+print("absent")
+' "${1#layer:}" ;;
+        *) echo "unknown observable: $1" >&2; return 1 ;;
+    esac
 }
 
+# Takes a dotted path so nested nodes -- hybrid.features.floatingLyrics -- are reachable.
 set_key() {
-    python3 - "$CFG" "$1" "$2" "$3" <<'PY'
+    python3 - "$CFG" "$1" "$2" <<'PY'
 import json, sys
-path, node, key, raw = sys.argv[1:5]
+path, dotted, raw = sys.argv[1:4]
 try:
     val = json.loads(raw)
 except json.JSONDecodeError:
     val = raw
 d = json.load(open(path))
-d.setdefault(node, {})[key] = val
+node = d
+*parents, leaf = dotted.split(".")
+for part in parents:
+    node = node.setdefault(part, {})
+node[leaf] = val
 json.dump(d, open(path, "w"), indent=2)
 PY
 }
@@ -82,18 +110,20 @@ cp "$CFG" "$backup"
 trap 'cp "$backup" "$CFG"; rm -f "$backup"; sleep 1' EXIT
 
 baseline() {
-    set_key bar persistent true
-    set_key bar position '"top"'
-    set_key border thickness 10
-    set_key appearance islands false
-    set_key bar excludedScreens '[]'
+    set_key bar.persistent true
+    set_key bar.position '"top"'
+    set_key border.thickness 10
+    set_key appearance.islands false
+    set_key bar.excludedScreens '[]'
+    set_key background.wallpaperEnabled true
+    set_key hybrid.features.floatingLyrics true
     sleep "$SETTLE"
 }
 
 echo
 echo "hw-effects: writing settings and observing the result"
 baseline
-start=$(reserved)
+start=$(observe reserved)
 if [ "$start" != "[10, 10, 10, 10]" ] && [ "$start" != "[10, 60, 10, 10]" ]; then
     echo "  ${Y}note${N} baseline reserved is $start, not the expected [10, 60, 10, 10]"
 fi
@@ -101,19 +131,20 @@ echo
 
 MONITOR=$(hyprctl monitors -j | python3 -c 'import json,sys; print(json.load(sys.stdin)[0]["name"])')
 
-while IFS='|' read -r node key val exp desc; do
-    [ -z "$node" ] && continue
+while IFS='|' read -r path val obs exp desc; do
+    [ -z "$path" ] && continue
     # The excludedScreens case names a monitor; use whichever one is actually here.
-    case "$key" in excludedScreens) val="[\"$MONITOR\"]" ;; esac
+    case "$path" in *excludedScreens) val="[\"$MONITOR\"]" ;; esac
     baseline
-    set_key "$node" "$key" "$val"
+    set_key "$path" "$val"
     sleep "$SETTLE"
-    got=$(reserved)
-    label="$node.$key = $val"
+    got=$(observe "$obs")
+    label="$path = $val"
     if [ "$got" = "$exp" ]; then
-        PASS=$((PASS + 1)); printf "  %-28s ${G}ok${N}   %s\n" "$label" "$desc"
+        PASS=$((PASS + 1)); printf "  %-46s ${G}ok${N}   %s\n" "$label" "$desc"
     else
-        FAIL=$((FAIL + 1)); printf "  %-28s ${R}FAIL${N} expected %s, observed %s\n" "$label" "$exp" "$got"
+        FAIL=$((FAIL + 1)); printf "  %-46s ${R}FAIL${N} %s: expected %s, observed %s\n" \
+            "$label" "$obs" "$exp" "$got"
     fi
 done < <(printf '%s\n' "$CASES")
 
