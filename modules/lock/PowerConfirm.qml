@@ -3,7 +3,6 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Effects
 import QtQuick.Layouts
-import Qt5Compat.GraphicalEffects
 import Quickshell
 import Caelestia.Config
 import qs.components
@@ -90,15 +89,6 @@ Item {
             visible: false
         }
 
-        FastBlur {
-            id: glassBlur
-
-            anchors.fill: parent
-            source: glassCapture
-            radius: 75
-            visible: false
-        }
-
         StyledRect {
             id: glassMask
 
@@ -108,11 +98,24 @@ Item {
             visible: false
         }
 
-        OpacityMask {
+        // OP used FastBlur + OpacityMask from Qt5Compat.GraphicalEffects. That module comes
+        // from qt6-5compat, which this tree depends on nowhere else -- it is installed on the
+        // development machine and absent from the CI container, so qmllint could not resolve
+        // FastBlur and the shell failed to load entirely (rc=255 on every preset).
+        //
+        // MultiEffect does blur and masking in one, is already imported here via
+        // QtQuick.Effects, and is what the rest of this tree uses -- see
+        // modules/background/DesktopLyrics.qml. Removing a dependency beats adding one.
+        MultiEffect {
             anchors.fill: parent
             z: -1
-            source: glassBlur
+            source: glassCapture
             maskSource: glassMask
+            maskEnabled: true
+            blurEnabled: true
+            blur: 1
+            blurMax: 64
+            autoPaddingEnabled: false
         }
 
         MouseArea {
